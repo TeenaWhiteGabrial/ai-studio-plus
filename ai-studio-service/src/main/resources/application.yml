@@ -1,0 +1,71 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /ai-hub
+
+spring:
+  application:
+    name: ai-studio-service
+  datasource:
+    url: jdbc:mysql://39.105.212.130:3306/dev_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: DevRoot@2026
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.aistudio.service.entity
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# JWT 配置
+jwt:
+  secret: ai-studio-jwt-secret-key-2026-must-be-at-least-256-bits-long
+  expiration: 86400000  # 24h in ms
+
+# 七牛云配置
+qiniu:
+  access-key: ONiGLrLxZ2zTRQVDECDAy57fMz4cLGon93hrp1ca
+  secret-key: mOIIU8JaAeTp-JWnacVhQTEg9o8BAySmKlAuBLO4
+  bucket: topazzz
+  domain: http://qiniu.tenmagabrielwhite.cn
+  token-expire: 3600   # UpToken 有效期 1h
+
+# RSA 密钥配置（2048位，Base64 DER格式）
+rsa:
+  private-key: MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC3Y0MMaqTWYGuiWVwphqjNl5mh+ez5rLRKNp7RI1ENbPTjzTLW0AN/ifzCII8MdRBfyL0qPayITvmSrV+X3H4SpzrjH+XX9EFgS+WzNXIyX3BJ0AHveT0cC2ksZuA8IGaUIyBZR/qYqN0EAYVMxeuH7Q8yv3Brg9UAKcCTMJRTCzBBtv6/jDYNmN99+u7UEAl9qZiQ7OuVjmFyO8Xbh7kllAYwEHU4Js9gHMZXZ3JN4Qj+weVSG8lb74UBP4yt4JYDPAqLaeH+uxZyvl1qv8dnFOMySnf6SNUtUYELzZ/6vbccG0zxDYEvlZkA/pNsB+rvsRNlRKRnyZmDrCx7bzRPAgMBAAECggEAAPkCpN1+YuMml+PMOdhh8n6M98hchlx/UBaRvr900W8+ymQWLwBHVyNW1wlsZUKvsgwksZq4B2OAvJp8QdEBFKEGjm9KYL+UMWoswQCkLkE35Ifjvy7QDY3cYnMSy/X1JVRWJRakQnckKPdVw/HezVXuuTRZ9ujqCyStjN3eJxdELbjpqkPy7YHS+cHZW9QTIsp5Ur3N2tLR6/77qchFAkv7m0kqAKmiNphPqXf+9/G3Y78SaKbqmw+i8snh+nPOV6NWGEZn10OcdtlJ+vpblV2zrvQ/cM4zZRxgVDRqfHFBuCyEo3WpqyawoT6zqJIbHzWnGiWwxKzf5U8MY+2qSQKBgQDxOWMOS8/qwgxa70qHIqslqOnATpfnlcNohgNd3aUK1PRsH7vcwrqv6YpHW0L/20oAi2pye4w3+oejyyHoPvdG1lgJqcMBcTAQXJKzjAb9ocCrOn9HDACx/iOq12IJLvKbxvlSOyl4tjQoS9UCJ5nY2eY2ud6oNxt2oUR8bvA+2QKBgQDCnvKQinDUL3W9xv5NVhTt1MqP4xJrFzsPZblAHAw9YkNz0NY+qC2oEiae5Xt6D5ByCVx9T5dGR1Qm8YEc16WVd1h6b/N3CHGSFV7PMRQasqqiRVX3vARRWfrm636YqODgbSNYTDEvRmyGkBhp6WffnDKi4eKXETwY2R4kGThjZwKBgEFUTmxvwcaNeTUje2avz/QqE+xeHKu+lqZ3LPA999XAKNYjnghCwLalpCqBH9sVM6yEFXcd2LLMafHFMNCqROPtZvhu/n4kfmTf/Wcc9EO6i+iTtiayrHmIH3bEUCu2iEQCFkHb/fZQOj3zk6O6v+LH2J5XpmKeUhTFxjuA/BW5AoGAb1KZ7wGxXj2zfJVJuxTlLdFM+JbrXyRPnRQTrc8dVTNS3/lxwy9RxlRzkOo1AfHLLt+Z7vfK0OFWClyT/NqBFYjJrGdC/TBwPh5JN/ybwlW2ctF0Rhte4OW2NcY4iLv4vYbP897JN4Bx7VqZDGP9DZP8Bt1sTfsGxDPVINLoRTsCgYB3o1bjj+9/BTuQ+ELJ4dSPImZux9qsfNvKiUhJEbExYIt22dAv3Fv1UZdBcyAB8f3QBQEgZl4cz4dIzNobDps7WxGmxEP3hsTlJwZB7wfe1EE2EBq3JlsBdlyp5M0qWNkRf1RwNEyl2uTAw5WRUMFlMF06TXwEAURhM67hi4WwIw==
+  public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt2NDDGqk1mBrollcKYaozZeZofns+ay0Sjae0SNRDWz0480y1tADf4n8wiCPDHUQX8i9Kj2siE75kq1fl9x+Eqc64x/l1/RBYEvlszVyMl9wSdAB73k9HAtpLGbgPCBmlCMgWUf6mKjdBAGFTMXrh+0PMr9wa4PVACnAkzCUUwswQbb+v4w2DZjfffru1BAJfamYkOzrlY5hcjvF24e5JZQGMBB1OCbPYBzGV2dyTeEI/sHlUhvJW++FAT+MreCWAzwKi2nh/rsWcr5dar/HZxTjMkp3+kjVLVGBC82f+r23HBtM8Q2BL5WZAP6TbAfq77ETZUSkZ8mZg6wse280TwIDAQAB
+
+# Skill GitLab 集成配置
+skill:
+  gitlab:
+    # GitLab 服务器地址
+    url: ${GITLAB_URL:https://git.qualink.com}
+    # GitLab 访问 Token（Deploy Token 或 Personal Access Token）
+    token: ${GITLAB_TOKEN:glpat--v8mTUpmBc1sv1_Ps2wA}
+    # 仓库 ID（数字 ID，用于深层级子组项目）
+    repository: ${GITLAB_REPOSITORY:7023}
+    # 分支名称
+    branch: ${GITLAB_BRANCH:release}
+    # Skill 文件基础路径
+    base-path: ${GITLAB_BASE_PATH:Skills/}
+    # 同步定时任务 cron 表达式（默认每 30 分钟）
+    sync-cron: ${GITLAB_SYNC_CRON:0 */30 * * * ?}
+
+# Knife4j
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn

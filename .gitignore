@@ -1,0 +1,6 @@
+# Ignore the development configuration file
+dev.config
+
+ai-studio-web/node_modules/
+ai-studio-web/dist/*
+ai-studio-service/target/
