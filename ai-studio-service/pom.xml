@@ -89,11 +89,11 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- 七牛云 SDK -->
+        <!-- AWS SDK for Java 2.x (S3 兼容) -->
         <dependency>
-            <groupId>com.qiniu</groupId>
-            <artifactId>qiniu-java-sdk</artifactId>
-            <version>${qiniu.version}</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.25.11</version>
         </dependency>
 
         <!-- Knife4j (Swagger UI) -->

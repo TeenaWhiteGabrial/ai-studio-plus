@@ -18,32 +18,27 @@ public class Skill {
     private String category;
     private String source;
 
-    // GitLab 相关字段
-    private String gitlabRepo;
-    private String gitlabPath;
-    private String gitlabCommitSha;
+    // 版本管理
+    private Long latestVersionId;
+    private String latestVersion;
+    private Integer totalVersions;
 
-    // 元数据字段（从 YAML frontmatter 解析）
+    // 元数据字段
     private String author;
     private String tags;
 
-    // 同步状态
-    private Integer syncStatus;    // 0-待同步 1-成功 2-失败
-    private LocalDateTime lastSyncAt;
-    private String syncError;
-    private Integer isDeleted;     // 0-正常 1-已删除
+    // 归属信息
+    private Long createdBy;
+    private Long deptId;
 
     // 统计
     private Integer downloadCount;
-    private Long createdBy;
+
+    // 软删除
+    private Integer isDeleted;     // 0-正常 1-已删除
+    private LocalDateTime deletedAt;
+    private Long deletedBy;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    // 已废弃字段（保留但不使用）
-    @Deprecated
-    private String contentOssKey;
-    @Deprecated
-    private String contentUrl;
-    @Deprecated
-    private Integer status;
 }

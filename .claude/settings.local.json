@@ -46,7 +46,12 @@
       "Bash(claude config:*)",
       "WebFetch(domain:git.qualink.com)",
       "Bash(mysql -h 39.105.212.130 -P 3306 -u root -pDevRoot@2026 dev_db -e \"SHOW CREATE TABLE skill\\\\G\" 2>/dev/null | grep -i \"unique\\\\|key\")",
-      "Bash(mysql -h 39.105.212.130 -P 3306 -u root -pDevRoot@2026 dev_db -e \"SHOW INDEX FROM skill WHERE Non_unique=0;\" 2>/dev/null)"
+      "Bash(mysql -h 39.105.212.130 -P 3306 -u root -pDevRoot@2026 dev_db -e \"SHOW INDEX FROM skill WHERE Non_unique=0;\" 2>/dev/null)",
+      "Bash(find \"e:/Github Projects/skills/skills\" -name \"*.json\" -o -name \"index.*\" -o -name \"README*\" 2>/dev/null | head -30)",
+      "Bash(nvm list:*)",
+      "Bash(nvm use:*)",
+      "Bash(ls ai-studio-service/src/main/resources/db/*.sql | sort | tail -5)",
+      "Bash(ls -la E:/ai-studio/ai-studio-service/mvnw*)"
     ]
   }
 }

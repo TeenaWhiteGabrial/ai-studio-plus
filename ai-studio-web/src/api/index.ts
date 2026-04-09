@@ -1,15 +1,49 @@
 import request from '@/utils/request'
 
 export const skillApi = {
+  // 查询
   list: (params: any) => request.get('/skill/list', { params }),
   detail: (id: number) => request.get(`/skill/${id}`),
-  // 下载 Skill ZIP 包（包含 SKILL.md 和辅助文件）
-  download: (id: number) => request.get(`/skill/${id}/download`, { responseType: 'blob' }),
-  // 获取 Raw 内容（供 Claude Code 使用）- 返回纯文本，不经过响应拦截器处理
+  versions: (id: number) => request.get(`/skill/${id}/versions`),
+
+  // 管理
+  create: (data: any) => request.post('/skill', data),
+  update: (id: number, data: any) => request.put(`/skill/${id}`, data),
+  delete: (id: number) => request.delete(`/skill/${id}`),
+
+  // 版本管理
+  publishVersion: (id: number, data: any) => request.post(`/skill/${id}/versions`, data),
+  deleteVersion: (id: number, version: string) => request.delete(`/skill/${id}/versions/${version}`),
+
+  // 下载（返回 302 重定向）
+  download: (id: number, version?: string) => request.get(`/skill/${id}/download`, {
+    params: { version },
+    maxRedirects: 0
+  }),
+  getDownloadUrl: (id: number, version?: string) => {
+    const params = version ? `?version=${version}` : ''
+    return `/api/skill/${id}/download${params}`
+  },
+
+  // 上传文件到 OSS（后端代理上传）
+  upload: (file: File, skillName: string, version: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('skillName', skillName)
+    formData.append('version', version)
+    return request.post('/skill/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  // 以下方法已废弃（保留用于兼容性）
+  /** @deprecated */
   raw: (id: number) => request.get(`/skill/${id}/raw`, { responseType: 'text', transformResponse: [(data) => data] }),
-  // 手动触发同步（仅管理员）
+  /** @deprecated */
   sync: () => request.post('/skill/sync'),
-  // 查询同步历史
+  /** @deprecated */
   syncLog: (limit: number = 20) => request.get('/skill/sync-log', { params: { limit } }),
 }
 

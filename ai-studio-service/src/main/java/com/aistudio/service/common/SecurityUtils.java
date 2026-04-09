@@ -3,13 +3,16 @@ package com.aistudio.service.common;
 import com.aistudio.service.entity.SysUser;
 import com.aistudio.service.mapper.SysUserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +37,26 @@ public class SecurityUtils {
             return user != null ? user.getId() : null;
         }
         return null;
+    }
+
+    public Long getCurrentUserDeptId() {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return null;
+        }
+        SysUser user = userMapper.selectById(userId);
+        return user != null ? user.getDeptId() : null;
+    }
+
+    public List<String> getCurrentUserRoles() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return List.of();
+        }
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(role -> role.replace("ROLE_", ""))
+                .collect(Collectors.toList());
     }
 
     public boolean isAdmin() {
