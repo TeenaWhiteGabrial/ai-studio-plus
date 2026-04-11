@@ -1,13 +1,26 @@
 ---
-version: 1.1
+version: 1.2
 projectName: AI Coding 控制台
 generatedAt: 2026-04-11
 changeLog: |
+  - v1.2: 新增登录模块引用说明，引用 PRD-Common.md 统一登录规范
   - v1.1: 技术栈改为Vue3；API Key改为重置+申请；每日任务新增字段；
           新增项目管理模块；产出管理重写为只读统计；首页增加工时任务比
 ---
 
 # AI Coding 控制台 - 产品需求规格说明书
+
+## 0. 前置依赖说明
+
+### 0.1 登录模块
+
+本项目的**登录认证、权限控制、HTTP 请求管理**统一引用 [PRD-Common.md](./PRD-Common.md) 规范实现，不在本项目中重复定义。
+
+具体引用内容：
+- [C01 统一登录认证](../PRD-Common.md#3-模块-c01：统一登录认证)
+- [C02 HTTP 请求封装](../PRD-Common.md#4-模块-c02：http-请求封装)
+- [C03 路由权限控制](../PRD-Common.md#5-模块-c03：路由权限控制)
+- [C04 用户信息管理](../PRD-Common.md#6-模块-c04：用户信息管理)
 
 ## 1. 项目概述
 

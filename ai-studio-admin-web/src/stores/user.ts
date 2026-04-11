@@ -66,5 +66,9 @@ export const useUserStore = defineStore('user', () => {
     return hasRole('ADMIN') || hasRole('SUPER_ADMIN')
   }
 
-  return { userInfo, login, logout, hasRole, isAdmin, saveRememberedCredentials, getRememberedCredentials, clearRememberedCredentials }
+  function isSuperAdmin() {
+    return hasRole('SUPER_ADMIN')
+  }
+
+  return { userInfo, login, logout, hasRole, isAdmin, isSuperAdmin, saveRememberedCredentials, getRememberedCredentials, clearRememberedCredentials }
 })

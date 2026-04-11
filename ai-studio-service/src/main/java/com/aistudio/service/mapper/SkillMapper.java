@@ -16,10 +16,16 @@ public interface SkillMapper extends BaseMapper<Skill> {
     int incrementDownloadCount(Long id);
 
     /**
-     * 根据 GitLab 路径查询 Skill
+     * 检查名称是否存在
      */
-    @Select("SELECT * FROM skill WHERE gitlab_path = #{path} LIMIT 1")
-    Skill selectByGitlabPath(@Param("path") String path);
+    @Select("SELECT COUNT(*) > 0 FROM skill WHERE name = #{name} AND is_deleted = 0")
+    boolean existsByName(@Param("name") String name);
+
+    /**
+     * 根据名称查询（未删除的）
+     */
+    @Select("SELECT * FROM skill WHERE name = #{name} AND is_deleted = 0 LIMIT 1")
+    Skill selectByName(@Param("name") String name);
 
     /**
      * 查询所有未删除的 Skill
