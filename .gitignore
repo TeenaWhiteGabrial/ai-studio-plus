@@ -1,6 +1,90 @@
-# Ignore the development configuration file
+# ====================
+# Development & Config
+# ====================
 dev.config
+*.local
+.env.local
+.env.*.local
 
-ai-studio-web/node_modules/
-ai-studio-web/dist/*
+# ====================
+# Dependencies
+# ====================
+node_modules/
+.pnpm-store/
+
+# ====================
+# Build Outputs
+# ====================
+dist/
+.output/
+.nuxt/
+.nitro/
+.cache/
+
+# ====================
+# IDE
+# ====================
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ====================
+# Logs
+# ====================
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ====================
+# Test & Coverage
+# ====================
+coverage/
+*.lcov
+.nyc_output/
+
+# ====================
+# Spring Boot (Backend)
+# ====================
 ai-studio-service/target/
+ai-studio-service/*.log
+ai-studio-service/.mvn/wrapper/maven-wrapper.jar
+
+# ====================
+# Admin Web
+# ====================
+apps/ai-studio-admin-web/dist/
+apps/ai-studio-admin-web/.env.production
+
+# ====================
+# Console Web
+# ====================
+apps/ai-studio-console-web/dist/
+apps/ai-studio-console-web/.env.production
+
+# ====================
+# Portal Web
+# ====================
+apps/ai-studio-portal-web/.output/
+apps/ai-studio-portal-web/.env.production
+
+# ====================
+# Packages
+# ====================
+packages/@ai-studio/shared-auth/dist/
+
+# ====================
+# Temporary / Misc
+# ====================
+*.tmp
+*.temp
+*.bak
+*.swp
+.cache/

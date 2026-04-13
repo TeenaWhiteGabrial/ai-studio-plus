@@ -55,8 +55,27 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/auth/public-key", "/api/auth/gen-hash", "/doc.html",
-                        "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**", "/api/open/output/**").permitAll()
+                // 公开接口 - Spring Security 使用不含 context-path 的路径
+                .requestMatchers(
+                    // 基础公开接口
+                    "/auth/login", "/auth/public-key", "/auth/gen-hash",
+                    // Admin 端公开接口
+                    "/admin/auth/login", "/admin/auth/public-key", "/admin/auth/gen-hash",
+                    // Console 端公开接口
+                    "/console/auth/login", "/console/auth/public-key",
+                    // Open 开放接口
+                    "/open/**",
+                    // Swagger
+                    "/doc.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**"
+                ).permitAll()
+                // Admin 端接口（需特定角色）
+                .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "OP_ADMIN", "DEPT_ADMIN")
+                // Console 端接口
+                .requestMatchers("/console/**").hasRole("USER")
+                // Portal 认证操作（需登录但不限角色）
+                .requestMatchers("/portal/favorite/**", "/portal/like/**", "/portal/comment/**").authenticated()
+                // OSS 接口
+                .requestMatchers("/oss/**").authenticated()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

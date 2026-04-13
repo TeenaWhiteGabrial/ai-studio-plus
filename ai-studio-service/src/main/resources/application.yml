@@ -1,16 +1,24 @@
 server:
   port: 8080
   servlet:
-    context-path: /ai-hub
+    context-path: /ai-studio/v1
 
 spring:
   application:
     name: ai-studio-service
   datasource:
-    url: jdbc:mysql://100.70.4.15:3307/dev_iip_ai_studio?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    # url: jdbc:mysql://100.70.4.15:3307/dev_iip_ai_studio?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    # username: root
+    # password: YZptywc1024DBdev?
+    url: jdbc:mysql://39.105.212.130:3306/ai-studio-plus?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: YZptywc1024DBdev?
+    password: DevRoot@2026
     driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    table: flyway_schema_history
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
