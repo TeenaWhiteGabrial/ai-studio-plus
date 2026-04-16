@@ -37,6 +37,7 @@ public class UserImportResult {
         private String username;
         private String realName;
         private String department;
+        private String team;
         private String email;
     }
 }

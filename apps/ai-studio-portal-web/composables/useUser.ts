@@ -4,6 +4,7 @@ export const useUser = () => {
   const userInfo = useState<any>('userInfo', () => null)
 
   const isLoggedIn = () => {
+    if (!import.meta.client) return false
     return !!localStorage.getItem('token')
   }
 
@@ -18,18 +19,22 @@ export const useUser = () => {
     const data = await res.json()
     if (data.token) {
       userInfo.value = data
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('userInfo', JSON.stringify(data))
+      if (import.meta.client) {
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('userInfo', JSON.stringify(data))
+      }
     }
   }
 
   const logout = () => {
+    if (!import.meta.client) return
     userInfo.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('userInfo')
   }
 
   const initUserInfo = () => {
+    if (!import.meta.client) return
     const stored = localStorage.getItem('userInfo')
     if (stored) {
       userInfo.value = JSON.parse(stored)

@@ -1,8 +1,6 @@
 package com.aistudio.service.controller.admin;
 
 import com.aistudio.service.common.Result;
-import com.aistudio.service.common.SecurityUtils;
-import com.aistudio.service.common.exception.BusinessException;
 import com.aistudio.service.dto.request.BatchUserImportRequest;
 import com.aistudio.service.dto.request.UserCreateRequest;
 import com.aistudio.service.dto.request.UserUpdateRequest;
@@ -22,8 +20,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -45,20 +41,20 @@ public class AdminUserController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String deptId) {
+            @RequestParam(required = false, name = "dept_id") String deptId) {
         return Result.success(userService.listUsers(page, size, keyword, deptId));
     }
 
-    @Operation(summary = "创建用户")
+    @Operation(summary = "创建用户", description = "创建用户时可指定 roleIds 分配角色，若不指定则默认分配\"普通用户\"角色（roleId=4）")
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Long> create(@Valid @RequestBody UserCreateRequest request) {
         return Result.success(userService.createUser(request));
     }
 
     @Operation(summary = "更新用户")
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> update(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
         userService.updateUser(id, request);
         return Result.success();
@@ -66,7 +62,7 @@ public class AdminUserController {
 
     @Operation(summary = "删除用户")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         userService.deleteUser(id);
         return Result.success();
@@ -91,11 +87,6 @@ public class AdminUserController {
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = auth.getName();
-        SysUser target = userService.getById(id);
-        if (target == null) throw new BusinessException(404, "用户不存在");
-        if (target.getUsername().equals(currentUsername)) throw new BusinessException(403, "不能禁用当前登录用户");
         userService.updateUserStatus(id, status);
         return Result.success();
     }

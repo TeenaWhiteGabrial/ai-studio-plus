@@ -32,18 +32,26 @@ request.interceptors.response.use(
       return response
     }
     const data = response.data
-    if (data.code === 200) {
-      return data
+    // 业务错误码非 200 也走错误处理
+    if (data.code !== 200) {
+      ElMessage.error(data.message || '请求失败')
+      return Promise.reject(new Error(data.message || '请求失败'))
     }
-    ElMessage.error(data.message || '请求失败')
-    return Promise.reject(new Error(data.message))
+    return data
   },
   (error) => {
+    const isLoginRequest = error.config?.url?.includes('/auth/login')
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
-      router.push('/admin/login')
-      ElMessage.warning('登录已过期，请重新登录')
+      if (!isLoginRequest) {
+        // 非登录请求的 401 才跳转登录页
+        localStorage.removeItem('token')
+        localStorage.removeItem('userInfo')
+        router.push('/admin/login')
+        ElMessage.warning('登录已过期，请重新登录')
+      } else {
+        // 登录请求失败，显示后端返回的错误信息
+        ElMessage.error(error.response?.data?.message || '用户名或密码错误')
+      }
     } else if (error.response?.status === 403) {
       ElMessage.error('无权限访问')
     } else {

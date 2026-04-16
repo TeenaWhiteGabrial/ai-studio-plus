@@ -21,7 +21,7 @@ public class AdminDepartmentController {
 
     @Operation(summary = "部门列表")
     @GetMapping("/list")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<List<SysDepartment>> list() {
         return Result.success(departmentService.list());
     }

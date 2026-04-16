@@ -1,6 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: false },
+
+  imports: {
+    presets: [
+      {
+        from: 'element-plus',
+        imports: ['ElAlert','ElButton','ElCheckbox','ElDropdown','ElDropdownItem','ElDropdownMenu','ElForm','ElFormItem','ElInput','ElAvatar','ElMessage'],
+      },
+    ],
+  },
 
   ssr: true,
 
@@ -25,15 +34,22 @@ export default defineNuxtConfig({
     },
   },
 
-  css: [
-    'element-plus/dist/index.css',
-  ],
+  css: ['element-plus/dist/index.css'],
 
   build: {
     transpile: ['element-plus'],
   },
 
   vite: {
+    resolve: {
+      alias: {
+        dayjs: 'dayjs/dayjs.min.js',
+      },
+    },
+    optimizeDeps: {
+      include: ['element-plus'],
+      exclude: ['dayjs'],
+    },
     server: {
       proxy: {
         '/ai-studio/v1': {

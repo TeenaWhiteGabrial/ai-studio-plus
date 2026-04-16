@@ -45,6 +45,10 @@ export const useUserStore = defineStore('user', () => {
     if (!encryptedPassword) throw new Error('密码加密失败')
 
     const res = await request.post('/auth/login', { username, password: encryptedPassword }) as any
+    // 登录失败时，后端返回 code=401，这里直接抛出错误让调用方处理
+    if (res.code !== 200) {
+      throw new Error(res.message || '登录失败')
+    }
     const data = res.data
     userInfo.value = data
     localStorage.setItem('token', data.token)
@@ -63,7 +67,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function isAdmin() {
-    return hasRole('ADMIN') || hasRole('SUPER_ADMIN')
+    return hasRole('OP_ADMIN') || hasRole('SUPER_ADMIN') || hasRole('DEPT_ADMIN')
   }
 
   function isSuperAdmin() {

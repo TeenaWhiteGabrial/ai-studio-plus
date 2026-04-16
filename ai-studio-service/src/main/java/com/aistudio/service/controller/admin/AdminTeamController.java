@@ -1,8 +1,10 @@
 package com.aistudio.service.controller.admin;
 
 import com.aistudio.service.common.Result;
-import com.aistudio.service.common.SecurityUtils;
-import com.aistudio.service.service.DepartmentService;
+import com.aistudio.service.dto.request.TeamCreateRequest;
+import com.aistudio.service.dto.request.TeamUpdateRequest;
+import com.aistudio.service.entity.SysUser;
+import com.aistudio.service.service.TeamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,44 +19,50 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminTeamController {
 
-    private final DepartmentService departmentService;
-    private final SecurityUtils securityUtils;
+    private final TeamService teamService;
 
     @Operation(summary = "团队列表")
     @GetMapping("/list")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<List<Object>> list(@RequestParam(required = false) Long deptId) {
-        // TODO: 实现团队列表查询
-        return Result.success(List.of());
+        return Result.success(teamService.listTeams(deptId));
     }
 
     @Operation(summary = "创建团队")
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Long> create(@RequestBody Object team) {
-        // TODO: 实现团队创建
-        return Result.success(1L);
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
+    public Result<Long> create(@RequestBody TeamCreateRequest request) {
+        return Result.success(teamService.createTeam(request));
     }
 
     @Operation(summary = "更新团队")
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Void> update(@PathVariable Long id, @RequestBody Object team) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
+    public Result<Void> update(@PathVariable Long id, @RequestBody TeamUpdateRequest request) {
+        teamService.updateTeam(id, request);
+        return Result.success();
+    }
+
+    @Operation(summary = "删除团队")
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
+    public Result<Void> delete(@PathVariable Long id) {
+        teamService.deleteTeam(id);
         return Result.success();
     }
 
     @Operation(summary = "查看团队成员")
     @GetMapping("/{id}/members")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
-    public Result<List<Object>> members(@PathVariable Long id) {
-        // TODO: 实现团队成员查询
-        return Result.success(List.of());
+    public Result<List<SysUser>> members(@PathVariable Long id) {
+        return Result.success(teamService.getTeamMembers(id));
     }
 
     @Operation(summary = "添加成员到团队")
     @PostMapping("/{id}/members")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> addMember(@PathVariable Long id, @RequestBody List<Long> userIds) {
+        teamService.addTeamMembers(id, userIds);
         return Result.success();
     }
 
@@ -62,6 +70,7 @@ public class AdminTeamController {
     @DeleteMapping("/{id}/members/{userId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> removeMember(@PathVariable Long id, @PathVariable Long userId) {
+        teamService.removeTeamMember(id, userId);
         return Result.success();
     }
 }

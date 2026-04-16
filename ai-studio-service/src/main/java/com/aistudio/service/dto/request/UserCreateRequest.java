@@ -3,6 +3,8 @@ package com.aistudio.service.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class UserCreateRequest {
 
@@ -14,5 +16,9 @@ public class UserCreateRequest {
 
     private String realName;
     private Long deptId;
+    private Long teamId;  // 团队ID
     private String email;
+
+    /** 角色ID列表，若为空或null则默认分配"普通用户"角色 */
+    private List<Long> roleIds;
 }

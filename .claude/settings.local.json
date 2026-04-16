@@ -78,7 +78,29 @@
       "Bash(grep -o \"export.*['\\\\\"][A-Za-z]*['\\\\\"]\" \"E:/综合项目开发/ai-studio/node_modules/@element-plus/icons-vue/dist/es/index.js\" 2>/dev/null | head -30)",
       "Bash(git checkout:*)",
       "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && mvn compile -q 2>&1 | head -20)",
-      "Bash(cd E:/综合项目开发/ai-studio && npx openspec --help 2>&1 | head -30)"
+      "Bash(cd E:/综合项目开发/ai-studio && npx openspec --help 2>&1 | head -30)",
+      "Bash(cd E:/综合项目开发/ai-studio && npx openspec new change \"dept-admin-user-team-management\" 2>&1)",
+      "Bash(npx openspec:*)",
+      "Bash(which openspec:*)",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec new change \"assign-role-on-user-create\")",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec status --change \"assign-role-on-user-create\" --json)",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec instructions proposal --change \"assign-role-on-user-create\" --json)",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec instructions design --change \"assign-role-on-user-create\" --json)",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec instructions specs --change \"assign-role-on-user-create\" --json)",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec instructions tasks --change \"assign-role-on-user-create\" --json)",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec status --change \"assign-role-on-user-create\")",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec instructions apply --change \"assign-role-on-user-create\" --json)",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec new change \"role-selection-single\")",
+      "Bash(cd E:/综合项目开发/ai-studio && /c/Users/zhangkunlun01/AppData/Local/pnpm/openspec status --change \"role-selection-single\" --json)",
+      "Bash(cd \"E:\\\\综合项目开发\\\\ai-studio\" && mkdir -p openspec/changes/archive)",
+      "Bash(cd \"E:\\\\综合项目开发\\\\ai-studio\" && mv openspec/changes/dept-admin-user-team-management \"openspec/changes/archive/2026-04-15-dept-admin-user-team-management\")",
+      "Bash(cd \"E:\\\\综合项目开发\\\\ai-studio\" && cp -r openspec/changes/archive/2026-04-15-dept-admin-user-team-management/specs/admin-user-management openspec/specs/ && cp -r openspec/changes/archive/2026-04-15-dept-admin-user-team-management/specs/admin-team-management openspec/specs/)",
+      "WebFetch(domain:www.alibabacloud.com)",
+      "WebFetch(domain:platform.minimaxi.com)",
+      "Bash(curl -s --location 'https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains' \\\\\n--header 'Authorization: Bearer sk-cp-Y-4U5WDONes9U7YdDomDmumwckWSIVZcrYHR3Xj1Z17oOO5-MWALVDyzKq23ya2HiQvUI48yzL-BrfNwJunBWm0DD0AwdnvfQhbw4RioytArl1q5yT__rH8' \\\\\n--header 'Content-Type: application/json')",
+      "Bash(find \"E:/综合项目开发/ai-studio/ai-studio-service/src/main/java/com/aistudio/service\" -name \"Open*\" -o -name \"*Controller.java\" 2>/dev/null | grep -i \"open\\\\|portal\")",
+      "WebFetch(domain:www.csdn.net)",
+      "Bash(netstat -ano | grep -E \":\\(5175|3000\\)\" | head -5)"
     ]
   }
 }

@@ -65,6 +65,12 @@ public class SecurityConfig {
                     "/console/auth/login", "/console/auth/public-key",
                     // Open 开放接口
                     "/open/**",
+                    // Portal 资源公开浏览
+                    "/portal/resource/**",
+                    // 文章/问答公开读取
+                    "/api/article/list", "/api/article/{id}", "/api/article/{id}/like",
+                    "/api/question/list", "/api/question/{id}",
+                    "/api/tag/list",
                     // Swagger
                     "/doc.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**"
                 ).permitAll()
@@ -72,10 +78,20 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "OP_ADMIN", "DEPT_ADMIN")
                 // Console 端接口
                 .requestMatchers("/console/**").hasRole("USER")
-                // Portal 认证操作（需登录但不限角色）
-                .requestMatchers("/portal/favorite/**", "/portal/like/**", "/portal/comment/**").authenticated()
-                // OSS 接口
-                .requestMatchers("/oss/**").authenticated()
+                // Portal 社区认证操作（需登录但不限角色）
+                .requestMatchers(
+                    "/api/article", "/api/article/{id}",
+                    "/api/question", "/api/question/{id}",
+                    "/api/answer/**",
+                    "/api/comment/**",
+                    "/api/favorite/**",
+                    "/api/browse-history/**",
+                    "/api/notification/**",
+                    "/api/user/profile",
+                    "/oss/**"
+                ).authenticated()
+                // Admin 下架接口（仅超级管理员）
+                .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

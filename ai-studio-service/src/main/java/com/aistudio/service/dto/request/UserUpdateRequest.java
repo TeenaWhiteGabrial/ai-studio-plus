@@ -6,6 +6,7 @@ import lombok.Data;
 public class UserUpdateRequest {
     private String realName;
     private Long deptId;
+    private Long teamId;  // 团队ID
     private String email;
     private Integer status;
 }

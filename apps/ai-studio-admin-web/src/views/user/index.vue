@@ -17,8 +17,14 @@
 
       <el-table :data="list" v-loading="loading" border>
         <el-table-column prop="username" label="账号" width="120" />
-        <el-table-column prop="real_name" label="姓名" width="100" />
+        <el-table-column prop="real_name" label="姓名" min-width="100" />
         <el-table-column prop="dept_name" label="部门" width="150" />
+        <el-table-column label="团队" min-width="150">
+          <template #default="{ row }">
+            <span v-if="row.team_names">{{ row.team_names }}</span>
+            <span v-else class="text-gray">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="角色" width="150">
           <template #default="{ row }">
             <el-tag :type="getRoleTagType(row)" v-for="roleId in row.role_ids" :key="roleId" size="small" class="role-tag">
@@ -58,18 +64,29 @@
     <!-- 新建/编辑弹窗 -->
     <el-dialog v-model="dialogVisible" :title="editId ? '编辑用户' : '新建用户'" width="500px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="账号" prop="username"><el-input v-model="form.username" :disabled="!!editId" /></el-form-item>
+        <el-form-item label="账号" prop="username"><el-input v-model="form.username"  placeholder="请输入账号" :disabled="!!editId" /></el-form-item>
         <el-form-item v-if="!editId" label="密码" prop="password">
-          <el-input v-model="form.password" type="password" show-password />
+          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
           <div class="password-hint">密码至少8位，需包含大小写字母、数字和特殊字符</div>
         </el-form-item>
-        <el-form-item label="姓名"><el-input v-model="form.real_name" /></el-form-item>
+        <el-form-item label="姓名" ><el-input v-model="form.real_name"  placeholder="请输入姓名" /></el-form-item>
         <el-form-item label="部门">
-          <el-select v-model="form.dept_id" placeholder="请选择部门" clearable>
+          <el-select v-model="form.dept_id" placeholder="请选择部门" :disabled="!isSuperAdmin" clearable @change="handleDeptChange">
             <el-option v-for="dept in activeDepartments" :key="dept.id" :label="dept.dept_name" :value="dept.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="邮箱"><el-input v-model="form.email" /></el-form-item>
+        <el-form-item label="团队">
+          <el-select
+            v-model="form.team_id"
+            :placeholder="(!isSuperAdmin || form.dept_id) ? '请选择团队（可选）' : '请先选择部门'"
+            :disabled="isSuperAdmin && !form.dept_id"
+            clearable
+            style="width: 100%"
+          >
+            <el-option v-for="team in teams" :key="team.id" :label="team.team_name" :value="team.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="邮箱"><el-input v-model="form.email" placeholder="请输入邮箱" /></el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="form.status"><el-radio :value="1">正常</el-radio><el-radio :value="0">禁用</el-radio></el-radio-group>
         </el-form-item>
@@ -131,7 +148,8 @@
             <el-table-column prop="username" label="账号" width="100" />
             <el-table-column prop="password" label="密码" width="100" />
             <el-table-column prop="real_name" label="姓名" width="80" />
-            <el-table-column prop="department" label="部门" width="120" />
+            <el-table-column prop="dept_name" label="部门" width="120" />
+            <el-table-column prop="team_name" label="团队" width="120" />
             <el-table-column prop="email" label="邮箱" min-width="150" />
           </el-table>
         </div>
@@ -194,13 +212,14 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, UploadFilled } from '@element-plus/icons-vue'
-import { userApi, departmentApi } from '@/api'
+import { userApi, departmentApi, teamApi } from '@/api'
 import { useUserStore } from '@/stores/user'
 import type { FormInstance } from 'element-plus'
 import * as XLSX from 'xlsx'
 
 const userStore = useUserStore()
 const isAdmin = computed(() => userStore.isAdmin())
+const isSuperAdmin = computed(() => userStore.isSuperAdmin())
 
 // 过滤掉超级管理员角色的列表
 const filteredRoles = computed(() => {
@@ -214,7 +233,7 @@ const roleDialogVisible = ref(false), currentUserId = ref<number | null>(null)
 const allRoles = ref<any[]>([]), selectedRole = ref<number | undefined>(undefined)
 const formRef = ref<FormInstance>()
 const query = reactive({ page: 1, size: 10, keyword: '', dept_id: null as number | null })
-const form = reactive({ username: '', password: '', real_name: '', dept_id: null as number | null, email: '', status: 1 })
+const form = reactive({ username: '', password: '', real_name: '', dept_id: null as number | null, email: '', status: 1, team_id: null as number | null })
 const rules = {
   username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   password: [
@@ -225,11 +244,20 @@ const rules = {
 
 const departments = ref<any[]>([])
 const activeDepartments = ref<any[]>([])
+const teams = ref<any[]>([])
 
 async function loadDepartments() {
   try {
     const res = await departmentApi.list() as any
     departments.value = res.data || []
+    // 建立部门名称到 ID 的映射
+    const map: Record<string, number> = {}
+    departments.value.forEach((dept: any) => {
+      if (dept.dept_name) {
+        map[dept.dept_name] = dept.id
+      }
+    })
+    deptNameToIdMap.value = map
   } catch (error) {
     console.error('加载部门列表失败', error)
   }
@@ -244,6 +272,31 @@ async function loadActiveDepartments() {
   }
 }
 
+async function loadTeams(deptId?: number | null) {
+  try {
+    const res = await teamApi.list(deptId ? { deptId } : undefined) as any
+    teams.value = res.data || []
+    // 建立团队名称到 ID 的映射（用于批量导入校验，加载全量）
+    if (!deptId) {
+      const map: Record<string, number> = {}
+      teams.value.forEach((team: any) => {
+        if (team.team_name) map[team.team_name] = team.id
+      })
+      teamNameToIdMap.value = map
+    }
+  } catch (error) {
+    console.error('加载团队列表失败', error)
+  }
+}
+
+// 部门切换时清空团队并按部门重新加载
+function handleDeptChange(deptId: number | null) {
+  form.team_id = null
+  teams.value = []
+  if (deptId) {
+    loadTeams(deptId)
+  }
+}
 // 获取角色名称
 function getRoleName(roleId: number): string {
   const role = allRoles.value.find(r => r.id === roleId)
@@ -257,10 +310,14 @@ function getRoleTagType(row: any): 'primary' | 'success' | 'warning' | 'info' | 
   if (roleIds.includes(1)) {
     return 'danger'
   }
-  // 管理员（role_id为1）- 黄色
+  // 运营管理员（role_id为1）- 黄色
   if (roleIds.includes(2)) {
     return 'warning'
   }
+  if (roleIds.includes(3)) {
+    return 'success' // 部门管理员 - 绿色
+  }
+  
   return 'primary' // 普通用户 - 蓝色
 }
 function validatePasswordComplexity(_rule: any, value: string, callback: Function) {
@@ -284,6 +341,8 @@ const importErrors = ref<any[]>([])
 const importing = ref(false)
 const importResults = ref<any[]>([])
 const uploadFile = ref<any>(null)
+const deptNameToIdMap = ref<Record<string, number>>({})  // 部门名称 -> ID 映射
+const teamNameToIdMap = ref<Record<string, number>>({})  // 团队名称 -> ID 映射
 
 const canImport = computed(() => previewData.value.length > 0 && importErrors.value.length === 0)
 const allSuccess = computed(() => importResults.value.every(r => r.success))
@@ -295,11 +354,13 @@ function openImportDialog() {
   importErrors.value = []
   importResults.value = []
   uploadFile.value = null
+  loadTeams()  // 加载全量团队列表用于批量导入校验
   importDialogVisible.value = true
 }
 
 function downloadTemplate() {
-  window.open('/ai-studio-web/用户导入模板.xlsx', '_blank')
+  // 直接从 public 目录下载模板（public 目录文件通过根路径访问）
+  window.open('/用户导入模板.xlsx', '_blank')
 }
 
 async function loadList() {
@@ -307,8 +368,23 @@ async function loadList() {
   try { const res = await userApi.list(query) as any; list.value = res.data.records; total.value = res.data.total }
   finally { loading.value = false }
 }
-function openCreate() { editId.value = null; Object.assign(form, { username: '', password: '', real_name: '', dept_id: null, email: '', status: 1 }); loadActiveDepartments(); dialogVisible.value = true }
-function openEdit(row: any) { editId.value = row.id; Object.assign(form, row); loadActiveDepartments(); dialogVisible.value = true }
+function openCreate() {
+  editId.value = null
+  Object.assign(form, { username: '', password: '', real_name: '', dept_id: null, email: '', status: 1, team_id: null })
+  teams.value = []
+  loadActiveDepartments()
+  // DEPT_ADMIN 部门固定，直接加载可用团队
+  if (!isSuperAdmin.value) loadTeams()
+  dialogVisible.value = true
+}
+function openEdit(row: any) {
+  editId.value = row.id
+  Object.assign(form, { ...row, roleIds: row.role_ids || [], team_id: row.team_id || null })
+  teams.value = []
+  loadActiveDepartments()
+  if (row.dept_id) loadTeams(row.dept_id)
+  dialogVisible.value = true
+}
 async function handleSubmit() {
   await formRef.value?.validate(); submitting.value = true
   try { editId.value ? await userApi.update(editId.value, form) : await userApi.create(form); ElMessage.success('操作成功'); dialogVisible.value = false; loadList() }
@@ -393,6 +469,18 @@ function handleFileChange(file: any) {
         if (!row['账号']) rowErrors.push('缺少账号')
         if (!row['密码']) rowErrors.push('缺少密码')
 
+        // 部门校验（如果填写了部门名称，必须能匹配到部门 ID）
+        const deptName = row['部门'] ? String(row['部门']).trim() : ''
+        if (deptName && !deptNameToIdMap.value[deptName]) {
+          rowErrors.push(`部门"${deptName}"不存在`)
+        }
+
+        // 团队校验（如果填写了团队名称，必须能匹配到团队 ID）
+        const teamName = row['团队'] ? String(row['团队']).trim() : ''
+        if (teamName && !teamNameToIdMap.value[teamName]) {
+          rowErrors.push(`团队"${teamName}"不存在`)
+        }
+
         // 邮箱格式校验（如果有）
         if (row['邮箱'] && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row['邮箱'])) {
           rowErrors.push('邮箱格式不正确')
@@ -406,11 +494,14 @@ function handleFileChange(file: any) {
           })
         } else {
           validData.push({
-            username: String(row['账号']),
+            username: String(row['账号']).trim(),
             password: String(row['密码']),
-            real_name: row['姓名'] ? String(row['姓名']) : '',
-            department: row['部门'] ? String(row['部门']) : '',
-            email: row['邮箱'] ? String(row['邮箱']) : '',
+            real_name: row['姓名'] ? String(row['姓名']).trim() : '',
+            dept_name: deptName,  // 用于预览显示
+            dept_id: deptName ? deptNameToIdMap.value[deptName] : null,  // 实际传给后端
+            team_name: teamName,  // 用于预览显示
+            team_id: teamName ? teamNameToIdMap.value[teamName] : null,  // 实际传给后端
+            email: row['邮箱'] ? String(row['邮箱']).trim() : '',
             status: 1
           })
         }
@@ -543,5 +634,9 @@ async function handleImport() {
 .role-tag {
   margin-right: 4px;
   margin-bottom: 2px;
+}
+
+.text-gray {
+  color: #909399;
 }
 </style>

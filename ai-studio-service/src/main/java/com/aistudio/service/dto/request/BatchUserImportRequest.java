@@ -20,6 +20,8 @@ public class BatchUserImportRequest {
 
     private String department;  // 部门名称（Excel导入用）
 
+    private String team;  // 团队名称（Excel导入用）
+
     @Email(message = "邮箱格式不正确")
     private String email;
 }

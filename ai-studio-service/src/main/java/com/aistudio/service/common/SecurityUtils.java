@@ -72,4 +72,26 @@ public class SecurityUtils {
         return auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
     }
+
+    public boolean isDeptAdmin() {
+        return getCurrentUserRoles().contains("DEPT_ADMIN");
+    }
+
+    public boolean isOpAdmin() {
+        return getCurrentUserRoles().contains("OP_ADMIN");
+    }
+
+    /**
+     * 判断当前用户是否有权操作指定部门的数据
+     * SUPER_ADMIN 和 OP_ADMIN 可以操作任何部门
+     * DEPT_ADMIN 只能操作自己所属部门的数据
+     */
+    public boolean canManageDept(Long targetDeptId) {
+        if (isSuperAdmin() || isOpAdmin()) return true;
+        if (isDeptAdmin()) {
+            Long myDeptId = getCurrentUserDeptId();
+            return myDeptId != null && myDeptId.equals(targetDeptId);
+        }
+        return false;
+    }
 }

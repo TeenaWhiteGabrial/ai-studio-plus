@@ -4,13 +4,14 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev --port 5175",
+    "dev": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs dev --port 5175",
     "build": "nuxt build",
     "preview": "nuxt preview"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
     "axios": "^1.7.0",
+    "dayjs": "^1.11.11",
     "element-plus": "^2.7.0",
     "nuxt": "^3.11.0",
     "vue": "^3.4.0",

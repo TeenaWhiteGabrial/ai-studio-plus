@@ -29,4 +29,9 @@ public class SysUser {
 
     @TableField(exist = false)
     private String deptName;  // 部门名称（关联查询）
+
+    private Long teamId;  // 团队ID
+
+    @TableField(exist = false)
+    private String teamName;  // 团队名称（关联查询）
 }

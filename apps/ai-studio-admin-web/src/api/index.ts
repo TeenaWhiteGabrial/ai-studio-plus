@@ -136,3 +136,20 @@ export const userApi = {
   // 更新用户状态
   updateStatus: (id: number, status: number) => request.put(`/user/${id}/status`, null, { params: { status } }),
 }
+
+export const teamApi = {
+  // 团队列表
+  list: (params?: { deptId?: number }) => request.get('/team/list', { params }),
+  // 创建团队
+  create: (data: { team_name: string; dept_id?: number; description?: string }) => request.post('/team', data),
+  // 更新团队
+  update: (id: number, data: { team_name?: string; description?: string; status?: number }) => request.put(`/team/${id}`, data),
+  // 删除团队
+  delete: (id: number) => request.delete(`/team/${id}`),
+  // 获取团队成员
+  members: (teamId: number) => request.get(`/team/${teamId}/members`),
+  // 添加团队成员
+  addMembers: (teamId: number, userIds: number[]) => request.post(`/team/${teamId}/members`, userIds),
+  // 移除团队成员
+  removeMember: (teamId: number, userId: number) => request.delete(`/team/${teamId}/members/${userId}`),
+}

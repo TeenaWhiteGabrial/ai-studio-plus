@@ -118,6 +118,7 @@
           </div>
           <h2 class="login-title">登录到 AI Studio</h2>
           <p class="login-subtitle">使用您的账户凭证访问平台</p>
+          <el-alert v-if="loginError" :title="loginError" type="error" show-icon :closable="false" class="login-error-alert" />
         </div>
 
         <el-form ref="formRef" :model="form" :rules="rules" size="large" class="login-form">
@@ -183,6 +184,7 @@ const menuStore = useMenuStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 const rememberMe = ref(false)
+const loginError = ref('')
 const form = ref({ username: '', password: '' })
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -260,6 +262,7 @@ onMounted(() => {
 })
 
 async function handleLogin() {
+  loginError.value = '' // 先清除之前的错误
   await formRef.value?.validate()
   loading.value = true
   try {
@@ -270,6 +273,9 @@ async function handleLogin() {
     }
     await menuStore.fetchMenus()
     router.push('/dashboard')
+  } catch (error: any) {
+    // 显示错误提示
+    loginError.value = error.message || '登录失败'
   } finally {
     loading.value = false
   }
@@ -1125,6 +1131,10 @@ async function handleLogin() {
   font-size: 15px;
   color: #909399;
   line-height: 1.6;
+}
+
+.login-error-alert {
+  margin-top: 16px;
 }
 
 /* 登录表单 */
