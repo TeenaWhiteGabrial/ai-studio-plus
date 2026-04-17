@@ -30,6 +30,8 @@ export interface ResourceListResponse {
  * 资源相关 API
  */
 export function useResource() {
+  const config = useRuntimeConfig()
+
   /**
    * 获取资源列表
    */
@@ -37,7 +39,7 @@ export function useResource() {
     const res = await $fetch<ResourceListResponse>(`/portal/resource/${query.type}/list`, {
       method: 'GET',
       params: query,
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
     return res
   }
@@ -48,7 +50,7 @@ export function useResource() {
   async function getResourceDetail(type: ResourceType, id: string): Promise<Resource> {
     const res = await $fetch<Resource>(`/portal/resource/${type}/${id}`, {
       method: 'GET',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
     return res
   }
@@ -60,14 +62,50 @@ export function useResource() {
     const res = await $fetch<{ records: Resource[] }>(`/portal/resource/${type}/list`, {
       method: 'GET',
       params: { sort: 'hot', size },
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
     return res?.records || []
+  }
+
+  /**
+   * 下载 Skill ZIP
+   */
+  function downloadSkill(id: number | string) {
+    window.open(`${config.public.apiBase}/portal/open/resource/skill/${id}/download`, '_blank')
+  }
+
+  /**
+   * 下载 Plugin
+   */
+  function downloadPlugin(id: number | string) {
+    window.open(`${config.public.apiBase}/portal/open/resource/plugin/${id}/download`, '_blank')
+  }
+
+  /**
+   * 获取教程视频播放地址
+   */
+  async function getTutorialVideoUrl(id: number | string): Promise<string> {
+    const res = await $fetch<{ data: string }>(`/portal/open/resource/tutorial/${id}/video`, {
+      method: 'GET',
+      baseURL: config.public.apiBase
+    })
+    return res?.data || ''
+  }
+
+  /**
+   * 下载教程 ZIP 附件
+   */
+  function downloadTutorialZip(id: number | string) {
+    window.open(`${config.public.apiBase}/portal/open/resource/tutorial/${id}/zip`, '_blank')
   }
 
   return {
     getResourceList,
     getResourceDetail,
-    getHotResources
+    getHotResources,
+    downloadSkill,
+    downloadPlugin,
+    getTutorialVideoUrl,
+    downloadTutorialZip
   }
 }

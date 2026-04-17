@@ -25,7 +25,7 @@ public class AdminRoleController {
 
     @Operation(summary = "角色列表")
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DEPT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN','DEPT_ADMIN')")
     public Result<List<SysRole>> list() {
         return Result.success(roleMapper.selectList(null));
     }
@@ -41,7 +41,7 @@ public class AdminRoleController {
     }
 
     @Operation(summary = "更新角色菜单")
-    @PutMapping("/{id}/menus")
+    @PostMapping("/{id}/menus")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> updateRoleMenus(@PathVariable Long id, @RequestBody List<Long> menuIds) {
         SysRole role = roleMapper.selectById(id);

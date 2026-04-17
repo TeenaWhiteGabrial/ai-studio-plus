@@ -103,7 +103,12 @@
       "Bash(netstat -ano | grep -E \":\\(5175|3000\\)\" | head -5)",
       "Bash(cd \"E:/综合项目开发/ai-studio\" && pnpm run dev:portal 2>&1 | head -30)",
       "Bash(cd \"E:/综合项目开发/ai-studio/apps/ai-studio-portal-web\" && timeout 10 pnpm run dev 2>&1 || true)",
-      "Bash(cd \"E:/综合项目开发/ai-studio/apps/ai-studio-portal-web\" && pnpm run dev 2>&1)"
+      "Bash(cd \"E:/综合项目开发/ai-studio/apps/ai-studio-portal-web\" && pnpm run dev 2>&1)",
+      "Bash(grep -n \"@RequestMapping\" \"E:/综合项目开发/ai-studio/ai-studio-service/src/main/java/com/aistudio/service/controller/portal/\"*.java)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service/src/main/java/com/aistudio/service/controller\" && rm -f UserController.java RoleController.java DepartmentController.java MenuController.java DashboardController.java ProjectStatsController.java DepartmentStatsController.java ExportController.java SkillController.java PluginController.java TutorialController.java McpServerController.java MemberOutputController.java)",
+      "Bash(claude update:*)",
+      "Bash(set CLAUDE_CODE_GIT_BASH_PATH=D:\\\\Git\\\\bin\\\\bash.exe && claude update)",
+      "Bash(\"D:\\\\Git\\\\bin\\\\bash.exe\" -c \"claude update\")"
     ]
   }
 }

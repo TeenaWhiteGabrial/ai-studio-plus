@@ -2,6 +2,7 @@ package com.aistudio.service.controller.admin;
 
 import com.aistudio.service.common.Result;
 import com.aistudio.service.common.SecurityUtils;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.PluginRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.Plugin;
@@ -14,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Admin - Plugin 管理
+ * Admin - Plugin 审核管理
  */
 @Tag(name = "Admin - Plugin管理")
 @RestController
@@ -32,9 +33,9 @@ public class AdminPluginController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) Integer status) {
-        return Result.success(pluginService.listPlugins(page, size, keyword, type, status));
+        return Result.success(pluginService.listPlugins(page, size, keyword, category, status));
     }
 
     @Operation(summary = "Plugin 详情")
@@ -46,26 +47,11 @@ public class AdminPluginController {
         return Result.success(plugin);
     }
 
-    @Operation(summary = "创建 Plugin")
-    @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Long> create(@Valid @RequestBody PluginRequest request) {
-        return Result.success(pluginService.createPlugin(request, securityUtils.getCurrentUserId()));
-    }
-
-    @Operation(summary = "更新 Plugin")
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Void> update(@PathVariable Long id, @RequestBody PluginRequest request) {
-        pluginService.updatePlugin(id, request, securityUtils.getCurrentUserId());
-        return Result.success();
-    }
-
-    @Operation(summary = "删除 Plugin")
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Void> delete(@PathVariable Long id) {
-        pluginService.deletePlugin(id, securityUtils.getCurrentUserId());
+    @Operation(summary = "审核 Plugin")
+    @PostMapping("/{id}/audit")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN')")
+    public Result<Void> audit(@PathVariable Long id, @Valid @RequestBody AuditRequest request) {
+        pluginService.auditPlugin(id, request, securityUtils.getCurrentUserId());
         return Result.success();
     }
 

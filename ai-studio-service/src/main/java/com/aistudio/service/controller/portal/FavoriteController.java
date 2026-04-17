@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/favorite")
+@RequestMapping("/portal/favorite")
 @RequiredArgsConstructor
 public class FavoriteController {
 
@@ -25,7 +25,7 @@ public class FavoriteController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping
+    @PostMapping("/remove")
     public ResponseEntity<Void> removeFavorite(@RequestBody FavoriteDeleteRequest request) {
         Long userId = securityUtils.getCurrentUserId();
         favoriteService.removeFavorite(userId, request.getTargetType(), request.getTargetId());

@@ -1,6 +1,7 @@
 package com.aistudio.service.service.impl;
 
 import com.aistudio.service.common.exception.BusinessException;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.TutorialRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.Tutorial;
@@ -12,6 +13,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +39,8 @@ public class TutorialServiceImpl implements TutorialService {
     public Long createTutorial(TutorialRequest request, Long userId) {
         Tutorial tutorial = new Tutorial();
         copyFromRequest(tutorial, request);
-        tutorial.setCreatedBy(userId);
+        tutorial.setCreatorId(userId);
+        tutorial.setStatus(0);  // 待审核
         tutorial.setViewCount(0);
         tutorialMapper.insert(tutorial);
         return tutorial.getId();
@@ -52,8 +56,31 @@ public class TutorialServiceImpl implements TutorialService {
     @Override
     public void deleteTutorial(Long id, Long userId) {
         Tutorial tutorial = getTutorialById(id);
-        ossService.deleteFile(tutorial.getContentOssKey());
+        // 删除关联的 OSS 文件
+        if (tutorial.getVideoUrl() != null) {
+            try {
+                ossService.deleteFile(tutorial.getVideoUrl());
+            } catch (Exception e) {
+                // 忽略
+            }
+        }
+        if (tutorial.getZipFileUrl() != null) {
+            try {
+                ossService.deleteFile(tutorial.getZipFileUrl());
+            } catch (Exception e) {
+                // 忽略
+            }
+        }
         tutorialMapper.deleteById(id);
+    }
+
+    @Override
+    public void auditTutorial(Long id, AuditRequest request, Long userId) {
+        Tutorial tutorial = getTutorialById(id);
+        tutorial.setStatus(request.getStatus());
+        tutorial.setReviewTime(LocalDateTime.now());
+        tutorial.setReviewComment(request.getReviewComment());
+        tutorialMapper.updateById(tutorial);
     }
 
     @Override
@@ -66,10 +93,13 @@ public class TutorialServiceImpl implements TutorialService {
 
     private void copyFromRequest(Tutorial tutorial, TutorialRequest request) {
         tutorial.setTitle(request.getTitle());
+        tutorial.setDescription(request.getDescription());
         tutorial.setCategory(request.getCategory());
-        tutorial.setTags(request.getTags());
-        tutorial.setContentOssKey(request.getContentOssKey());
-        tutorial.setContentUrl(request.getContentUrl());
-        if (request.getStatus() != null) tutorial.setStatus(request.getStatus());
+        tutorial.setCoverImage(request.getCoverImage());
+        tutorial.setContentType(request.getContentType());
+        tutorial.setContent(request.getContent());
+        tutorial.setVideoUrl(request.getVideoUrl());
+        tutorial.setZipFileUrl(request.getZipFileUrl());
+        tutorial.setZipFileName(request.getZipFileName());
     }
 }

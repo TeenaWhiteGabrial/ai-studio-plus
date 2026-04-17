@@ -65,12 +65,8 @@ public class SecurityConfig {
                     "/console/auth/login", "/console/auth/public-key",
                     // Open 开放接口
                     "/open/**",
-                    // Portal 资源公开浏览
-                    "/portal/resource/**",
-                    // 文章/问答公开读取
-                    "/api/article/list", "/api/article/{id}", "/api/article/{id}/like",
-                    "/api/question/list", "/api/question/{id}",
-                    "/api/tag/list",
+                    // Portal 公开接口（无需认证）
+                    "/portal/open/**",
                     // Swagger
                     "/doc.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**"
                 ).permitAll()
@@ -80,14 +76,17 @@ public class SecurityConfig {
                 .requestMatchers("/console/**").hasRole("USER")
                 // Portal 社区认证操作（需登录但不限角色）
                 .requestMatchers(
-                    "/api/article", "/api/article/{id}",
-                    "/api/question", "/api/question/{id}",
-                    "/api/answer/**",
-                    "/api/comment/**",
-                    "/api/favorite/**",
-                    "/api/browse-history/**",
-                    "/api/notification/**",
-                    "/api/user/profile",
+                    "/portal/article", "/portal/article/{id}",
+                    "/portal/question", "/portal/question/{id}",
+                    "/portal/question/{questionId}/answer",
+                    "/portal/question/{questionId}/answers",
+                    "/portal/answer/**",
+                    "/portal/comment/**",
+                    "/portal/favorite/**",
+                    "/portal/browse-history/**",
+                    "/portal/notification/**",
+                    "/portal/tag",
+                    "/portal/user/profile",
                     "/oss/**"
                 ).authenticated()
                 // Admin 下架接口（仅超级管理员）

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/notification")
+@RequestMapping("/portal/notification")
 @RequiredArgsConstructor
 public class NotificationController {
 
@@ -24,7 +24,7 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.listNotifications(userId));
     }
 
-    @PutMapping("/{id}/read")
+    @PostMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
         Long userId = securityUtils.getCurrentUserId();
         notificationService.markAsRead(id, userId);

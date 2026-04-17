@@ -170,6 +170,9 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "LEFT JOIN sys_user u ON mo.user_id = u.id " +
             "LEFT JOIN sys_department d ON u.dept_id = d.id " +
             "WHERE mo.stat_date = #{date} " +
+            "<if test='userIds != null and userIds.size() > 0'>" +
+            "AND mo.user_id IN <foreach collection='userIds' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
+            "</if>" +
             "<if test='deptIds != null and deptIds.size() > 0'>" +
             "AND d.id IN <foreach collection='deptIds' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
             "</if>" +
@@ -178,6 +181,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "</if>" +
             "</script>")
     List<Map<String, Object>> selectAllByDateWithFilters(@Param("date") LocalDate date,
+                                                         @Param("userIds") List<Long> userIds,
                                                          @Param("deptIds") List<Long> deptIds,
                                                          @Param("projectNames") List<String> projectNames);
 
@@ -194,6 +198,9 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "LEFT JOIN sys_user u ON mo.user_id = u.id " +
             "LEFT JOIN sys_department d ON u.dept_id = d.id " +
             "WHERE mo.stat_date BETWEEN #{startDate} AND #{endDate} " +
+            "<if test='userIds != null and userIds.size() > 0'>" +
+            "AND mo.user_id IN <foreach collection='userIds' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
+            "</if>" +
             "<if test='deptIds != null and deptIds.size() > 0'>" +
             "AND d.id IN <foreach collection='deptIds' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
             "</if>" +
@@ -203,8 +210,39 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "</script>")
     Map<String, Object> selectStatsAllWithFilters(@Param("startDate") LocalDate startDate,
                                                   @Param("endDate") LocalDate endDate,
+                                                  @Param("userIds") List<Long> userIds,
                                                   @Param("deptIds") List<Long> deptIds,
                                                   @Param("projectNames") List<String> projectNames);
+
+    // ==================== 按人员查询产出 ====================
+
+    @Select("<script>" +
+            "SELECT u.id as userId, u.username, u.real_name as realName, d.dept_name as department, " +
+            "SUM(mo.prd_doc_count) as prdDocCount, SUM(mo.data_model_doc_count) as dataModelDocCount, " +
+            "SUM(mo.api_doc_count) as apiDocCount, SUM(mo.java_file_count) as javaFileCount, " +
+            "SUM(mo.java_code_lines) as javaCodeLines, SUM(mo.api_count) as apiCount, " +
+            "SUM(mo.core_biz_service_count) as coreBizServiceCount, SUM(mo.entity_count) as entityCount, " +
+            "SUM(mo.frontend_component_count) as frontendComponentCount, SUM(mo.frontend_page_count) as frontendPageCount, " +
+            "SUM(mo.frontend_common_component_count) as frontendCommonComponentCount, SUM(mo.ts_code_lines) as tsCodeLines, " +
+            "SUM(mo.frontend_code_lines) as frontendCodeLines, SUM(mo.sql_script_count) as sqlScriptCount, " +
+            "SUM(mo.test_file_count) as testFileCount, SUM(mo.total_code_lines) as totalCodeLines " +
+            "FROM sys_user u " +
+            "LEFT JOIN member_output mo ON u.id = mo.user_id AND mo.stat_date BETWEEN #{startDate} AND #{endDate} " +
+            "LEFT JOIN sys_department d ON u.dept_id = d.id " +
+            "WHERE u.status = 1 " +
+            "<if test='userIds != null and userIds.size() > 0'>" +
+            "AND u.id IN <foreach collection='userIds' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
+            "</if>" +
+            "<if test='projectNames != null and projectNames.size() > 0'>" +
+            "AND mo.project_root_name IN <foreach collection='projectNames' item='name' open='(' separator=',' close=')'>#{name}</foreach>" +
+            "</if>" +
+            "GROUP BY u.id, u.username, u.real_name, d.dept_name " +
+            "ORDER BY SUM(mo.total_code_lines) DESC" +
+            "</script>")
+    List<Map<String, Object>> selectOutputByUsers(@Param("userIds") List<Long> userIds,
+                                                   @Param("startDate") LocalDate startDate,
+                                                   @Param("endDate") LocalDate endDate,
+                                                   @Param("projectNames") List<String> projectNames);
 
     // ==================== 分页导出查询 ====================
 

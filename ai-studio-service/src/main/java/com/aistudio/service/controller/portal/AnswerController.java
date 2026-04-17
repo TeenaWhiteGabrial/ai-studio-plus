@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/portal")
 @RequiredArgsConstructor
 public class AnswerController {
 
@@ -31,21 +31,21 @@ public class AnswerController {
         return ResponseEntity.ok(answerService.createAnswer(questionId, request, userId));
     }
 
-    @PutMapping("/answer/{id}")
+    @PostMapping("/answer/{id}")
     public ResponseEntity<Void> updateAnswer(@PathVariable Long id, @RequestBody AnswerUpdateRequest request) {
         Long userId = securityUtils.getCurrentUserId();
         answerService.updateAnswer(id, request.getContent(), userId);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/answer/{id}")
+    @PostMapping("/answer/{id}/delete")
     public ResponseEntity<Void> deleteAnswer(@PathVariable Long id) {
         Long userId = securityUtils.getCurrentUserId();
         answerService.deleteAnswer(id, userId);
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/answer/{id}/accept")
+    @PostMapping("/answer/{id}/accept")
     public ResponseEntity<Void> acceptAnswer(@PathVariable Long id, @RequestParam Long questionId) {
         Long userId = securityUtils.getCurrentUserId();
         answerService.acceptAnswer(id, questionId, userId);

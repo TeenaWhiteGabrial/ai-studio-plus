@@ -22,10 +22,15 @@ public class SkillDetailVO {
     private Integer totalVersions;
 
     // 归属信息
-    private Long createdBy;
+    private Long creatorId;
     private String creatorName;
     private Long deptId;
     private String deptName;
+
+    // 审核信息
+    private Integer status;
+    private LocalDateTime reviewTime;
+    private String reviewComment;
 
     // 统计
     private Integer downloadCount;

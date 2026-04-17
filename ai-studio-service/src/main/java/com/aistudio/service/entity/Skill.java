@@ -28,8 +28,13 @@ public class Skill {
     private String tags;
 
     // 归属信息
-    private Long createdBy;
+    private Long creatorId;
     private Long deptId;
+
+    // 审核信息
+    private Integer status;            // 0-待审核 1-通过 2-拒绝
+    private LocalDateTime reviewTime;
+    private String reviewComment;
 
     // 统计
     private Integer downloadCount;

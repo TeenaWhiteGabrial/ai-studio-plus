@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/question")
+@RequestMapping("/portal/question")
 @RequiredArgsConstructor
 public class QuestionController {
 
@@ -40,14 +40,14 @@ public class QuestionController {
         return ResponseEntity.ok(questionService.createQuestion(request, userId));
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/{id}")
     public ResponseEntity<Void> updateQuestion(@PathVariable Long id, @RequestBody QuestionUpdateRequest request) {
         Long userId = securityUtils.getCurrentUserId();
         questionService.updateQuestion(id, request, userId);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{id}")
+    @PostMapping("/{id}/delete")
     public ResponseEntity<Void> deleteQuestion(@PathVariable Long id) {
         Long userId = securityUtils.getCurrentUserId();
         questionService.deleteQuestion(id, userId);

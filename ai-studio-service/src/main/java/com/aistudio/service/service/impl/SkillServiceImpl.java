@@ -1,6 +1,7 @@
 package com.aistudio.service.service.impl;
 
 import com.aistudio.service.common.exception.BusinessException;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.SkillCreateRequest;
 import com.aistudio.service.dto.request.SkillQuery;
 import com.aistudio.service.dto.request.SkillUpdateRequest;
@@ -57,8 +58,9 @@ public class SkillServiceImpl implements SkillService {
         skill.setName(request.getName());
         skill.setDescription(request.getDescription());
         skill.setCategory(request.getCategory());
-        skill.setCreatedBy(userId);
+        skill.setCreatorId(userId);
         skill.setDeptId(deptId);
+        skill.setStatus(0);  // 待审核
         skill.setIsDeleted(0);
         skill.setDownloadCount(0);
         skill.setTotalVersions(0);
@@ -174,6 +176,25 @@ public class SkillServiceImpl implements SkillService {
         log.info("删除版本成功: skillId={}, version={}, userId={}", skillId, version, userId);
     }
 
+    @Override
+    @Transactional
+    public void auditSkill(Long skillId, AuditRequest request, Long userId, List<String> roles) {
+        // 只有 SUPER_ADMIN 和 OP_ADMIN 有审核权限
+        if (!isAdmin(roles) && !isSuperAdmin(roles)) {
+            throw new BusinessException("无权审核技能");
+        }
+
+        Skill skill = skillMapper.selectById(skillId);
+        checkSkillExists(skill);
+
+        skill.setStatus(request.getStatus());
+        skill.setReviewTime(LocalDateTime.now());
+        skill.setReviewComment(request.getReviewComment());
+        skillMapper.updateById(skill);
+
+        log.info("审核技能成功: skillId={}, status={}, userId={}", skillId, request.getStatus(), userId);
+    }
+
     // ========== 查询 ==========
 
     @Override
@@ -272,7 +293,7 @@ public class SkillServiceImpl implements SkillService {
         if (isAdmin(roles) || isSuperAdmin(roles)) {
             return true;
         }
-        return skill.getCreatedBy().equals(userId);
+        return skill.getCreatorId().equals(userId);
     }
 
     @Override
@@ -368,14 +389,17 @@ public class SkillServiceImpl implements SkillService {
         vo.setLatestVersionId(skill.getLatestVersionId());
         vo.setLatestVersion(skill.getLatestVersion());
         vo.setTotalVersions(skill.getTotalVersions());
-        vo.setCreatedBy(skill.getCreatedBy());
+        vo.setCreatorId(skill.getCreatorId());
         vo.setDeptId(skill.getDeptId());
         vo.setDownloadCount(skill.getDownloadCount());
+        vo.setStatus(skill.getStatus());
+        vo.setReviewTime(skill.getReviewTime());
+        vo.setReviewComment(skill.getReviewComment());
         vo.setCreatedAt(skill.getCreatedAt());
         vo.setUpdatedAt(skill.getUpdatedAt());
 
         // 查询用户和部门名称
-        SysUser user = userMapper.selectById(skill.getCreatedBy());
+        SysUser user = userMapper.selectById(skill.getCreatorId());
         if (user != null) {
             vo.setCreatorName(user.getRealName());
         }
@@ -467,7 +491,7 @@ public class SkillServiceImpl implements SkillService {
     }
 
     private boolean isAdmin(List<String> roles) {
-        return roles != null && (roles.contains("ADMIN") || roles.contains("SUPER_ADMIN"));
+        return roles != null && (roles.contains("OP_ADMIN") || roles.contains("SUPER_ADMIN"));
     }
 
     // ========== 兼容旧接口（已废弃） ==========

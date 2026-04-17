@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/comment")
+@RequestMapping("/portal/comment")
 @RequiredArgsConstructor
 public class CommentController {
 
@@ -32,7 +32,7 @@ public class CommentController {
                 userId, request.getTargetType(), request.getTargetId(), request.getParentId(), request.getContent()));
     }
 
-    @DeleteMapping("/{id}")
+    @PostMapping("/{id}/delete")
     public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
         Long userId = securityUtils.getCurrentUserId();
         commentService.deleteComment(id, userId);

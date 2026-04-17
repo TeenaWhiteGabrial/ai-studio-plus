@@ -1,6 +1,7 @@
 package com.aistudio.service.service.impl;
 
 import com.aistudio.service.common.exception.BusinessException;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.PluginRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.Plugin;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class PluginServiceImpl implements PluginService {
@@ -23,10 +26,10 @@ public class PluginServiceImpl implements PluginService {
     private final OssService ossService;
 
     @Override
-    public PageResult<Plugin> listPlugins(int page, int size, String keyword, String type, Integer status) {
+    public PageResult<Plugin> listPlugins(int page, int size, String keyword, String category, Integer status) {
         LambdaQueryWrapper<Plugin> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(keyword)) wrapper.like(Plugin::getName, keyword);
-        if (StringUtils.hasText(type)) wrapper.eq(Plugin::getType, type);
+        if (StringUtils.hasText(category)) wrapper.eq(Plugin::getCategory, category);
         if (status != null) wrapper.eq(Plugin::getStatus, status);
         wrapper.orderByDesc(Plugin::getCreatedAt);
         Page<Plugin> p = pluginMapper.selectPage(new Page<>(page, size), wrapper);
@@ -40,7 +43,8 @@ public class PluginServiceImpl implements PluginService {
         }
         Plugin plugin = new Plugin();
         copyFromRequest(plugin, request);
-        plugin.setCreatedBy(userId);
+        plugin.setCreatorId(userId);
+        plugin.setStatus(0);  // 待审核
         plugin.setDownloadCount(0);
         pluginMapper.insert(plugin);
         return plugin.getId();
@@ -56,8 +60,23 @@ public class PluginServiceImpl implements PluginService {
     @Override
     public void deletePlugin(Long id, Long userId) {
         Plugin plugin = getPluginById(id);
-        ossService.deleteFile(plugin.getFileOssKey());
+        if (plugin.getFileOssKey() != null) {
+            try {
+                ossService.deleteFile(plugin.getFileOssKey());
+            } catch (Exception e) {
+                // 忽略 OSS 删除失败
+            }
+        }
         pluginMapper.deleteById(id);
+    }
+
+    @Override
+    public void auditPlugin(Long id, AuditRequest request, Long userId) {
+        Plugin plugin = getPluginById(id);
+        plugin.setStatus(request.getStatus());
+        plugin.setReviewTime(LocalDateTime.now());
+        plugin.setReviewComment(request.getReviewComment());
+        pluginMapper.updateById(plugin);
     }
 
     @Override
@@ -77,11 +96,11 @@ public class PluginServiceImpl implements PluginService {
     private void copyFromRequest(Plugin plugin, PluginRequest request) {
         plugin.setName(request.getName());
         plugin.setDescription(request.getDescription());
-        plugin.setType(request.getType());
+        plugin.setCategory(request.getCategory());
+        plugin.setIcon(request.getIcon());
         plugin.setVersion(request.getVersion());
         plugin.setFileOssKey(request.getFileOssKey());
         plugin.setFileUrl(request.getFileUrl());
         plugin.setFileSize(request.getFileSize());
-        if (request.getStatus() != null) plugin.setStatus(request.getStatus());
     }
 }

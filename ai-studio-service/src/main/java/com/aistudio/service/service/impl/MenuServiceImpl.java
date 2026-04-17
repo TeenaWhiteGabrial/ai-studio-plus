@@ -1,5 +1,7 @@
 package com.aistudio.service.service.impl;
 
+import com.aistudio.service.common.exception.BusinessException;
+import com.aistudio.service.dto.request.MenuRequest;
 import com.aistudio.service.dto.response.MenuTreeVO;
 import com.aistudio.service.dto.response.RoleMenuTreeVO;
 import com.aistudio.service.entity.SysMenu;
@@ -71,6 +73,58 @@ public class MenuServiceImpl implements MenuService {
             roleMenu.setMenuId(menuId);
             roleMenuMapper.insert(roleMenu);
         }
+    }
+
+    @Override
+    public List<SysMenu> listAllMenus() {
+        return menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+                .orderByAsc(SysMenu::getSort));
+    }
+
+    @Override
+    public SysMenu getMenuById(Long id) {
+        SysMenu menu = menuMapper.selectById(id);
+        if (menu == null) {
+            throw new BusinessException(404, "菜单不存在");
+        }
+        return menu;
+    }
+
+    @Override
+    public Long createMenu(MenuRequest request) {
+        SysMenu menu = new SysMenu();
+        BeanUtils.copyProperties(request, menu);
+        menuMapper.insert(menu);
+        return menu.getId();
+    }
+
+    @Override
+    public void updateMenu(Long id, MenuRequest request) {
+        SysMenu menu = menuMapper.selectById(id);
+        if (menu == null) {
+            throw new BusinessException(404, "菜单不存在");
+        }
+        BeanUtils.copyProperties(request, menu);
+        menu.setId(id);
+        menuMapper.updateById(menu);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMenu(Long id) {
+        // 检查是否有子菜单
+        long childCount = menuMapper.selectCount(new LambdaQueryWrapper<SysMenu>()
+                .eq(SysMenu::getParentId, id));
+        if (childCount > 0) {
+            throw new BusinessException(400, "请先删除子菜单");
+        }
+        // 检查是否被角色使用
+        long roleCount = roleMenuMapper.selectCount(new LambdaQueryWrapper<SysRoleMenu>()
+                .eq(SysRoleMenu::getMenuId, id));
+        if (roleCount > 0) {
+            throw new BusinessException(400, "该菜单已被角色使用，无法删除");
+        }
+        menuMapper.deleteById(id);
     }
 
     private List<MenuTreeVO> buildTree(List<MenuTreeVO> all, Long parentId) {

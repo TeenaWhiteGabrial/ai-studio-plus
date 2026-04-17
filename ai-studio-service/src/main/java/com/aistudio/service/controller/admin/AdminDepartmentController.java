@@ -43,7 +43,7 @@ public class AdminDepartmentController {
     }
 
     @Operation(summary = "更新部门")
-    @PutMapping("/{id}")
+    @PostMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> update(@PathVariable Long id, @RequestBody SysDepartment dept) {
         dept.setId(id);
@@ -52,7 +52,7 @@ public class AdminDepartmentController {
     }
 
     @Operation(summary = "删除部门")
-    @DeleteMapping("/{id}")
+    @PostMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         departmentService.removeById(id);

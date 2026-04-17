@@ -9,20 +9,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Portal - 公开信息（Banner、公告等）
+ * Portal - 公开信息（公告等）
  */
 @Tag(name = "Portal - 公开信息")
 @RestController
-@RequestMapping("/portal/public")
+@RequestMapping("/portal/open/public")
 @RequiredArgsConstructor
 public class PortalPublicInfoController {
-
-    @Operation(summary = "获取 Banner 列表")
-    @GetMapping("/banner")
-    public Result<Object> banners() {
-        // TODO: 实现 Banner 查询
-        return Result.success(null);
-    }
 
     @Operation(summary = "获取公告列表")
     @GetMapping("/announcement")

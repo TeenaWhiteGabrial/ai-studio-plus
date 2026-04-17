@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/browse-history")
+@RequestMapping("/portal/browse-history")
 @RequiredArgsConstructor
 public class BrowseHistoryController {
 
@@ -32,7 +32,7 @@ public class BrowseHistoryController {
         return ResponseEntity.ok(browseHistoryService.listBrowseHistories(userId));
     }
 
-    @DeleteMapping("/clear")
+    @PostMapping("/clear")
     public ResponseEntity<Void> clearBrowseHistories() {
         Long userId = securityUtils.getCurrentUserId();
         browseHistoryService.clearBrowseHistories(userId);

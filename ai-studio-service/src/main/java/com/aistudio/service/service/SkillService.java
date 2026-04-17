@@ -1,5 +1,6 @@
 package com.aistudio.service.service;
 
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.SkillCreateRequest;
 import com.aistudio.service.dto.request.SkillUpdateRequest;
 import com.aistudio.service.dto.request.SkillVersionRequest;
@@ -40,6 +41,11 @@ public interface SkillService {
      * 删除版本（物理删除，仅超管）
      */
     void deleteVersion(Long skillId, String version, Long userId, List<String> roles);
+
+    /**
+     * 审核技能
+     */
+    void auditSkill(Long skillId, AuditRequest request, Long userId, List<String> roles);
 
     /**
      * 获取技能详情

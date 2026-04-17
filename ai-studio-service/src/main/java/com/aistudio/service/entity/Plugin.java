@@ -15,14 +15,17 @@ public class Plugin {
     private Long id;
     private String name;
     private String description;
-    private String type;
+    private String category;
+    private String icon;
     private String version;
     private String fileOssKey;
     private String fileUrl;
     private Long fileSize;
-    private Integer status;
+    private Integer status;            // 0-待审核 1-通过 2-拒绝
+    private Long creatorId;
+    private LocalDateTime reviewTime;
+    private String reviewComment;
     private Integer downloadCount;
-    private Long createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

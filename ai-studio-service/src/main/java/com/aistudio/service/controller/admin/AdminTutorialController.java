@@ -2,6 +2,7 @@ package com.aistudio.service.controller.admin;
 
 import com.aistudio.service.common.Result;
 import com.aistudio.service.common.SecurityUtils;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.TutorialRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.Tutorial;
@@ -14,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Admin - 教程管理
+ * Admin - 教程审核管理
  */
 @Tag(name = "Admin - 教程管理")
 @RestController
@@ -45,26 +46,11 @@ public class AdminTutorialController {
         return Result.success(tutorialService.getTutorialById(id));
     }
 
-    @Operation(summary = "创建教程")
-    @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Long> create(@Valid @RequestBody TutorialRequest request) {
-        return Result.success(tutorialService.createTutorial(request, securityUtils.getCurrentUserId()));
-    }
-
-    @Operation(summary = "更新教程")
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Void> update(@PathVariable Long id, @RequestBody TutorialRequest request) {
-        tutorialService.updateTutorial(id, request, securityUtils.getCurrentUserId());
-        return Result.success();
-    }
-
-    @Operation(summary = "删除教程")
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Void> delete(@PathVariable Long id) {
-        tutorialService.deleteTutorial(id, securityUtils.getCurrentUserId());
+    @Operation(summary = "审核教程")
+    @PostMapping("/{id}/audit")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN')")
+    public Result<Void> audit(@PathVariable Long id, @Valid @RequestBody AuditRequest request) {
+        tutorialService.auditTutorial(id, request, securityUtils.getCurrentUserId());
         return Result.success();
     }
 }

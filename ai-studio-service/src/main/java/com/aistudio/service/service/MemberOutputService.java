@@ -1,6 +1,5 @@
 package com.aistudio.service.service;
 
-import com.aistudio.service.dto.request.MemberOutputRequest;
 import com.aistudio.service.dto.request.OpenOutputSubmitRequest;
 import com.aistudio.service.entity.MemberOutput;
 
@@ -10,16 +9,17 @@ import java.util.Map;
 
 public interface MemberOutputService {
     MemberOutput getTodayOutput(Long userId);
-    void submitOutput(MemberOutputRequest request, Long userId);
     List<MemberOutput> getHistory(Long userId, LocalDate startDate, LocalDate endDate);
     List<MemberOutput> getHistory(Long userId, LocalDate startDate, LocalDate endDate, List<String> projectNames);
-    List<Map<String, Object>> getAdminList(LocalDate date);
-    List<Map<String, Object>> getAdminList(LocalDate date, List<Long> deptIds, List<String> projectNames);
-    Map<String, Object> getStats(Long userId, LocalDate startDate, LocalDate endDate, boolean isAdmin);
-    Map<String, Object> getStats(Long userId, LocalDate startDate, LocalDate endDate, boolean isAdmin, List<Long> deptIds, List<String> projectNames);
+
+    // 管理员多维度查询
+    List<Map<String, Object>> getOutputList(LocalDate date, List<Long> userIds, List<Long> deptIds, List<String> projectNames);
+    List<Map<String, Object>> getOutputByUsers(List<Long> userIds, LocalDate startDate, LocalDate endDate, List<String> projectNames);
+    Map<String, Object> getStats(Long userId, LocalDate startDate, LocalDate endDate, boolean isAdmin, List<Long> userIds, List<Long> deptIds, List<String> projectNames);
+    List<Map<String, Object>> getOutputByDepartment(LocalDate startDate, LocalDate endDate, List<Long> deptIds);
+    List<Map<String, Object>> getOutputByProject(LocalDate startDate, LocalDate endDate, List<String> projectNames);
+    List<Map<String, Object>> getProjectMembers(String projectName, LocalDate startDate, LocalDate endDate);
 
     // 开放 API 方法
     void submitOutputByUsername(OpenOutputSubmitRequest request);
-    List<MemberOutput> getTodayOutputByUsername(String username);
-    List<MemberOutput> getHistoryByUsername(String username, LocalDate startDate, LocalDate endDate);
 }

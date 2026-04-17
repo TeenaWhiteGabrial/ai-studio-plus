@@ -14,15 +14,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 
 @Tag(name = "Admin - 用户管理")
@@ -53,7 +47,7 @@ public class AdminUserController {
     }
 
     @Operation(summary = "更新用户")
-    @PutMapping("/{id}")
+    @PostMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> update(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
         userService.updateUser(id, request);
@@ -61,7 +55,7 @@ public class AdminUserController {
     }
 
     @Operation(summary = "删除用户")
-    @DeleteMapping("/{id}")
+    @PostMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         userService.deleteUser(id);
@@ -69,7 +63,7 @@ public class AdminUserController {
     }
 
     @Operation(summary = "分配角色")
-    @PutMapping("/{id}/roles")
+    @PostMapping("/{id}/roles")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> assignRoles(@PathVariable Long id, @RequestBody List<Long> roleIds) {
         userService.assignRoles(id, roleIds);
@@ -78,13 +72,13 @@ public class AdminUserController {
 
     @Operation(summary = "角色列表")
     @GetMapping("/roles")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DEPT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN','DEPT_ADMIN')")
     public Result<List<SysRole>> roles() {
         return Result.success(roleMapper.selectList(null));
     }
 
     @Operation(summary = "更新用户状态")
-    @PutMapping("/{id}/status")
+    @PostMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
         userService.updateUserStatus(id, status);
@@ -98,14 +92,4 @@ public class AdminUserController {
         return Result.success(userService.batchImport(requests));
     }
 
-    @Operation(summary = "下载导入模板")
-    @GetMapping("/template")
-    public ResponseEntity<byte[]> downloadTemplate() throws IOException {
-        Resource resource = new ClassPathResource("templates/user-import-template.xlsx");
-        byte[] bytes = resource.getContentAsByteArray();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"用户导入模板.xlsx\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(bytes);
-    }
 }

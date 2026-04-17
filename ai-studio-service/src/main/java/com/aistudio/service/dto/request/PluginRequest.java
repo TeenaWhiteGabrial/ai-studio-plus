@@ -10,7 +10,8 @@ public class PluginRequest {
     private String name;
 
     private String description;
-    private String type;
+    private String category;
+    private String icon;
 
     @NotBlank(message = "版本号不能为空")
     private String version;
@@ -22,5 +23,4 @@ public class PluginRequest {
     private String fileUrl;
 
     private Long fileSize;
-    private Integer status = 1;
 }

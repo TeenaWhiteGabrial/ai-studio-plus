@@ -2,6 +2,7 @@ package com.aistudio.service.controller.admin;
 
 import com.aistudio.service.common.Result;
 import com.aistudio.service.common.SecurityUtils;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.SkillCreateRequest;
 import com.aistudio.service.dto.request.SkillQuery;
 import com.aistudio.service.dto.request.SkillUpdateRequest;
@@ -26,7 +27,7 @@ import java.net.URI;
 import java.util.List;
 
 /**
- * Admin - Skill 管理（完整CRUD + 版本管理）
+ * Admin - Skill 管理（审核 + 版本管理）
  */
 @Slf4j
 @Tag(name = "Admin - Skill管理")
@@ -60,38 +61,16 @@ public class AdminSkillController {
         return Result.success(skillService.getSkillVersions(id, null, List.of("SUPER_ADMIN", "OP_ADMIN")));
     }
 
-    @Operation(summary = "创建 Skill")
-    @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Long> create(@RequestBody @Valid SkillCreateRequest request) {
-        return Result.success(skillService.createSkill(request, securityUtils.getCurrentUserId(), securityUtils.getCurrentUserDeptId()));
-    }
-
-    @Operation(summary = "更新 Skill")
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Void> update(@PathVariable Long id, @RequestBody SkillUpdateRequest request) {
-        skillService.updateSkill(id, request, securityUtils.getCurrentUserId(), List.of("SUPER_ADMIN"));
+    @Operation(summary = "审核 Skill")
+    @PostMapping("/{id}/audit")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN')")
+    public Result<Void> audit(@PathVariable Long id, @Valid @RequestBody AuditRequest request) {
+        skillService.auditSkill(id, request, securityUtils.getCurrentUserId(), List.of("SUPER_ADMIN", "OP_ADMIN"));
         return Result.success();
     }
 
-    @Operation(summary = "删除 Skill")
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<Void> delete(@PathVariable Long id) {
-        skillService.deleteSkill(id, securityUtils.getCurrentUserId(), List.of("SUPER_ADMIN"));
-        return Result.success();
-    }
-
-    @Operation(summary = "发布新版本")
-    @PostMapping("/{id}/versions")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<String> publishVersion(@PathVariable Long id, @RequestBody @Valid SkillVersionRequest request) {
-        return Result.success(skillService.publishVersion(id, request, securityUtils.getCurrentUserId(), securityUtils.getCurrentUserDeptId(), List.of("SUPER_ADMIN")));
-    }
-
-    @Operation(summary = "删除版本")
-    @DeleteMapping("/{id}/versions/{version}")
+    @Operation(summary = "删除版本（仅SUPER_ADMIN）")
+    @PostMapping("/{id}/versions/{version}/delete")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> deleteVersion(@PathVariable Long id, @PathVariable String version) {
         skillService.deleteVersion(id, version, securityUtils.getCurrentUserId(), List.of("SUPER_ADMIN"));
@@ -104,33 +83,6 @@ public class AdminSkillController {
     public ResponseEntity<Void> download(@PathVariable Long id, @RequestParam(required = false) String version) {
         String signedUrl = skillService.downloadSkill(id, version, null, List.of("SUPER_ADMIN", "OP_ADMIN"));
         return ResponseEntity.status(302).location(URI.create(signedUrl)).build();
-    }
-
-    @Operation(summary = "上传 Skill 文件到 OSS")
-    @PostMapping("/upload")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public Result<UploadResultVO> uploadFile(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam String skillName,
-            @RequestParam String version) {
-        try {
-            if (file.isEmpty()) return Result.error(400, "上传文件为空");
-            String originalFilename = file.getOriginalFilename();
-            String suffix = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                    : "";
-            String randomName = System.currentTimeMillis() + "_" + (int)(Math.random() * 10000) + suffix;
-            String key = String.format("skills/%s/v%s/%s", skillName, version, randomName);
-            String ossKey = ossService.uploadFile(key, file.getInputStream(), file.getSize(), file.getContentType());
-            UploadResultVO vo = new UploadResultVO();
-            vo.setOssKey(ossKey);
-            vo.setOssUrl(ossService.getPublicUrl(ossKey));
-            vo.setFileSize(file.getSize());
-            return Result.success(vo);
-        } catch (IOException e) {
-            log.error("上传文件失败", e);
-            return Result.error(500, "上传文件失败: " + e.getMessage());
-        }
     }
 
     @lombok.Data

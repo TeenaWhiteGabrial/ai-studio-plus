@@ -6,14 +6,12 @@ export const skillApi = {
   detail: (id: number) => request.get(`/skill/${id}`),
   versions: (id: number) => request.get(`/skill/${id}/versions`),
 
-  // 管理
-  create: (data: any) => request.post('/skill', data),
-  update: (id: number, data: any) => request.put(`/skill/${id}`, data),
-  delete: (id: number) => request.delete(`/skill/${id}`),
+  // 审核
+  audit: (id: number, data: { status: number; reviewComment?: string }) => request.post(`/skill/${id}/audit`, data),
 
   // 版本管理
   publishVersion: (id: number, data: any) => request.post(`/skill/${id}/versions`, data),
-  deleteVersion: (id: number, version: string) => request.delete(`/skill/${id}/versions/${version}`),
+  deleteVersion: (id: number, version: string) => request.post(`/skill/${id}/versions/${version}/delete`),
 
   // 下载（返回 302 重定向）
   download: (id: number, version?: string) => request.get(`/skill/${id}/download`, {
@@ -24,19 +22,6 @@ export const skillApi = {
     const params = version ? `?version=${version}` : ''
     // 通过 Vite proxy 代理到后端，baseURL /ai-studio/v1/admin 会自动添加
     return `/skill/${id}/download${params}`
-  },
-
-  // 上传文件到 OSS（后端代理上传）
-  upload: (file: File, skillName: string, version: string) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('skillName', skillName)
-    formData.append('version', version)
-    return request.post('/skill/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
   },
 
   // 以下方法已废弃（保留用于兼容性）
@@ -51,34 +36,29 @@ export const skillApi = {
 export const mcpApi = {
   list: (params: any) => request.get('/mcp/list', { params }),
   create: (data: any) => request.post('/mcp', data),
-  update: (id: number, data: any) => request.put(`/mcp/${id}`, data),
-  delete: (id: number) => request.delete(`/mcp/${id}`),
+  update: (id: number, data: any) => request.post(`/mcp/${id}`, data),
+  delete: (id: number) => request.post(`/mcp/${id}/delete`),
   test: (id: number) => request.post(`/mcp/${id}/test`),
 }
 
 export const pluginApi = {
   list: (params: any) => request.get('/plugin/list', { params }),
-  create: (data: any) => request.post('/plugin', data),
-  update: (id: number, data: any) => request.put(`/plugin/${id}`, data),
-  delete: (id: number) => request.delete(`/plugin/${id}`),
+  detail: (id: number) => request.get(`/plugin/${id}`),
+  // 审核
+  audit: (id: number, data: { status: number; reviewComment?: string }) => request.post(`/plugin/${id}/audit`, data),
+  // 下载
   download: (id: number) => request.get(`/plugin/${id}/download`),
 }
 
 export const tutorialApi = {
   list: (params: any) => request.get('/tutorial/list', { params }),
-  create: (data: any) => request.post('/tutorial', data),
-  update: (id: number, data: any) => request.put(`/tutorial/${id}`, data),
-  delete: (id: number) => request.delete(`/tutorial/${id}`),
   detail: (id: number) => request.get(`/tutorial/${id}`),
+  // 审核
+  audit: (id: number, data: { status: number; reviewComment?: string }) => request.post(`/tutorial/${id}/audit`, data),
 }
 
 export const outputApi = {
-  today: () => request.get('/output/today'),
-  submit: (data: any) => request.post('/output', data),
-  history: (params: any) => request.get('/output/history', { params }),
-  adminList: (params: any) => request.get('/output/admin/list', { params }),
-  stats: (params: any) => request.get('/output/stats', { params }),
-  // 开放 API（无需认证，通过 window.location 跳转或直接 fetch 调用）
+  // 开放 API（无需认证，用于提交产出数据）
   openSubmit: (data: any) => {
     return fetch('/ai-studio/v1/open/output/submit', {
       method: 'POST',
@@ -86,18 +66,13 @@ export const outputApi = {
       body: JSON.stringify(data)
     })
   },
-  openToday: (username: string) => {
-    return fetch(`/ai-studio/v1/open/output/today?username=${username}`)
-      .then(res => res.json())
-  },
-  // 部门统计
-  deptSummary: (params: any) => request.get('/output/stats/department/summary', { params }),
-  deptMembers: (params: any) => request.get('/output/stats/department/members', { params }),
-  deptRanking: (params: any) => request.get('/output/stats/department/ranking', { params }),
-  // 项目统计
-  projectSummary: (params: any) => request.get('/output/stats/project/summary', { params }),
-  projectMembers: (params: any) => request.get('/output/stats/project/members', { params }),
-  userProjectDistribution: (params: any) => request.get('/output/stats/project/user-distribution', { params }),
+  // Admin 端产出管理
+  adminList: (params: any) => request.get('/output/list', { params }),
+  adminByUsers: (params: any) => request.get('/output/by-users', { params }),
+  stats: (params: any) => request.get('/output/stats', { params }),
+  byDepartment: (params: any) => request.get('/output/by-department', { params }),
+  byProject: (params: any) => request.get('/output/by-project', { params }),
+  projectMembers: (params: any) => request.get('/output/project-members', { params }),
   // 导出
   export: (params: any) => request.get('/output/export', { params, responseType: 'blob' }),
 }
@@ -106,8 +81,8 @@ export const departmentApi = {
   list: () => request.get('/department/list'),
   active: () => request.get('/department/active'),
   create: (data: any) => request.post('/department', data),
-  update: (id: number, data: any) => request.put(`/department/${id}`, data),
-  delete: (id: number) => request.delete(`/department/${id}`),
+  update: (id: number, data: any) => request.post(`/department/${id}`, data),
+  delete: (id: number) => request.post(`/department/${id}/delete`),
 }
 
 export const dashboardApi = {
@@ -120,21 +95,20 @@ export const dashboardApi = {
 export const roleApi = {
   list: () => request.get('/role/list'),
   menus: (id: number) => request.get(`/role/${id}/menus`),
-  updateMenus: (id: number, menuIds: number[]) => request.put(`/role/${id}/menus`, menuIds),
+  updateMenus: (id: number, menuIds: number[]) => request.post(`/role/${id}/menus`, menuIds),
 }
 
 export const userApi = {
   list: (params: any) => request.get('/user/list', { params }),
   create: (data: any) => request.post('/user', data),
-  update: (id: number, data: any) => request.put(`/user/${id}`, data),
-  delete: (id: number) => request.delete(`/user/${id}`),
-  assignRoles: (id: number, roleIds: number[]) => request.put(`/user/${id}/roles`, roleIds),
+  update: (id: number, data: any) => request.post(`/user/${id}`, data),
+  delete: (id: number) => request.post(`/user/${id}/delete`),
+  assignRoles: (id: number, roleIds: number[]) => request.post(`/user/${id}/roles`, roleIds),
   roles: () => request.get('/user/roles'),
   // 批量导入
   batchImport: (data: any[]) => request.post('/user/batch', data),
-  downloadTemplate: () => request.get('/user/template', { responseType: 'blob' }),
   // 更新用户状态
-  updateStatus: (id: number, status: number) => request.put(`/user/${id}/status`, null, { params: { status } }),
+  updateStatus: (id: number, status: number) => request.post(`/user/${id}/status`, null, { params: { status } }),
 }
 
 export const teamApi = {
@@ -143,13 +117,13 @@ export const teamApi = {
   // 创建团队
   create: (data: { team_name: string; dept_id?: number; description?: string }) => request.post('/team', data),
   // 更新团队
-  update: (id: number, data: { team_name?: string; description?: string; status?: number }) => request.put(`/team/${id}`, data),
+  update: (id: number, data: { team_name?: string; description?: string; status?: number }) => request.post(`/team/${id}`, data),
   // 删除团队
-  delete: (id: number) => request.delete(`/team/${id}`),
+  delete: (id: number) => request.post(`/team/${id}/delete`),
   // 获取团队成员
   members: (teamId: number) => request.get(`/team/${teamId}/members`),
   // 添加团队成员
   addMembers: (teamId: number, userIds: number[]) => request.post(`/team/${teamId}/members`, userIds),
   // 移除团队成员
-  removeMember: (teamId: number, userId: number) => request.delete(`/team/${teamId}/members/${userId}`),
+  removeMember: (teamId: number, userId: number) => request.post(`/team/${teamId}/members/${userId}/delete`),
 }
