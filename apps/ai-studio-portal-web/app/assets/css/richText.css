@@ -1,0 +1,16 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.rich-text-content {
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 4px;
+}
+
+.rich-text-content img {
+  max-width: 100% !important;
+  height: auto;
+}

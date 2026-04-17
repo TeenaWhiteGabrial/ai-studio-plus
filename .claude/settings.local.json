@@ -100,7 +100,10 @@
       "Bash(curl -s --location 'https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains' \\\\\n--header 'Authorization: Bearer sk-cp-Y-4U5WDONes9U7YdDomDmumwckWSIVZcrYHR3Xj1Z17oOO5-MWALVDyzKq23ya2HiQvUI48yzL-BrfNwJunBWm0DD0AwdnvfQhbw4RioytArl1q5yT__rH8' \\\\\n--header 'Content-Type: application/json')",
       "Bash(find \"E:/综合项目开发/ai-studio/ai-studio-service/src/main/java/com/aistudio/service\" -name \"Open*\" -o -name \"*Controller.java\" 2>/dev/null | grep -i \"open\\\\|portal\")",
       "WebFetch(domain:www.csdn.net)",
-      "Bash(netstat -ano | grep -E \":\\(5175|3000\\)\" | head -5)"
+      "Bash(netstat -ano | grep -E \":\\(5175|3000\\)\" | head -5)",
+      "Bash(cd \"E:/综合项目开发/ai-studio\" && pnpm run dev:portal 2>&1 | head -30)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/apps/ai-studio-portal-web\" && timeout 10 pnpm run dev 2>&1 || true)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/apps/ai-studio-portal-web\" && pnpm run dev 2>&1)"
     ]
   }
 }

@@ -1,24 +1,50 @@
 {
   "name": "ai-studio-portal-web",
-  "private": true,
-  "version": "1.0.0",
   "type": "module",
+  "private": true,
   "scripts": {
-    "dev": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs dev --port 5175",
-    "build": "nuxt build",
-    "preview": "nuxt preview"
+    "dev": "nuxt dev --dotenv .env.localdev",
+    "build:prod": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.production",
+    "build:test": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.test",
+    "build:dev": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.openSource.development",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "start": "nuxt start",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs",
+    "pm2:reload": "pm2 reload ecosystem.config.cjs",
+    "pm2:delete": "pm2 delete ecosystem.config.cjs",
+    "pm2:logs": "pm2 logs NuxtAppName",
+    "pm2:monit": "pm2 monit"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^2.3.1",
-    "axios": "^1.7.0",
-    "dayjs": "^1.11.11",
-    "element-plus": "^2.7.0",
-    "nuxt": "^3.11.0",
-    "vue": "^3.4.0",
-    "vue-router": "^4.3.0"
+    "@iconify-json/material-symbols": "^1.2.34",
+    "@micro-zoe/micro-app": "1.0.0-rc.28",
+    "@nuxt/content": "^3.6.3",
+    "@nuxt/icon": "^2.0.0",
+    "@nuxt/image": "^2.0.0",
+    "@pinia/nuxt": "^0.11.3",
+    "@shikijs/core": "3.12.1",
+    "@vueup/vue-quill": "^1.2.0",
+    "dayjs": "^1.11.19",
+    "element-china-area-data": "^6.1.0",
+    "jsencrypt": "3.3.2",
+    "nuxt": "^4.2.1",
+    "nuxt-swiper": "^2.0.1",
+    "pinia": "^3.0.3",
+    "pinia-plugin-persistedstate": "^4.5.0",
+    "sortablejs": "^1.15.6",
+    "unocss": "^66.4.2",
+    "vue": "^3.5.20",
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^1.0.0",
-    "@types/node": "^25.6.0"
+    "@element-plus/nuxt": "^1.1.4",
+    "@nuxt/kit": "^4.3.1",
+    "@unocss/nuxt": "^66.4.2",
+    "@unocss/preset-wind3": "^66.5.10",
+    "element-plus": "^2.11.2"
   }
 }

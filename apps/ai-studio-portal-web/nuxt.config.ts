@@ -1,62 +1,46 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devtools: { enabled: false },
-
-  imports: {
-    presets: [
-      {
-        from: 'element-plus',
-        imports: ['ElAlert','ElButton','ElCheckbox','ElDropdown','ElDropdownItem','ElDropdownMenu','ElForm','ElFormItem','ElInput','ElAvatar','ElMessage'],
-      },
-    ],
+  modules: [
+    './modules/theme',
+    '@unocss/nuxt',
+    '@nuxt/icon',
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt',
+    '@element-plus/nuxt',
+    'nuxt-swiper',
+    '@nuxt/image',
+  ],
+  elementPlus: {
+    defaultLocale:'zh-cn'
   },
-
-  ssr: true,
-
-  runtimeConfig: {
-    public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/ai-studio/v1',
-      appType: process.env.NUXT_PUBLIC_APP_TYPE || 'portal',
+  piniaPluginPersistedstate: {
+    storage: 'cookies',
+    cookieOptions: {
+      sameSite: 'lax'
     }
   },
-
-  app: {
-    head: {
-      title: 'AI Studio - 资源门户',
-      meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'AI Studio 资源门户，提供 Skill、MCP、Plugin、教程等资源下载' },
-      ],
-      link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-      ],
-    },
+  compatibilityDate: '2025-09-11',
+  devtools: { enabled: true },
+  css: ['~/assets/css/richText.css'],
+  icon: {
+    collections: ['material-symbols'] // 明确指定集合
   },
-
-  css: ['element-plus/dist/index.css'],
-
-  build: {
-    transpile: ['element-plus'],
+  router: {
+    options: {
+      hashMode: false  // 不启用哈希路由模式
+    }
   },
+  runtimeConfig: {
+    public: {
+      apiBase: import.meta.env.NUXT_API_BASE_URL, 
+      loginType: import.meta.env.NUXT_LOGIN_TYPE,
+      loginUrl: import.meta.env.NUXT_LOGIN_URL,
+      logoutUrl: import.meta.env.NUXT_LOGOUT_URL,
+      registerUrl: import.meta.env.NUXT_REGISTER_URL,
+      tokenType: import.meta.env.NUXT_TOKEN_TYPE,
+      baseRouter: import.meta.env.NUXT_APP_BASE_URL,
+      supplierUrl: import.meta.env.NUXT_SUPPLIER_MICRO_URL
 
-  vite: {
-    resolve: {
-      alias: {
-        dayjs: 'dayjs/dayjs.min.js',
-      },
-    },
-    optimizeDeps: {
-      include: ['element-plus'],
-      exclude: ['dayjs'],
-    },
-    server: {
-      proxy: {
-        '/ai-studio/v1': {
-          target: 'http://localhost:8080',
-          changeOrigin: true,
-        },
-      },
-    },
+    }
   },
 })
