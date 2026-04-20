@@ -28,7 +28,6 @@ public class TutorialServiceImpl implements TutorialService {
         LambdaQueryWrapper<Tutorial> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(keyword)) wrapper.like(Tutorial::getTitle, keyword);
         if (StringUtils.hasText(category)) wrapper.eq(Tutorial::getCategory, category);
-        if (StringUtils.hasText(tag)) wrapper.like(Tutorial::getTags, tag);
         if (status != null) wrapper.eq(Tutorial::getStatus, status);
         wrapper.orderByDesc(Tutorial::getCreatedAt);
         Page<Tutorial> p = tutorialMapper.selectPage(new Page<>(page, size), wrapper);

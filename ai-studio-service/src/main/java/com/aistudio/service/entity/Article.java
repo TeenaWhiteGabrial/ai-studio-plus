@@ -29,6 +29,8 @@ public class Article {
     private Integer status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    /** 定时发布时间 */
+    private LocalDateTime publishedAt;
     /** 逻辑删除: 0-正常 1-已删除 */
     private Integer isDeleted;
 }

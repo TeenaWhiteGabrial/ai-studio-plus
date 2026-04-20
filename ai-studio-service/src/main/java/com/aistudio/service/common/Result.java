@@ -19,18 +19,18 @@ public class Result<T> {
     }
 
     public static <T> Result<T> success(T data) {
-        return new Result<>(200, "success", data);
+        return new Result<T>(200, "success", data);
     }
 
     public static <T> Result<T> success() {
-        return new Result<>(200, "success", null);
+        return new Result<T>(200, "success", null);
     }
 
     public static <T> Result<T> error(String message) {
-        return new Result<>(500, message, null);
+        return new Result<T>(500, message, null);
     }
 
     public static <T> Result<T> error(Integer code, String message) {
-        return new Result<>(code, message, null);
+        return new Result<T>(code, message, null);
     }
 }

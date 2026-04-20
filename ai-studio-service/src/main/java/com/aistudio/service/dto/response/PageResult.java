@@ -18,6 +18,6 @@ public class PageResult<T> {
     private List<T> records;
 
     public static <T> PageResult<T> of(Long total, List<T> records) {
-        return new PageResult<>(total, records);
+        return new PageResult<T>(total, records);
     }
 }

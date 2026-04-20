@@ -47,7 +47,7 @@ public class AdminUserController {
     }
 
     @Operation(summary = "更新用户")
-    @PostMapping("/{id}")
+    @PostMapping("/update/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> update(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
         userService.updateUser(id, request);
@@ -55,7 +55,7 @@ public class AdminUserController {
     }
 
     @Operation(summary = "删除用户")
-    @PostMapping("/{id}")
+    @PostMapping("/delete/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         userService.deleteUser(id);

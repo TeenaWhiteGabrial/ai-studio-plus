@@ -21,6 +21,8 @@ public class Answer {
     private Integer likesCount;
     /** 是否最佳答案: 0-否 1-是 */
     private Integer isBest;
+    /** 是否下架: 0-正常 1-已下架 */
+    private Integer takenDown;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     /** 逻辑删除: 0-正常 1-已删除 */

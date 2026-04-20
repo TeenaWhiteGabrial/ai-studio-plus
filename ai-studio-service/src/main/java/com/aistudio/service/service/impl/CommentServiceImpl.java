@@ -1,6 +1,7 @@
 package com.aistudio.service.service.impl;
 
 import com.aistudio.service.common.exception.BusinessException;
+import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.CommunityComment;
 import com.aistudio.service.entity.SysUser;
 import com.aistudio.service.mapper.CommunityCommentMapper;
@@ -8,10 +9,12 @@ import com.aistudio.service.mapper.SysUserMapper;
 import com.aistudio.service.service.CommentService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -83,5 +86,68 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public boolean isLiked(Long id, Long userId) {
         return false;
+    }
+
+    // ========== Console端 ==========
+    @Override
+    public PageResult listMyComments(Long userId, String targetType, int page, int size) {
+        LambdaQueryWrapper<CommunityComment> q = new LambdaQueryWrapper<>();
+        q.eq(CommunityComment::getAuthorId, userId)
+                .eq(CommunityComment::getIsDeleted, 0);
+
+        if (StringUtils.hasText(targetType)) {
+            q.eq(CommunityComment::getCommentType, targetType);
+        }
+
+        q.orderByDesc(CommunityComment::getCreatedAt);
+
+        Page<CommunityComment> p = new Page<>(page, size);
+        Page<CommunityComment> result = commentMapper.selectPage(p, q);
+
+        return PageResult.of(result.getTotal(), result.getRecords());
+    }
+
+    // ========== Admin端 ==========
+    @Override
+    public PageResult listAllComments(String targetType, Long targetId, String keyword, int page, int size) {
+        LambdaQueryWrapper<CommunityComment> q = new LambdaQueryWrapper<>();
+        q.eq(CommunityComment::getIsDeleted, 0);
+
+        if (StringUtils.hasText(targetType)) {
+            q.eq(CommunityComment::getCommentType, targetType);
+        }
+
+        if (targetId != null) {
+            q.eq(CommunityComment::getTargetId, targetId);
+        }
+
+        if (StringUtils.hasText(keyword)) {
+            q.like(CommunityComment::getContent, keyword);
+        }
+
+        q.orderByDesc(CommunityComment::getCreatedAt);
+
+        Page<CommunityComment> p = new Page<>(page, size);
+        Page<CommunityComment> result = commentMapper.selectPage(p, q);
+
+        return PageResult.of(result.getTotal(), result.getRecords());
+    }
+
+    @Override
+    public CommunityComment getCommentForAdmin(Long id) {
+        CommunityComment comment = commentMapper.selectById(id);
+        if (comment == null || comment.getIsDeleted() == 1) {
+            throw new BusinessException(404, "评论不存在");
+        }
+        return comment;
+    }
+
+    @Override
+    @Transactional
+    public void adminDeleteComment(Long id, String reason) {
+        commentMapper.update(null, new LambdaUpdateWrapper<CommunityComment>()
+                .eq(CommunityComment::getId, id)
+                .set(CommunityComment::getIsDeleted, 1));
+        log.info("管理员删除评论: id={}, reason={}", id, reason);
     }
 }

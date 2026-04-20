@@ -36,7 +36,7 @@ public class AdminTeamController {
     }
 
     @Operation(summary = "更新团队")
-    @PostMapping("/{id}")
+    @PostMapping("/update/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> update(@PathVariable Long id, @RequestBody TeamUpdateRequest request) {
         teamService.updateTeam(id, request);
@@ -44,7 +44,7 @@ public class AdminTeamController {
     }
 
     @Operation(summary = "删除团队")
-    @PostMapping("/{id}")
+    @PostMapping("/delete/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         teamService.deleteTeam(id);

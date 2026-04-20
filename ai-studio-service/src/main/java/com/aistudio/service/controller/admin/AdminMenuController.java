@@ -53,7 +53,7 @@ public class AdminMenuController {
     }
 
     @Operation(summary = "更新菜单")
-    @PostMapping("/{id}")
+    @PostMapping("/update/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> update(@PathVariable Long id, @Valid @RequestBody MenuRequest request) {
         menuService.updateMenu(id, request);

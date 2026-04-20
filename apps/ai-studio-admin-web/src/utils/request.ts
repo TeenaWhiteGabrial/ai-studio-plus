@@ -8,12 +8,21 @@ const request = axios.create({
   withCredentials: true, // 允许携带 Cookie/认证信息
 })
 
-// 请求拦截器：自动携带 Token
+const DEFAULT_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const DEFAULT_AUTH_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_BASE_ROUTER}`
+// 请求拦截器：自动携带 Token 根据请求路径设置 baseURL
+
 request.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+    // 判断是否为认证相关请求
+    if (config.url?.startsWith('/auth/')) {
+      config.baseURL = DEFAULT_BASE_URL
+    } else {
+      config.baseURL = DEFAULT_AUTH_BASE_URL
     }
     return config
   },

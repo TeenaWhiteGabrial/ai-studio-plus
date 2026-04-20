@@ -677,23 +677,86 @@
 
 | 属性 | 说明 |
 |------|------|
-| 功能描述 | 文章的 CRUD 和点赞 |
-| 涉及端 | Portal(/portal/article) |
+| 功能描述 | 文章的创建、编辑、发布、下架及互动 |
+| 业务流程 | Console 创建/编辑 → Admin 下架 → Portal 展示/互动 |
 
-**接口列表：**
+#### 文章状态说明
 
-| 端 | 方法 | 路径 | 说明 | 业务规则 |
-|----|------|------|------|---------|
-| Portal | GET | `/portal/article/list` | 文章列表 | - |
-| Portal | GET | `/portal/article/{id}` | 文章详情 | - |
-| Portal | POST | `/portal/article` | 创建文章 | - |
-| Portal | POST | `/portal/article/{id}` | 更新文章 | 必须是作者 |
-| Portal | POST | `/portal/article/{id}/delete` | 删除文章 | 必须是作者 |
-| Portal | POST | `/portal/article/{id}/like` | 点赞/取消点赞 | Toggle 模式 |
+| 状态 | 值 | 说明 |
+|------|-----|------|
+| 草稿 | 0 | 未发布状态，作者可继续编辑 |
+| 已发布 | 1 | 已发布状态，在 Portal 端可见 |
+| 已下架 | 2 | 管理员下架，不再在 Portal 端显示 |
+
+#### Console 端 - 文章创建与管理
+
+| 端 | 方法 | 路径 | 说明 |
+|----|------|------|------|
+| Console | GET | `/console/article/list` | 我的文章列表(所有状态) |
+| Console | GET | `/console/article/{id}` | 文章详情(编辑使用) |
+| Console | POST | `/console/article` | 创建文章 |
+| Console | POST | `/console/article/{id}` | 更新文章 |
+| Console | POST | `/console/article/{id}/delete` | 删除文章 |
+| Console | POST | `/console/article/{id}/publish` | 立即发布文章 |
+| Console | POST | `/console/article/{id}/schedule` | 定时发布文章 |
+| Console | POST | `/console/article/{id}/cancel-schedule` | 取消定时发布 |
+
+**创建/更新请求体：**
+```json
+{
+  "title": "文章标题",
+  "content": "文章内容",
+  "summary": "文章摘要",
+  "coverImage": "封面图URL",
+  "tagIds": [1, 2, 3],
+  "publishType": 0,
+  "scheduledPublishTime": "2026-05-01T10:00:00"
+}
+```
+
+**publishType 说明：**
+- `0`: 保存为草稿
+- `1`: 立即发布
+- `2`: 定时发布（需配合 scheduledPublishTime）
 
 **业务规则：**
+- 只有作者可以查看、更新、删除自己的文章
+- 定时发布时间不能早于当前时间
+- 已下架的文章不能发布
+
+#### Admin 端 - 文章下架管理
+
+| 端 | 方法 | 路径 | 说明 |
+|----|------|------|------|
+| Admin | GET | `/admin/article/list` | 文章列表(所有状态) |
+| Admin | GET | `/admin/article/{id}` | 文章详情 |
+| Admin | POST | `/admin/article/{id}/takedown` | 下架文章 |
+
+**下架请求体：**
+```json
+{
+  "reason": "下架原因"
+}
+```
+
+**业务规则：**
+- 只有 SUPER_ADMIN 和 OP_ADMIN 可以下架文章
+- 下架后文章状态变为"已下架"，不再在 Portal 端显示
+
+#### Portal 端 - 文章展示与互动
+
+| 端 | 方法 | 路径 | 说明 |
+|----|------|------|------|
+| Portal | GET | `/portal/article/list` | 文章列表(仅已发布) |
+| Portal | GET | `/portal/article/{id}` | 文章详情 |
+| Portal | POST | `/portal/article/{id}/like` | 点赞/取消点赞 |
+| Portal | GET | `/portal/article/{id}/is-liked` | 检查是否已点赞 |
+
+**业务规则：**
+- 列表只显示 status=1(已发布) 的文章
 - 支持按关键字、标签筛选和排序
 - 排序规则: latest(最新)、hot(热门)
+- 查看文章详情时阅读数自动 +1
 
 ---
 
@@ -930,7 +993,8 @@ ai-studio-service/src/main/java/com/aistudio/service/controller/
 │   ├── ConsolePluginController.java          # Plugin 浏览
 │   ├── ConsoleTutorialController.java         # 教程浏览
 │   ├── ConsoleMcpController.java             # MCP 浏览
-│   └── ConsoleOutputController.java          # 个人产出
+│   ├── ConsoleOutputController.java          # 个人产出
+│   └── ConsoleArticleController.java        # 文章管理
 ├── admin/
 │   ├── AdminDashboardController.java         # 数据看板
 │   ├── AdminStatsController.java             # 产出统计
@@ -944,7 +1008,8 @@ ai-studio-service/src/main/java/com/aistudio/service/controller/
 │   ├── AdminTutorialController.java         # 教程管理
 │   ├── AdminMcpController.java               # MCP 管理
 │   ├── AdminOutputController.java           # 产出管理
-│   └── AdminExportController.java           # 数据导出
+│   ├── AdminExportController.java           # 数据导出
+│   └── AdminArticleController.java          # 文章管理
 └── open/
     └── OpenOutputController.java             # 开放产出接口
 ```

@@ -149,4 +149,92 @@ public class QuestionServiceImpl implements QuestionService {
                 .set(Question::getTakenDown, 1));
         log.info("问题下架: id={}", id);
     }
+
+    // ========== Console端 ==========
+    @Override
+    public PageResult listMyQuestions(Long userId, String keyword, Integer status, int page, int size) {
+        LambdaQueryWrapper<Question> q = new LambdaQueryWrapper<>();
+        q.eq(Question::getAuthorId, userId)
+                .eq(Question::getIsDeleted, 0);
+
+        if (StringUtils.hasText(keyword)) {
+            q.and(w -> w.like(Question::getTitle, keyword).or().like(Question::getContent, keyword));
+        }
+
+        if (status != null) {
+            if (status == 1) {
+                q.eq(Question::getHasBestAnswer, 0); // 待解决
+            } else if (status == 2) {
+                q.eq(Question::getHasBestAnswer, 1); // 已解决
+            }
+        }
+
+        q.orderByDesc(Question::getCreatedAt);
+
+        Page<Question> p = new Page<>(page, size);
+        Page<Question> result = questionMapper.selectPage(p, q);
+
+        return PageResult.of(result.getTotal(), result.getRecords());
+    }
+
+    @Override
+    public Question getQuestionForEdit(Long id, Long userId) {
+        Question question = questionMapper.selectById(id);
+        if (question == null || question.getIsDeleted() == 1) {
+            throw new BusinessException(404, "问题不存在");
+        }
+        if (!question.getAuthorId().equals(userId)) {
+            throw new BusinessException(403, "无权限查看他人的问题");
+        }
+        return question;
+    }
+
+    // ========== Admin端 ==========
+    @Override
+    public PageResult listAllQuestions(String keyword, Integer takenDown, int page, int size) {
+        LambdaQueryWrapper<Question> q = new LambdaQueryWrapper<>();
+        q.eq(Question::getIsDeleted, 0);
+
+        if (StringUtils.hasText(keyword)) {
+            q.and(w -> w.like(Question::getTitle, keyword).or().like(Question::getContent, keyword));
+        }
+
+        if (takenDown != null) {
+            q.eq(Question::getTakenDown, takenDown);
+        }
+
+        q.orderByDesc(Question::getCreatedAt);
+
+        Page<Question> p = new Page<>(page, size);
+        Page<Question> result = questionMapper.selectPage(p, q);
+
+        return PageResult.of(result.getTotal(), result.getRecords());
+    }
+
+    @Override
+    public Question getQuestionForAdmin(Long id) {
+        Question question = questionMapper.selectById(id);
+        if (question == null || question.getIsDeleted() == 1) {
+            throw new BusinessException(404, "问题不存在");
+        }
+        return question;
+    }
+
+    @Override
+    @Transactional
+    public void takedownQuestion(Long id, String reason) {
+        questionMapper.update(null, new LambdaUpdateWrapper<Question>()
+                .eq(Question::getId, id)
+                .set(Question::getTakenDown, 1));
+        log.info("管理员下架问题: id={}, reason={}", id, reason);
+    }
+
+    @Override
+    @Transactional
+    public void restoreQuestion(Long id) {
+        questionMapper.update(null, new LambdaUpdateWrapper<Question>()
+                .eq(Question::getId, id)
+                .set(Question::getTakenDown, 0));
+        log.info("管理员恢复问题: id={}", id);
+    }
 }

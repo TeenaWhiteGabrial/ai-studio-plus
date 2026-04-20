@@ -53,7 +53,7 @@ public class AdminMcpController {
     }
 
     @Operation(summary = "更新 MCP 服务器")
-    @PostMapping("/{id}")
+    @PostMapping("/update/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> update(@PathVariable Long id, @RequestBody McpServerRequest request) {
         mcpServerService.updateMcpServer(id, request, securityUtils.getCurrentUserId());
@@ -61,7 +61,7 @@ public class AdminMcpController {
     }
 
     @Operation(summary = "删除 MCP 服务器")
-    @PostMapping("/{id}")
+    @PostMapping("/delete/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         mcpServerService.deleteMcpServer(id, securityUtils.getCurrentUserId());
