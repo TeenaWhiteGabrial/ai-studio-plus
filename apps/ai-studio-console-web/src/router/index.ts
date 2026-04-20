@@ -38,6 +38,18 @@ const consoleRoutes = [
     meta: { title: '每日任务' },
   },
   {
+    path: '/console/article',
+    name: 'Article',
+    component: () => import('@/views/Article.vue'),
+    meta: { title: '文章管理' },
+  },
+  {
+    path: '/console/article/:id/edit',
+    name: 'ArticleEdit',
+    component: () => import('@/views/ArticleEdit.vue'),
+    meta: { title: '编辑文章' },
+  },
+  {
     path: '/console/resource',
     name: 'ResourceCenter',
     component: () => import('@/views/ResourceCenter.vue'),

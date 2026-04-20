@@ -98,10 +98,55 @@ const deleteKey = (_row: any) => {
   align-items: center;
 }
 
+.card-header span {
+  font-weight: 600;
+  color: var(--ai-text-primary);
+}
+
 .api-key {
-  background: #f5f7fa;
+  background: var(--ai-fill-light);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--ai-radius-sm);
   font-size: 12px;
+  color: var(--ai-text-secondary);
+  font-family: 'Courier New', monospace;
+  border: 1px solid var(--ai-border-subtle);
+}
+
+:deep(.el-card__header) {
+  border-bottom: 1px solid var(--ai-border-default);
+}
+
+/* Table styling */
+:deep(.el-table) {
+  border-radius: var(--ai-radius-md);
+  overflow: hidden;
+}
+
+:deep(.el-table th.el-table__cell) {
+  color: var(--ai-text-tertiary);
+  font-weight: 500;
+}
+
+:deep(.el-table td.el-table__cell) {
+  color: var(--ai-text-secondary);
+}
+
+/* Button styling */
+:deep(.el-button) {
+  font-weight: 500;
+}
+
+/* Tag styling */
+:deep(.el-tag--success) {
+  --el-tag-bg-color: hsla(142, 76%, 36%, 0.1);
+  --el-tag-border-color: hsla(142, 76%, 36%, 0.2);
+  --el-tag-text-color: var(--ai-success);
+}
+
+:deep(.el-tag--danger) {
+  --el-tag-bg-color: hsla(0, 72%, 51%, 0.1);
+  --el-tag-border-color: hsla(0, 72%, 51%, 0.2);
+  --el-tag-text-color: var(--ai-error);
 }
 </style>

@@ -3,8 +3,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import router from './auth'
 
 // 控制台 Web 的 baseURL: /ai-studio/v1/console
-const baseURL = '/ai-studio/v1/console'
-
+const baseURL = import.meta.env.VITE_API_BASE_URL
+const baseRouterUrl = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_BASE_ROUTER}`
 const request: AxiosInstance = axios.create({
   baseURL,
   timeout: 30000,
@@ -16,6 +16,12 @@ request.interceptors.request.use(
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+    // 判断是否为认证相关请求
+    if (config.url?.startsWith('/auth/')) {
+      config.baseURL = baseURL
+    } else {
+      config.baseURL = baseRouterUrl
     }
     return config
   },

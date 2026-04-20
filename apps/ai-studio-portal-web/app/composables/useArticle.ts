@@ -10,7 +10,7 @@ export function useArticle() {
    * 后端直接返回 PageResult{ total, records }
    */
   async function getArticleList(query: ArticleListQuery): Promise<ArticleListResponse> {
-    const res = await $fetch<ArticleListResponse>('/api/article/list', {
+    const res = await $fetch<ArticleListResponse>('/portal/article/list', {
       method: 'GET',
       params: query,
       baseURL: useRuntimeConfig().public.apiBase
@@ -22,7 +22,7 @@ export function useArticle() {
    * 获取文章详情
    */
   async function getArticleDetail(id: string): Promise<Article> {
-    const res = await $fetch<Article>(`/api/article/${id}`, {
+    const res = await $fetch<Article>(`/portal/article/${id}`, {
       method: 'GET',
       baseURL: useRuntimeConfig().public.apiBase
     })
@@ -30,54 +30,30 @@ export function useArticle() {
   }
 
   /**
-   * 创建文章
-   */
-  async function createArticle(data: ArticleFormData): Promise<{ id: number }> {
-    const res = await $fetch<{ id: number }>('/api/article', {
-      method: 'POST',
-      body: data,
-      baseURL: useRuntimeConfig().public.apiBase
-    })
-    return res
-  }
-
-  /**
-   * 更新文章
-   */
-  async function updateArticle(id: string, data: ArticleFormData): Promise<void> {
-    await $fetch(`/api/article/${id}`, {
-      method: 'PUT',
-      body: data,
-      baseURL: useRuntimeConfig().public.apiBase
-    })
-  }
-
-  /**
-   * 删除文章
-   */
-  async function deleteArticle(id: string): Promise<void> {
-    await $fetch(`/api/article/${id}`, {
-      method: 'DELETE',
-      baseURL: useRuntimeConfig().public.apiBase
-    })
-  }
-
-  /**
-   * 点赞文章
+   * 点赞/取消点赞文章
    */
   async function likeArticle(id: string): Promise<void> {
-    await $fetch(`/api/article/${id}/like`, {
+    await $fetch(`/portal/article/${id}/like`, {
       method: 'POST',
       baseURL: useRuntimeConfig().public.apiBase
     })
+  }
+
+  /**
+   * 检查是否已点赞
+   */
+  async function isArticleLiked(id: string): Promise<boolean> {
+    const res = await $fetch<{ isLiked: boolean }>(`/portal/article/${id}/is-liked`, {
+      method: 'GET',
+      baseURL: useRuntimeConfig().public.apiBase
+    })
+    return res?.isLiked || false
   }
 
   return {
     getArticleList,
     getArticleDetail,
-    createArticle,
-    updateArticle,
-    deleteArticle,
-    likeArticle
+    likeArticle,
+    isArticleLiked
   }
 }

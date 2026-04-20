@@ -127,3 +127,33 @@ export const teamApi = {
   // 移除团队成员
   removeMember: (teamId: number, userId: number) => request.post(`/team/${teamId}/members/${userId}/delete`),
 }
+
+// 社区管理 - 文章
+export const adminArticleApi = {
+  list: () => request.get('/article/list'),
+  detail: (id: number) => request.get(`/article/${id}`),
+  takedown: (id: number, reason: string) => request.post(`/article/${id}/takedown`, { reason }),
+}
+
+// 社区管理 - 问题
+export const adminQuestionApi = {
+  list: (params: { keyword?: string; takenDown?: number; page?: number; size?: number }) => request.get('/question/list', { params }),
+  detail: (id: number) => request.get(`/question/${id}`),
+  takedown: (id: number, reason: string) => request.post(`/question/${id}/takedown`, { reason }),
+  restore: (id: number) => request.post(`/question/${id}/restore`),
+}
+
+// 社区管理 - 回答
+export const adminAnswerApi = {
+  list: (params: { keyword?: string; questionId?: number; isBest?: number; page?: number; size?: number }) => request.get('/answer/list', { params }),
+  detail: (id: number) => request.get(`/answer/${id}`),
+  takedown: (id: number, reason: string) => request.post(`/answer/${id}/takedown`, { reason }),
+  restore: (id: number) => request.post(`/answer/${id}/restore`),
+}
+
+// 社区管理 - 评论
+export const adminCommentApi = {
+  list: (params: { targetType?: string; targetId?: number; keyword?: string; page?: number; size?: number }) => request.get('/comment/list', { params }),
+  detail: (id: number) => request.get(`/comment/${id}`),
+  delete: (id: number, reason: string) => request.post(`/comment/${id}/delete`, { reason }),
+}

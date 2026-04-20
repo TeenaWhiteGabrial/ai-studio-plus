@@ -71,6 +71,6 @@ export const defaultSiteConfig: SiteConfig = {
     name: 'AI Studio',
     description: 'AI 应用开发平台',
     logo: '',
-    icon: '/favicon.ico',
+    icon: '/favicon.png',
     contacts: '',
 }

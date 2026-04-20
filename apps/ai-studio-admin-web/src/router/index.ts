@@ -109,6 +109,30 @@ const adminRoutes = [
     component: () => import('@/views/audit/resource.vue'),
     meta: { title: '资源审核' },
   },
+  {
+    path: '/admin/community/article',
+    name: 'CommunityArticle',
+    component: () => import('@/views/community/article.vue'),
+    meta: { title: '文章管理' },
+  },
+  {
+    path: '/admin/community/question',
+    name: 'CommunityQuestion',
+    component: () => import('@/views/community/question.vue'),
+    meta: { title: '问题管理' },
+  },
+  {
+    path: '/admin/community/answer',
+    name: 'CommunityAnswer',
+    component: () => import('@/views/community/answer.vue'),
+    meta: { title: '回答管理' },
+  },
+  {
+    path: '/admin/community/comment',
+    name: 'CommunityComment',
+    component: () => import('@/views/community/comment.vue'),
+    meta: { title: '评论管理' },
+  },
 ]
 
 // 404 重定向

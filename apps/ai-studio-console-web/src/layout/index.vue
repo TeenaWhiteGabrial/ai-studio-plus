@@ -1,12 +1,14 @@
 <template>
   <el-container class="layout-container">
-    <el-aside width="200px" class="sidebar">
+    <el-aside :width="sidebarWidth" class="sidebar" :class="{ collapsed: isCollapsed }">
       <div class="logo">
-        <span class="logo-text">AI Studio</span>
+        <span class="logo-text" v-if="!isCollapsed">AI Studio</span>
+        <span class="logo-icon" v-else>A</span>
       </div>
       <el-menu
         :default-active="activeMenu"
         class="sidebar-menu"
+        :collapse="isCollapsed"
         router
       >
         <el-menu-item index="/console/dashboard">
@@ -38,18 +40,31 @@
           <span>个人设置</span>
         </el-menu-item>
       </el-menu>
+
+      <!-- 收起/展开按钮 -->
+      <div class="collapse-trigger" @click="toggleSidebar">
+        <el-icon>
+          <Fold v-if="!isCollapsed" />
+          <Expand v-else />
+        </el-icon>
+      </div>
     </el-aside>
 
     <el-container>
       <el-header class="header">
         <div class="header-left">
+          <el-icon class="toggle-btn" @click="toggleSidebar">
+            <Fold v-if="!isCollapsed" />
+            <Expand v-else />
+          </el-icon>
           <span class="page-title">{{ route.meta.title || '控制台' }}</span>
         </div>
         <div class="header-right">
+          <ThemeToggle />
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-avatar :size="32" icon="UserFilled" />
-              <span class="username">{{ userInfo?.real_name || userInfo?.username }}</span>
+              <span class="username" v-if="!isCollapsed">{{ userInfo?.real_name || userInfo?.username }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -69,9 +84,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import {
   HomeFilled,
   Key,
@@ -80,6 +96,9 @@ import {
   Box,
   DataLine,
   Setting,
+  Fold,
+  Expand,
+  UserFilled,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -88,7 +107,24 @@ const userStore = useUserStore()
 // @ts-ignore - userInfo is a ref that auto-unwraps in templates
 const userInfo = userStore.userInfo
 
+// 侧边栏收起状态
+const isCollapsed = ref(false)
+
+// 从 localStorage 读取侧边栏状态
+const savedCollapsed = localStorage.getItem('sidebarCollapsed')
+if (savedCollapsed === 'true') {
+  isCollapsed.value = true
+}
+
+const sidebarWidth = computed(() => isCollapsed.value ? '64px' : '200px')
+
 const activeMenu = computed(() => route.path)
+
+// 切换侧边栏收起/展开
+function toggleSidebar() {
+  isCollapsed.value = !isCollapsed.value
+  localStorage.setItem('sidebarCollapsed', isCollapsed.value.toString())
+}
 
 const handleCommand = (command: string) => {
   if (command === 'logout') {
@@ -106,7 +142,9 @@ const handleCommand = (command: string) => {
 }
 
 .sidebar {
-  background: #304156;
+  background: hsl(var(--card));
+  border-right: 1px solid hsl(var(--border));
+  transition: width 0.3s ease;
 }
 
 .logo {
@@ -114,46 +152,122 @@ const handleCommand = (command: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #263445;
+  background: hsl(var(--secondary));
+  border-bottom: 1px solid hsl(var(--border));
+  transition: all 0.3s ease;
 }
 
 .logo-text {
-  color: #fff;
+  color: hsl(var(--primary));
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.logo-icon {
+  color: hsl(var(--primary));
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.sidebar.collapsed .logo {
+  padding: 0;
 }
 
 .sidebar-menu {
   border-right: none;
   background: transparent;
-}
-
-.sidebar-menu:not(.el-menu--collapse) {
-  width: 200px;
+  padding: 8px 0;
 }
 
 :deep(.el-menu-item) {
-  color: #bfcbd9;
+  color: hsl(var(--muted-foreground));
+  margin: 4px 8px;
+  border-radius: calc(var(--radius) - 2px);
+  height: 40px;
+  line-height: 40px;
+  transition: all 0.2s ease;
 }
 
-:deep(.el-menu-item:hover),
+:deep(.el-menu-item:hover) {
+  background: hsl(var(--secondary));
+  color: hsl(var(--foreground));
+}
+
 :deep(.el-menu-item.is-active) {
-  background: #263445 !important;
-  color: #409eff;
+  background: hsl(var(--secondary));
+  color: hsl(var(--primary));
+  box-shadow: var(--ai-glow-sm);
+}
+
+:deep(.el-menu-item .el-icon) {
+  font-size: 18px;
+}
+
+.collapse-trigger {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 8px;
+  background: hsl(var(--secondary));
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s ease;
+}
+
+.collapse-trigger:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.sidebar.collapsed .collapse-trigger {
+  left: 50%;
 }
 
 .header {
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+  height: 60px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-right{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toggle-btn {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 28px;
+}
+
+.toggle-btn:hover {
+  background: hsl(var(--secondary));
 }
 
 .page-title {
   font-size: 16px;
   font-weight: 500;
+  color: hsl(var(--foreground));
 }
 
 .user-info {
@@ -161,14 +275,41 @@ const handleCommand = (command: string) => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  padding: 4px 12px;
+  border-radius: calc(var(--radius) - 2px);
+  transition: all 0.2s ease;
+}
+
+.user-info:hover {
+  background: hsl(var(--secondary));
 }
 
 .username {
   font-size: 14px;
+  color: hsl(var(--foreground));
+}
+
+:deep(.el-avatar) {
+  background: hsl(var(--primary));
+  color: white;
+}
+
+:deep(.el-dropdown-menu) {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+}
+
+:deep(.el-dropdown-menu__item) {
+  color: hsl(var(--foreground));
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background: hsl(var(--secondary));
+  color: hsl(var(--primary));
 }
 
 .main-content {
-  background: #f5f7fa;
+  background: hsl(var(--background));
   padding: 20px;
 }
 </style>

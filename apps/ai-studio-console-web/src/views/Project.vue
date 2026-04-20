@@ -65,4 +65,52 @@ const toggleStatus = (row: any) => {
   justify-content: space-between;
   align-items: center;
 }
+
+.card-header span {
+  font-weight: 600;
+  color: var(--ai-text-primary);
+}
+
+:deep(.el-card__header) {
+  border-bottom: 1px solid var(--ai-border-default);
+}
+
+/* Table styling */
+:deep(.el-table) {
+  border-radius: var(--ai-radius-md);
+  overflow: hidden;
+}
+
+:deep(.el-table th.el-table__cell) {
+  color: var(--ai-text-tertiary);
+  font-weight: 500;
+}
+
+:deep(.el-table td.el-table__cell) {
+  color: var(--ai-text-secondary);
+}
+
+/* Button styling */
+:deep(.el-button) {
+  font-weight: 500;
+}
+
+/* Tag styling */
+:deep(.el-tag--success) {
+  --el-tag-bg-color: hsla(142, 76%, 36%, 0.1);
+  --el-tag-border-color: hsla(142, 76%, 36%, 0.2);
+  --el-tag-text-color: var(--ai-success);
+}
+
+:deep(.el-tag--warning) {
+  --el-tag-bg-color: hsla(38, 92%, 50%, 0.1);
+  --el-tag-border-color: hsla(38, 92%, 50%, 0.2);
+  --el-tag-text-color: var(--ai-warning);
+}
+
+:deep(.el-tag--info) {
+  --el-tag-bg-color: hsla(199, 89%, 48%, 0.1);
+  --el-tag-border-color: hsla(199, 89%, 48%, 0.2);
+  --el-tag-text-color: var(--ai-info);
+}
 </style>
