@@ -110,6 +110,7 @@ public class UserServiceImpl implements UserService {
         user.setDeptId(request.getDeptId());
         user.setTeamId(request.getTeamId());
         user.setEmail(request.getEmail());
+        user.setAvatar(request.getAvatar());
         user.setStatus(1);
         userMapper.insert(user);
         // 插入用户角色关联
@@ -142,6 +143,7 @@ public class UserServiceImpl implements UserService {
         // 团队ID可以修改
         user.setTeamId(request.getTeamId());
         if (request.getEmail() != null) user.setEmail(request.getEmail());
+        if (request.getAvatar() != null) user.setAvatar(request.getAvatar());
         if (request.getStatus() != null) user.setStatus(request.getStatus());
         userMapper.updateById(user);
     }

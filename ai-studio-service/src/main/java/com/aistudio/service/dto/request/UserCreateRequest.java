@@ -18,6 +18,7 @@ public class UserCreateRequest {
     private Long deptId;
     private Long teamId;  // 团队ID
     private String email;
+    private String avatar;  // 头像URL
 
     /** 角色ID列表，若为空或null则默认分配"普通用户"角色 */
     private List<Long> roleIds;

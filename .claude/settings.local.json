@@ -109,7 +109,8 @@
       "Bash(claude update:*)",
       "Bash(set CLAUDE_CODE_GIT_BASH_PATH=D:\\\\Git\\\\bin\\\\bash.exe && claude update)",
       "Bash(\"D:\\\\Git\\\\bin\\\\bash.exe\" -c \"claude update\")",
-      "Bash(cd \"e:\\\\综合项目开发\\\\ai-studio\\\\apps\\\\ai-studio-console-web\" && rm -rf node_modules/.vite)"
+      "Bash(cd \"e:\\\\综合项目开发\\\\ai-studio\\\\apps\\\\ai-studio-console-web\" && rm -rf node_modules/.vite)",
+      "Bash(find ai-studio-service:*)"
     ]
   }
 }

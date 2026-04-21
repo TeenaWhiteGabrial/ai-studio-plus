@@ -36,4 +36,12 @@ export interface UserInfo {
      * 用户token
      */
     token?: string
+    /** 部门ID */
+    deptId?: number
+    /** 部门名称 */
+    deptName?: string
+    /** 团队ID */
+    teamId?: number
+    /** 团队名称 */
+    teamName?: string
 }

@@ -8,5 +8,6 @@ public class UserUpdateRequest {
     private Long deptId;
     private Long teamId;  // 团队ID
     private String email;
+    private String avatar;  // 头像URL
     private Integer status;
 }

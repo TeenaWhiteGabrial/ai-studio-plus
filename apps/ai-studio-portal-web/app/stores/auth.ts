@@ -59,24 +59,42 @@ export const useAuthStore = defineStore('authStore', {
             try {
                 // 登录前先清理一遍登录信息
                 this.clearLoginInfo()
-                const response = await useSimpleFetch<{
+
+                // 第一步：获取Token
+                const tokenResponse = await useSimpleFetch<{
                     code: number
                     msg: string
-                    data: { access_token: string,expires_in: number }
-                }>('/prod-api/auth/login', {
+                    data: { token: string }
+                }>('/prod-api/auth/token', {
                     method: 'POST',
-                    body: { 
+                    body: {
                         username,
                         password,
                         code,
                         uuid
                     }})
-                if (response.code === 200 && response.data) {
-                    // 存储token到cookie
-                    this.setToken(response.data.data.access_token)
+                if (tokenResponse.code !== 200 || !tokenResponse.data) {
+                    return { success: false, message: tokenResponse.msg || '登录失败' }
+                }
+
+                // 存储token到cookie
+                this.setToken(tokenResponse.data.token)
+
+                // 第二步：获取用户信息
+                const userInfoResponse = await useSimpleFetch<{
+                    code: number
+                    msg: string
+                    data: UserInfo
+                }>('/prod-api/auth/user-info', {
+                    method: 'GET'
+                })
+
+                if (userInfoResponse.code === 200 && userInfoResponse.data) {
+                    // 设置用户信息
+                    this.setLoginInfo(userInfoResponse.data)
                     return { success: true, message: '登录成功' }
                 } else {
-                    return { success: false, message: response.msg || '登录失败' }
+                    return { success: false, message: userInfoResponse.msg || '获取用户信息失败' }
                 }
             } catch (err) {
                 return { success: false, message: err instanceof Error ? err.message : '登录请求失败' }

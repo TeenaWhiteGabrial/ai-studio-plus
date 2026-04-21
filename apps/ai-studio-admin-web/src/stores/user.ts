@@ -9,6 +9,12 @@ interface UserInfo {
   real_name: string
   roles: string[]
   token: string
+  avatar?: string        // 头像URL
+  dept_id?: number       // 部门ID
+  dept_name?: string     // 部门名称
+  team_id?: number       // 团队ID
+  team_name?: string     // 团队名称
+  email?: string         // 邮箱
 }
 
 export const useUserStore = defineStore('user', () => {
@@ -44,14 +50,25 @@ export const useUserStore = defineStore('user', () => {
     const encryptedPassword = encryptor.encrypt(password)
     if (!encryptedPassword) throw new Error('密码加密失败')
 
-    const res = await request.post('/auth/login', { username, password: encryptedPassword }) as any
-    // 登录失败时，后端返回 code=401，这里直接抛出错误让调用方处理
-    if (res.code !== 200) {
-      throw new Error(res.message || '登录失败')
+    // 获取Token
+    const tokenRes = await request.post('/auth/token', { username, password: encryptedPassword }) as any
+    if (tokenRes.code !== 200) {
+      throw new Error(tokenRes.message || '登录失败')
     }
-    const data = res.data
+
+    // 存储Token
+    const token = tokenRes.data.token
+    localStorage.setItem('token', token)
+
+    // 获取用户信息
+    const userRes = await request.get('/auth/user-info') as any
+    if (userRes.code !== 200) {
+      throw new Error(userRes.message || '获取用户信息失败')
+    }
+
+    const data = userRes.data
+    data.token = token // 将token添加到用户信息中
     userInfo.value = data
-    localStorage.setItem('token', data.token)
     localStorage.setItem('userInfo', JSON.stringify(data))
   }
 

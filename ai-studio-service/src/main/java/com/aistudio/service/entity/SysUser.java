@@ -21,6 +21,7 @@ public class SysUser {
     private Long deptId;
     private String email;
     private Integer status;
+    private String avatar;          // 头像URL
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
