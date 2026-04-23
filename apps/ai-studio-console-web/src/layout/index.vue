@@ -42,12 +42,12 @@
       </el-menu>
 
       <!-- 收起/展开按钮 -->
-      <div class="collapse-trigger" @click="toggleSidebar">
+      <!-- <div class="collapse-trigger" @click="toggleSidebar">
         <el-icon>
           <Fold v-if="!isCollapsed" />
           <Expand v-else />
         </el-icon>
-      </div>
+      </div> -->
     </el-aside>
 
     <el-container>
@@ -63,7 +63,13 @@
           <ThemeToggle />
           <el-dropdown @command="handleCommand">
             <span class="user-info">
-              <el-avatar :size="32" icon="UserFilled" />
+              <!-- 头像显示 -->
+              <el-avatar
+                v-if="userInfo?.avatar"
+                :src="userInfo.avatar"
+                :size="32"
+              />
+              <el-avatar v-else :size="32" icon="UserFilled" />
               <span class="username" v-if="!isCollapsed">{{ userInfo?.real_name || userInfo?.username }}</span>
             </span>
             <template #dropdown>

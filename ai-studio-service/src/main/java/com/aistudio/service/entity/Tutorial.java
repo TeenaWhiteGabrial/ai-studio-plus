@@ -29,4 +29,9 @@ public class Tutorial {
     private Integer viewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // 版本控制相关字段
+    private Long latestVersionId;
+    private String latestVersion;
+    private Integer totalVersions;
 }

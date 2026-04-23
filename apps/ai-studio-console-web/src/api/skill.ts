@@ -30,10 +30,6 @@ export const skillApi = {
     formData.append('file', file)
     formData.append('skillName', skillName)
     formData.append('version', version)
-    return request.post('/skill/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    return request.post('/skill/upload', formData)
   },
 }

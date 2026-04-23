@@ -58,11 +58,11 @@ public class SecurityConfig {
                 // 公开接口 - Spring Security 使用不含 context-path 的路径
                 .requestMatchers(
                     // 基础公开接口
-                    "/auth/login", "/auth/public-key", "/auth/gen-hash",
+                    "/auth/login", "/auth/public-key", "/auth/gen-hash", "/auth/token", "/auth/user-info",
                     // Admin 端公开接口
-                    "/admin/auth/login", "/admin/auth/public-key", "/admin/auth/gen-hash",
+                    "/admin/auth/login", "/admin/auth/public-key", "/admin/auth/gen-hash", "/admin/auth/token", "/admin/auth/user-info",
                     // Console 端公开接口
-                    "/console/auth/login", "/console/auth/public-key",
+                    "/console/auth/login", "/console/auth/public-key", "/console/auth/token", "/console/auth/user-info",
                     // Open 开放接口
                     "/open/**",
                     // Portal 公开接口（无需认证）
@@ -70,6 +70,11 @@ public class SecurityConfig {
                     // Swagger
                     "/doc.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**"
                 ).permitAll()
+                // 认证接口（需登录但不限角色）
+                .requestMatchers(
+                    "/auth/avatar", "/auth/update-profile", "/auth/change-password",
+                    "/console/auth/avatar", "/console/auth/update-profile", "/console/auth/change-password"
+                ).authenticated()
                 // Admin 端接口（需特定角色）
                 .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "OP_ADMIN", "DEPT_ADMIN")
                 // Console 端接口

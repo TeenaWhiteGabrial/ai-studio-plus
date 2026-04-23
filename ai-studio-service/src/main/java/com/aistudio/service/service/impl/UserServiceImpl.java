@@ -3,6 +3,8 @@ package com.aistudio.service.service.impl;
 import com.aistudio.service.common.SecurityUtils;
 import com.aistudio.service.common.exception.BusinessException;
 import com.aistudio.service.dto.request.BatchUserImportRequest;
+import com.aistudio.service.dto.request.ChangePasswordRequest;
+import com.aistudio.service.dto.request.UpdateProfileRequest;
 import com.aistudio.service.dto.request.UserCreateRequest;
 import com.aistudio.service.dto.request.UserUpdateRequest;
 import com.aistudio.service.dto.response.PageResult;
@@ -257,6 +259,54 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(403, "不能禁用当前登录用户");
         }
         user.setStatus(status);
+        userMapper.updateById(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+
+        // 只能修改自己的密码
+        if (!securityUtils.getCurrentUserId().equals(userId)) {
+            throw new BusinessException(403, "只能修改自己的密码");
+        }
+
+        // 验证旧密码
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new BusinessException(400, "旧密码不正确");
+        }
+
+        // 更新密码
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userMapper.updateById(user);
+    }
+
+    @Override
+    public void updateProfile(Long userId, UpdateProfileRequest request) {
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+
+        // 只能修改自己的资料
+        if (!securityUtils.getCurrentUserId().equals(userId)) {
+            throw new BusinessException(403, "只能修改自己的资料");
+        }
+
+        // 更新邮箱
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+
+        // 更新头像
+        if (request.getAvatar() != null) {
+            user.setAvatar(request.getAvatar());
+        }
+
         userMapper.updateById(user);
     }
 }

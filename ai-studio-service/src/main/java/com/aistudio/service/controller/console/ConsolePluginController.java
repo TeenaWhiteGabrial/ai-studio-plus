@@ -3,8 +3,11 @@ package com.aistudio.service.controller.console;
 import com.aistudio.service.common.Result;
 import com.aistudio.service.common.SecurityUtils;
 import com.aistudio.service.dto.request.PluginRequest;
+import com.aistudio.service.dto.request.PluginVersionRequest;
 import com.aistudio.service.dto.response.PageResult;
+import com.aistudio.service.dto.response.PluginVersionVO;
 import com.aistudio.service.entity.Plugin;
+import com.aistudio.service.entity.PluginVersion;
 import com.aistudio.service.service.OssService;
 import com.aistudio.service.service.PluginService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Console - Plugin 上传/管理
@@ -72,6 +76,20 @@ public class ConsolePluginController {
     @GetMapping("/{id}/download")
     public Result<String> download(@PathVariable Long id) {
         return Result.success(pluginService.downloadPlugin(id));
+    }
+
+    @Operation(summary = "Plugin 版本列表")
+    @GetMapping("/{id}/versions")
+    public Result<List<PluginVersionVO>> versions(@PathVariable Long id) {
+        return Result.success(pluginService.getVersions(id));
+    }
+
+    @Operation(summary = "发布新版本")
+    @PostMapping("/{id}/versions")
+    public Result<String> publishVersion(
+            @PathVariable Long id,
+            @Valid @RequestBody PluginVersionRequest request) {
+        return Result.success(pluginService.publishVersion(id, request, securityUtils.getCurrentUserId()));
     }
 
     @Operation(summary = "上传 Plugin 文件到 OSS")

@@ -52,7 +52,14 @@
         <div class="header-right">
           <el-dropdown @command="handleCommand">
             <div class="user-info">
-              <el-avatar size="small" class="user-avatar">
+              <!-- 头像显示 -->
+              <el-avatar
+                v-if="userStore.userInfo?.avatar"
+                :src="userStore.userInfo.avatar"
+                size="small"
+                class="user-avatar"
+              />
+              <el-avatar v-else size="small" class="user-avatar">
                 {{ userStore.userInfo?.real_name?.charAt(0) || 'U' }}
               </el-avatar>
               <span class="username">{{ userStore.userInfo?.real_name || userStore.userInfo?.username }}</span>

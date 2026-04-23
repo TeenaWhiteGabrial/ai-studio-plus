@@ -28,6 +28,7 @@ spring:
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.aistudio.service.entity
+  type-handlers-package: com.aistudio.service.config
   global-config:
     db-config:
       id-type: auto
@@ -37,6 +38,7 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    default-enum-type-handler: org.apache.ibatis.type.EnumTypeHandler
 
 # JWT 配置
 jwt:

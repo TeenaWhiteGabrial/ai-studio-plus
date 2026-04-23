@@ -25,6 +25,28 @@ export const useAuthStore = defineStore('authStore', {
             this.roles = []
             removeCookieToken()
         },
+
+        /**
+         * 修改密码
+         */
+        async changePassword(oldPassword: string, newPassword: string) {
+            try {
+                const res = await useSimpleFetch<{
+                    code: number
+                    msg: string
+                }>('/prod-api/auth/change-password', {
+                    method: 'POST',
+                    body: { oldPassword, newPassword }
+                })
+                if (res.code === 200) {
+                    return { success: true, message: '密码修改成功' }
+                } else {
+                    return { success: false, message: res.msg || '密码修改失败' }
+                }
+            } catch (err) {
+                return { success: false, message: err instanceof Error ? err.message : '密码修改请求失败' }
+            }
+        },
         /**
          * 设置除token外的登录信息
          * @param info 登录信息

@@ -1,5 +1,6 @@
 package com.aistudio.service.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -13,14 +14,16 @@ public class PluginRequest {
     private String category;
     private String icon;
 
-    @NotBlank(message = "版本号不能为空")
-    private String version;
-
-    @NotBlank(message = "文件OSS Key不能为空")
+    /**
+     * OSS key（前端直传后返回）
+     */
+    @NotBlank(message = "请上传插件文件")
+    @JsonProperty("fileOssKey")
     private String fileOssKey;
 
-    @NotBlank(message = "文件URL不能为空")
-    private String fileUrl;
-
+    /**
+     * 文件大小
+     */
+    @JsonProperty("fileSize")
     private Long fileSize;
 }

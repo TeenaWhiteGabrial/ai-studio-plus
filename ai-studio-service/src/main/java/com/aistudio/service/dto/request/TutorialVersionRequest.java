@@ -9,7 +9,7 @@ import lombok.Data;
  * 发布新版本请求
  */
 @Data
-public class SkillVersionRequest {
+public class TutorialVersionRequest {
 
     /**
      * 版本升级类型
@@ -17,14 +17,6 @@ public class SkillVersionRequest {
     @NotNull(message = "请选择版本升级类型")
     @JsonProperty("bumpType")
     private VersionBumpType bumpType;
-
-    @NotBlank(message = "请上传技能文件")
-    @JsonProperty("ossKey")
-    private String ossKey;
-
-    @NotNull(message = "文件大小不能为空")
-    @JsonProperty("fileSize")
-    private Long fileSize;
 
     @JsonProperty("changelog")
     private String changelog;

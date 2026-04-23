@@ -4,6 +4,7 @@ import com.aistudio.service.common.Result;
 import com.aistudio.service.common.SecurityUtils;
 import com.aistudio.service.dto.request.TutorialRequest;
 import com.aistudio.service.dto.response.PageResult;
+import com.aistudio.service.dto.response.TutorialVersionVO;
 import com.aistudio.service.entity.Tutorial;
 import com.aistudio.service.service.OssService;
 import com.aistudio.service.service.TutorialService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Console - 教程上传/管理
@@ -67,6 +69,20 @@ public class ConsoleTutorialController {
     public Result<Void> delete(@PathVariable Long id) {
         tutorialService.deleteTutorial(id, securityUtils.getCurrentUserId());
         return Result.success();
+    }
+
+    @Operation(summary = "教程版本列表")
+    @GetMapping("/{id}/versions")
+    public Result<List<TutorialVersionVO>> versions(@PathVariable Long id) {
+        return Result.success(tutorialService.getVersions(id));
+    }
+
+    @Operation(summary = "发布新版本")
+    @PostMapping("/{id}/versions")
+    public Result<String> publishVersion(
+            @PathVariable Long id,
+            @RequestParam(required = false) String changelog) {
+        return Result.success(tutorialService.publishVersion(id, changelog, securityUtils.getCurrentUserId()));
     }
 
     @Operation(summary = "上传视频到 OSS")

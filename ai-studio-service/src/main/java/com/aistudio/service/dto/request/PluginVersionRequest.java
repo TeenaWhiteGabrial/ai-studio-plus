@@ -9,7 +9,7 @@ import lombok.Data;
  * 发布新版本请求
  */
 @Data
-public class SkillVersionRequest {
+public class PluginVersionRequest {
 
     /**
      * 版本升级类型
@@ -18,7 +18,7 @@ public class SkillVersionRequest {
     @JsonProperty("bumpType")
     private VersionBumpType bumpType;
 
-    @NotBlank(message = "请上传技能文件")
+    @NotBlank(message = "请上传插件文件")
     @JsonProperty("ossKey")
     private String ossKey;
 

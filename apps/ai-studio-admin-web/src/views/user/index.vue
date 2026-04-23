@@ -11,11 +11,17 @@
         <el-form-item>
           <el-button type="primary" @click="loadList">搜索</el-button>
           <el-button type="success" @click="openCreate">新建用户</el-button>
-          <el-button type="info" @click="openImportDialog">批量导入</el-button>
+          <!-- <el-button type="info" @click="openImportDialog">批量导入</el-button> -->
         </el-form-item>
       </el-form>
 
       <el-table :data="list" v-loading="loading" border>
+        <el-table-column label="头像" width="80" align="center">
+          <template #default="{ row }">
+            <el-image v-if="row.avatar" :src="row.avatar" fit="cover" class="table-avatar" :preview-src-list="[row.avatar]" />
+            <el-icon v-else :size="24" class="default-avatar"><User /></el-icon>
+          </template>
+        </el-table-column>
         <el-table-column prop="username" label="账号" width="120" />
         <el-table-column prop="real_name" label="姓名" min-width="100" />
         <el-table-column prop="dept_name" label="部门" width="150" />
@@ -87,6 +93,35 @@
           </el-select>
         </el-form-item>
         <el-form-item label="邮箱"><el-input v-model="form.email" placeholder="请输入邮箱" /></el-form-item>
+        <el-form-item label="头像">
+          <div class="avatar-upload-container">
+            <el-upload
+              class="avatar-uploader"
+              :show-file-list="false"
+              :before-upload="handleAvatarUpload"
+              accept="image/*"
+              :disabled="uploadingAvatar"
+            >
+              <div v-if="form.avatar" class="avatar-preview-wrapper">
+                <el-image :src="form.avatar" fit="cover" class="avatar-preview" :preview-src-list="[form.avatar]" />
+                <div class="avatar-mask">
+                  <el-icon :size="20"><ZoomIn /></el-icon>
+                  <span class="mask-text">点击更换</span>
+                </div>
+              </div>
+              <div v-else class="avatar-placeholder">
+                <el-icon :size="32"><Plus /></el-icon>
+                <div class="placeholder-text">上传头像</div>
+              </div>
+            </el-upload>
+            <div v-if="form.avatar" class="avatar-actions">
+              <el-button size="small" type="danger" plain @click="form.avatar = ''" :disabled="uploadingAvatar">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </div>
+          </div>
+        </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="form.status"><el-radio :value="1">正常</el-radio><el-radio :value="0">禁用</el-radio></el-radio-group>
         </el-form-item>
@@ -211,11 +246,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Download, UploadFilled } from '@element-plus/icons-vue'
+import { Download, UploadFilled, User, Plus, ZoomIn, Delete } from '@element-plus/icons-vue'
 import { userApi, departmentApi, teamApi } from '@/api'
 import { useUserStore } from '@/stores/user'
 import type { FormInstance } from 'element-plus'
 import * as XLSX from 'xlsx'
+import request from '@/utils/request'
 
 const userStore = useUserStore()
 const isAdmin = computed(() => userStore.isAdmin())
@@ -227,13 +263,14 @@ const filteredRoles = computed(() => {
 })
 
 const loading = ref(false), submitting = ref(false)
+const uploadingAvatar = ref(false)
 const list = ref<any[]>([]), total = ref(0)
 const dialogVisible = ref(false), editId = ref<number | null>(null)
 const roleDialogVisible = ref(false), currentUserId = ref<number | null>(null)
 const allRoles = ref<any[]>([]), selectedRole = ref<number | undefined>(undefined)
 const formRef = ref<FormInstance>()
 const query = reactive({ page: 1, size: 10, keyword: '', dept_id: null as number | null })
-const form = reactive({ username: '', password: '', real_name: '', dept_id: null as number | null, email: '', status: 1, team_id: null as number | null })
+const form = reactive({ username: '', password: '', real_name: '', dept_id: null as number | null, email: '', avatar: '', status: 1, team_id: null as number | null })
 const rules = {
   username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   password: [
@@ -368,9 +405,45 @@ async function loadList() {
   try { const res = await userApi.list(query) as any; list.value = res.data.records; total.value = res.data.total }
   finally { loading.value = false }
 }
+async function handleAvatarUpload(file: any) {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+    return false
+  }
+
+  // 使用 FormData 上传文件
+  const formData = new FormData()
+  formData.append('file', file)
+
+  uploadingAvatar.value = true
+  try {
+    const res = await request.post('/auth/avatar', formData) as any
+    if (res.code === 200 && res.data) {
+      // 使用 oss_url 获取完整 URL
+      form.avatar = res.data.oss_url || res.data.ossUrl
+      ElMessage.success('头像上传成功')
+    } else {
+      ElMessage.error(res.message || '头像上传失败')
+    }
+  } catch (error: any) {
+    ElMessage.error(error.message || '头像上传失败')
+  } finally {
+    uploadingAvatar.value = false
+  }
+
+  return false // 阻止 el-upload 默認上傳行为
+}
+
 function openCreate() {
   editId.value = null
-  Object.assign(form, { username: '', password: '', real_name: '', dept_id: null, email: '', status: 1, team_id: null })
+  Object.assign(form, { username: '', password: '', real_name: '', dept_id: null, email: '', avatar: '', status: 1, team_id: null })
   teams.value = []
   loadActiveDepartments()
   // DEPT_ADMIN 部门固定，直接加载可用团队
@@ -387,8 +460,16 @@ function openEdit(row: any) {
 }
 async function handleSubmit() {
   await formRef.value?.validate(); submitting.value = true
-  try { editId.value ? await userApi.update(editId.value, form) : await userApi.create(form); ElMessage.success('操作成功'); dialogVisible.value = false; loadList() }
-  finally { submitting.value = false }
+  try {
+    if (editId.value) {
+      // 编辑用户时排除 password 字段
+      const { password, ...updateData } = form as any
+      await userApi.update(editId.value, updateData)
+    } else {
+      await userApi.create(form)
+    }
+    ElMessage.success('操作成功'); dialogVisible.value = false; loadList()
+  } finally { submitting.value = false }
 }
 async function handleDelete(row: any) {
   await ElMessageBox.confirm(`确认删除用户 "${row.username}"？`, '提示', { type: 'warning' })
@@ -638,5 +719,106 @@ async function handleImport() {
 
 .text-gray {
   color: #909399;
+}
+
+.avatar-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.avatar-uploader {
+  :deep(.el-upload) {
+    display: block;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px dashed #d9d9d9;
+    background: #f5f7fa;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--el-color-primary);
+      background: #ecf5ff;
+    }
+  }
+}
+
+.avatar-preview-wrapper {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+
+  .avatar-preview {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  .avatar-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: #fff;
+
+    .el-icon {
+      margin-bottom: 4px;
+    }
+
+    .mask-text {
+      font-size: 12px;
+    }
+  }
+
+  &:hover .avatar-mask {
+    opacity: 1;
+  }
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #8c939d;
+
+  .el-icon {
+    margin-bottom: 6px;
+  }
+
+  .placeholder-text {
+    font-size: 12px;
+  }
+}
+
+.avatar-actions {
+  margin-top: 12px;
+}
+
+.table-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.default-avatar {
+  color: #c0c4cc;
 }
 </style>

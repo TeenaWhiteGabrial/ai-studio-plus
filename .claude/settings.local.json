@@ -110,7 +110,26 @@
       "Bash(set CLAUDE_CODE_GIT_BASH_PATH=D:\\\\Git\\\\bin\\\\bash.exe && claude update)",
       "Bash(\"D:\\\\Git\\\\bin\\\\bash.exe\" -c \"claude update\")",
       "Bash(cd \"e:\\\\综合项目开发\\\\ai-studio\\\\apps\\\\ai-studio-console-web\" && rm -rf node_modules/.vite)",
-      "Bash(find ai-studio-service:*)"
+      "Bash(find ai-studio-service:*)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && mvn clean compile 2>&1 | grep -E \"WARNING|WARNING\")",
+      "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && mvn clean compile -Xlint:deprecation -Xlint:unchecked 2>&1 | tail -100)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && mvn clean compile 2>&1 | tail -30)",
+      "Bash(netstat -ano | findstr :8080)",
+      "Bash(taskkill /F /PID 17548)",
+      "Bash(taskkill //F //PID 17548)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && mvn spring-boot:run)",
+      "Bash(taskkill //F //PID 15184)",
+      "Bash(taskkill //F //PID 24180 && sleep 3)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && timeout 80 mvn spring-boot:run 2>&1 | tail -100)",
+      "Bash(netstat -ano | findstr :8080 | findstr LISTENING)",
+      "Bash(taskkill //F //PID 22776)",
+      "Bash(cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && timeout 80 mvn spring-boot:run 2>&1 | tail -80)",
+      "Bash(wmic process:*)",
+      "Bash(taskkill //F //PID 24824 && sleep 3 && cd \"E:/综合项目开发/ai-studio/ai-studio-service\" && timeout 60 mvn spring-boot:run 2>&1 | tail -80)",
+      "Bash(netstat -ano | findstr LISTENING | findstr :8080)",
+      "Bash(C:\\\\\\\\Users\\\\\\\\zhangkunlun01\\\\\\\\.local\\\\\\\\bin\\\\\\\\claude.exe update:*)",
+      "Bash(mysql -h 39.105.212.130 -uroot -pDevRoot@2026 ai-studio-plus)",
+      "Bash(echo \"SQL 执行结果: $?\")"
     ]
   }
 }

@@ -9,19 +9,19 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * Skill 版本实体
+ * Tutorial 版本实体
  */
 @Data
-@TableName("skill_version")
-public class SkillVersion {
+@TableName("tutorial_version")
+public class TutorialVersion {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 关联 skill.id
+     * 关联 tutorial.id
      */
-    private Long skillId;
+    private Long tutorialId;
 
     /**
      * 版本号，如：1.2.3
@@ -47,21 +47,6 @@ public class SkillVersion {
      * 版本数字表示，用于排序（major*10000 + minor*100 + patch）
      */
     private Integer versionNumber;
-
-    /**
-     * ZIP包OSS存储key
-     */
-    private String ossKey;
-
-    /**
-     * OSS访问URL
-     */
-    private String ossUrl;
-
-    /**
-     * 文件大小（字节）
-     */
-    private Long fileSize;
 
     /**
      * 版本变更说明

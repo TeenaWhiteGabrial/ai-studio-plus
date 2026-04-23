@@ -20,11 +20,13 @@
 | 端 | 方法 | 路径 | 说明 |
 |----|------|------|------|
 | 通用 | GET | `/auth/public-key` | 获取 RSA 公钥 |
-| 通用 | POST | `/auth/login` | 用户登录 |
+| 通用 | POST | `auth/token` | 登录获取token |
+| 通用 | GET | `/auth/user-info` | 获取用户信息 |
 
 **业务规则：**
 - 密码传输使用 RSA 加密
 - 登录成功后返回 JWT Token
+- 根据Token获取用户信息
 - 所有端（Admin/Console/Portal）使用同一套登录接口
 
 ---

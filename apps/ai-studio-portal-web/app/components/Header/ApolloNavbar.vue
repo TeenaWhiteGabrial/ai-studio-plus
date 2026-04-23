@@ -76,7 +76,22 @@
                 class="flex items-center text-sm h-full"
                 :style="`line-height:${height}`"
               >
-                <span class="ml-2 text-neutral-700">欢迎回来，{{ authStore.userName }}</span>
+                <!-- 头像显示 -->
+                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary shadow-sm mr-2 flex items-center justify-center bg-gray-100">
+                  <img
+                    v-if="authStore.avatar"
+                    :src="authStore.avatar"
+                    alt="用户头像"
+                    class="w-full h-full object-cover"
+                  />
+                  <Icon
+                    v-else
+                    name="material-symbols:person"
+                    size="24"
+                    class="text-gray-400"
+                  />
+                </div>
+                <span class="text-neutral-700">欢迎回来，{{ authStore.userName }}</span>
                 <Icon class="ml-3 transition-all duration-300 group-hover:rotate-180" name="material-symbols:keyboard-arrow-down" size="18"  />
               </div>
               

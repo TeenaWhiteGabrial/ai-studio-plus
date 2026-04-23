@@ -1,4 +1,6 @@
 export * from './skill'
 export * from './plugin'
 export * from './tutorial'
+export * from './mcp'
 export * from './article'
+export * from './auth'

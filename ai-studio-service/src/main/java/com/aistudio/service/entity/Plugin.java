@@ -17,7 +17,6 @@ public class Plugin {
     private String description;
     private String category;
     private String icon;
-    private String version;
     private String fileOssKey;
     private String fileUrl;
     private Long fileSize;
@@ -28,4 +27,9 @@ public class Plugin {
     private Integer downloadCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // 版本控制相关字段
+    private Long latestVersionId;
+    private String latestVersion;
+    private Integer totalVersions;
 }

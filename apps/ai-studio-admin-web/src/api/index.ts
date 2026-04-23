@@ -48,6 +48,8 @@ export const pluginApi = {
   audit: (id: number, data: { status: number; reviewComment?: string }) => request.post(`/plugin/${id}/audit`, data),
   // 下载
   download: (id: number) => request.get(`/plugin/${id}/download`),
+  // 版本管理
+  versions: (id: number) => request.get(`/plugin/${id}/versions`),
 }
 
 export const tutorialApi = {
@@ -101,14 +103,20 @@ export const roleApi = {
 export const userApi = {
   list: (params: any) => request.get('/user/list', { params }),
   create: (data: any) => request.post('/user', data),
-  update: (id: number, data: any) => request.post(`/user/${id}`, data),
-  delete: (id: number) => request.post(`/user/${id}/delete`),
+  update: (id: number, data: any) => request.post(`/user/update/${id}`, data),
+  delete: (id: number) => request.post(`/user/delete/${id}`),
   assignRoles: (id: number, roleIds: number[]) => request.post(`/user/${id}/roles`, roleIds),
   roles: () => request.get('/user/roles'),
   // 批量导入
   batchImport: (data: any[]) => request.post('/user/batch', data),
   // 更新用户状态
   updateStatus: (id: number, status: number) => request.post(`/user/${id}/status`, null, { params: { status } }),
+}
+
+export const authApi = {
+  // 修改密码
+  changePassword: (data: { oldPassword: string; newPassword: string }) =>
+    request.post('/auth/change-password', data),
 }
 
 export const teamApi = {
