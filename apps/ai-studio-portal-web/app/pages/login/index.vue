@@ -180,6 +180,7 @@
 
     const authStore = useAuthStore()
     const route = useRoute()
+    const router = useRouter()
 
     const formRef = ref<FormInstance>()
     const loading = ref(false)
@@ -273,9 +274,18 @@
                 authStore.clearRememberedCredentials()
             }
 
-            // 获取重定向地址
-            const redirect = route.query.redirect as string || '/'
-            await navigateTo(redirect)
+            // 获取重定向地址（避免重复拼接 app.baseURL）
+            const rawRedirect = (route.query.redirect as string) || '/'
+            const appBase = router.options.history.base || '/'
+            const normalizedBase = appBase.endsWith('/') ? appBase : `${appBase}/`
+            let redirect = decodeURIComponent(rawRedirect)
+            if (!redirect.startsWith('/')) {
+                redirect = `/${redirect}`
+            }
+            if (normalizedBase !== '/' && redirect.startsWith(normalizedBase)) {
+                redirect = `/${redirect.slice(normalizedBase.length)}`.replace(/^\/+/, '/')
+            }
+            await navigateTo(redirect || '/')
         } catch (error: any) {
             loginError.value = error?.message || '登录失败'
         } finally {

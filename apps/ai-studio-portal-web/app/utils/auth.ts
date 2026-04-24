@@ -2,13 +2,33 @@
  * 跳转登录页面逻辑，分2种：maxkey、own
  */
 export async function goLoginPage(url?: string) {
-  const redirectUrl = url || window.location.pathname + window.location.search
   const config = useRuntimeConfig()
+  const router = useRouter()
+  const appBase = router.options.history.base || '/'
+  const normalizeBase = (base: string) => base.endsWith('/') ? base : `${base}/`
+  const normalizedBase = normalizeBase(appBase)
+  const normalizeRedirect = (redirect: string) => {
+    if (!redirect) {
+      return '/'
+    }
+    let target = decodeURIComponent(redirect)
+    if (!target.startsWith('/')) {
+      target = `/${target}`
+    }
+    if (normalizedBase !== '/' && target.startsWith(normalizedBase)) {
+      target = `/${target.slice(normalizedBase.length)}`.replace(/^\/+/, '/')
+    }
+    return target || '/'
+  }
+
+  const currentPath = import.meta.client ? `${window.location.pathname}${window.location.search}` : '/'
+  const redirectUrl = normalizeRedirect(url || currentPath)
+
   if (['maxkey'].includes(config.public.loginType)) {
     const state = Math.floor(Math.random() * 10000000000)
     await navigateTo(`${config.public.loginUrl}${window.location.origin}${window.location.pathname}&state=${state}`, { external: true })
   } else {
-    await navigateTo(`/login?redirect=${redirectUrl}`)
+    await navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 }
 
