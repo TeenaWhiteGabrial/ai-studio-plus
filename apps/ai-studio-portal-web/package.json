@@ -6,7 +6,7 @@
     "dev": "nuxt dev --dotenv .env.localdev",
     "build:prod": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.production",
     "build:test": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.test",
-    "build:dev": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.openSource.development",
+    "build:dev": "node --max-old-space-size=4096 ./node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.devtest",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
