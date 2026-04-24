@@ -1,12 +1,14 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import { ElMessage } from 'element-plus'
 import router from './auth'
 
-// 控制台 Web 的 baseURL: /ai-studio/v1/console
-const baseURL = import.meta.env.VITE_API_BASE_URL
-const baseRouterUrl = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_BASE_ROUTER}`
+// API 基础路径
+const API_BASE_URL = '/ai-studio/v1'
+// 业务路由前缀
+const BASE_ROUTER = import.meta.env.VITE_BASE_ROUTER
+
 const request: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   timeout: 30000,
 })
 
@@ -19,9 +21,11 @@ request.interceptors.request.use(
     }
     // 判断是否为认证相关请求
     if (config.url?.startsWith('/auth/')) {
-      config.baseURL = baseURL
+      // auth 接口直接请求 /ai-studio/v1/auth/*
+      config.baseURL = API_BASE_URL
     } else {
-      config.baseURL = baseRouterUrl
+      // 业务接口请求 /ai-studio/v1/console/*
+      config.baseURL = `${API_BASE_URL}${BASE_ROUTER}`
     }
     return config
   },

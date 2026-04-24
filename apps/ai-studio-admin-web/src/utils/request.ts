@@ -2,16 +2,18 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
+// API 基础路径
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+// 业务路由前缀
+const BASE_ROUTER = import.meta.env.VITE_BASE_ROUTER
+
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: API_BASE_URL,
   timeout: 30000,
   withCredentials: true, // 允许携带 Cookie/认证信息
 })
 
-const DEFAULT_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
-const DEFAULT_AUTH_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_BASE_ROUTER}`
 // 请求拦截器：自动携带 Token 根据请求路径设置 baseURL
-
 request.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -20,9 +22,11 @@ request.interceptors.request.use(
     }
     // 判断是否为认证相关请求
     if (config.url?.startsWith('/auth/')) {
-      config.baseURL = DEFAULT_BASE_URL
+      // auth 接口直接请求 /ai-studio/v1/auth/*
+      config.baseURL = API_BASE_URL
     } else {
-      config.baseURL = DEFAULT_AUTH_BASE_URL
+      // 业务接口请求 /ai-studio/v1/admin/*
+      config.baseURL = `${API_BASE_URL}${BASE_ROUTER}`
     }
     return config
   },
@@ -44,7 +48,7 @@ request.interceptors.response.use(
     // 业务错误码非 200 也走错误处理
     if (data.code !== 200) {
       ElMessage.error(data.message || '请求失败')
-      return Promise.reject(new Error(data.message || '请求失败'))
+      return Promise.reject(new Error(data.data?.message || '请求失败'))
     }
     // 直接返回整个响应对象，保持 code、data、message 结构
     return response.data
