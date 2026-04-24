@@ -1,5 +1,3 @@
-import JSEncrypt from 'jsencrypt'
-
 interface LoginResponse {
   code: number
   message: string
@@ -198,6 +196,10 @@ export const useAuthStore = defineStore('authStore', {
     },
 
     async login(username: string, password: string) {
+      if (!import.meta.client) {
+        throw new Error('登录仅支持客户端执行')
+      }
+
       this.clearLoginInfo()
       const config = useRuntimeConfig()
 
@@ -206,6 +208,8 @@ export const useAuthStore = defineStore('authStore', {
         throw new Error('获取公钥失败')
       }
 
+      const jsencryptModule = await import('jsencrypt/bin/jsencrypt.min')
+      const JSEncrypt = (jsencryptModule as { default: new () => any }).default
       const encryptor = new JSEncrypt()
       encryptor.setPublicKey(keyRes.data)
       const encryptedPassword = encryptor.encrypt(password)
