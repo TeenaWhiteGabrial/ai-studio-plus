@@ -203,7 +203,10 @@ export const useAuthStore = defineStore('authStore', {
       this.clearLoginInfo()
       const config = useRuntimeConfig()
 
-      const keyRes = await $fetch<{ data: string }>('/auth/public-key')
+      const keyRes = await $fetch<{ data: string }>('/auth/public-key', {
+        baseURL: config.public.apiBase,
+      })
+
       if (!keyRes?.data) {
         throw new Error('获取公钥失败')
       }
@@ -219,6 +222,7 @@ export const useAuthStore = defineStore('authStore', {
 
       const tokenRes = await $fetch<LoginResponse>('/auth/token', {
         method: 'POST',
+        baseURL: config.public.apiBase,
         body: {
           username,
           password: encryptedPassword,
@@ -234,6 +238,7 @@ export const useAuthStore = defineStore('authStore', {
       const authHeader = config.public.tokenType ? `${config.public.tokenType} ${token}` : token
 
       const userRes = await $fetch<UserInfoResponse>('/auth/user-info', {
+        baseURL: config.public.apiBase,
         headers: {
           Authorization: authHeader,
         },
@@ -258,6 +263,7 @@ export const useAuthStore = defineStore('authStore', {
           : undefined
         await $fetch('/auth/logout', {
           method: 'POST',
+          baseURL: config.public.apiBase,
           headers: authHeader
             ? {
               Authorization: authHeader,

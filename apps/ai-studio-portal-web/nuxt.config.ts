@@ -9,13 +9,6 @@ export default defineNuxtConfig({
       exclude: ['jsencrypt'],
     },
   },
-  nitro: {
-    experimental: {
-      rollupConfig: {
-        external: ['jsencrypt'],
-      },
-    },
-  },
   modules: [
     './modules/theme',
     '@unocss/nuxt',
@@ -48,7 +41,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: import.meta.env.NUXT_API_BASE_URL || '/',
+      apiBase: import.meta.env.NUXT_API_BASE_URL || '/ai-studio/v1',
       loginType: import.meta.env.NUXT_LOGIN_TYPE,
       loginUrl: import.meta.env.NUXT_LOGIN_URL,
       logoutUrl: import.meta.env.NUXT_LOGOUT_URL,

@@ -105,6 +105,7 @@ export async function useSimpleFetch<R = any, T extends ResponseType = 'json'>(
     const originalOnResponseError = rawOptions.onResponseError
 
     delete rawOptions.noToken
+    delete rawOptions.addBaseUrl
     delete rawOptions.onResponse
     delete rawOptions.onResponseError
     delete rawOptions.throwError
@@ -133,7 +134,7 @@ export async function useSimpleFetch<R = any, T extends ResponseType = 'json'>(
         if (isAbsoluteUrl) {
             delete rawOptions.baseURL
         } else if (!rawOptions.baseURL) {
-            if (rawOptions.addBaseUrl && config.public.apiBase) {
+            if (config.public.apiBase) {
                 rawOptions.baseURL = config.public.apiBase
             } else if (import.meta.client && !rawOptions.withBaseRouter) {
                 rawOptions.baseURL = `${window.location.protocol}//${window.location.host}`
