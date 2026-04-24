@@ -38,6 +38,10 @@
           />
         </el-select>
 
+        <el-button @click="goWriteArticle">
+          <Icon name="material-symbols:article-outline" size="18" />
+          发布文章
+        </el-button>
         <el-button type="primary" @click="goAsk">
           <Icon name="material-symbols:edit-square-outline" size="18" />
           发布问题
@@ -201,6 +205,14 @@ function goAsk() {
     return
   }
   navigateTo('/community/ask')
+}
+
+function goWriteArticle() {
+  if (!authStore.token) {
+    goLoginPage()
+    return
+  }
+  navigateTo('/community/write')
 }
 
 onMounted(loadData)

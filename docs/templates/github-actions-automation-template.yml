@@ -1,0 +1,77 @@
+name: AI Studio Automation Tests
+
+on:
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+  push:
+    branches: [ "main", "develop" ]
+
+jobs:
+  backend-api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Run backend tests
+        run: mvn -f ai-studio-service/pom.xml test
+
+      - name: Upload surefire reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-surefire-reports
+          path: ai-studio-service/target/surefire-reports
+
+  portal-e2e-smoke:
+    runs-on: ubuntu-latest
+    needs: backend-api-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node + pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm -C apps/ai-studio-portal-web run test:e2e:install
+
+      - name: Start portal
+        run: pnpm -C apps/ai-studio-portal-web dev --dotenv .env.localdev &
+
+      - name: Wait for portal
+        run: npx wait-on http://localhost:3000/login
+
+      - name: Run e2e smoke
+        env:
+          PORTAL_BASE_URL: http://localhost:3000
+          PORTAL_USERNAME: ${{ secrets.PORTAL_USERNAME }}
+          PORTAL_PASSWORD: ${{ secrets.PORTAL_PASSWORD }}
+        run: pnpm -C apps/ai-studio-portal-web run test:e2e:smoke
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            apps/ai-studio-portal-web/test-results
+            apps/ai-studio-portal-web/playwright-report

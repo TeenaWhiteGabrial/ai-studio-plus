@@ -56,12 +56,22 @@ function normalizeNotification(item: Record<string, any>): Notification {
 
 export function useCommunity() {
   const config = useRuntimeConfig()
+  const authStore = useAuthStore()
+
+  function getAuthHeaders() {
+    if (!authStore.token) {
+      return undefined
+    }
+    const authorization = config.public.tokenType ? `${config.public.tokenType} ${authStore.token}` : authStore.token
+    return { Authorization: authorization }
+  }
 
   async function getCommentList(targetType: string, targetId: string): Promise<Comment[]> {
     const res = await $fetch<Record<string, any>[]>('/portal/comment/list', {
       method: 'GET',
       params: { targetType, targetId },
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
     return (res || []).map(normalizeComment)
   }
@@ -70,21 +80,24 @@ export function useCommunity() {
     return await $fetch<number>('/portal/comment', {
       method: 'POST',
       body: data,
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
   async function deleteComment(id: string): Promise<void> {
     await $fetch(`/portal/comment/${id}/delete`, {
       method: 'POST',
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
   async function likeComment(id: string): Promise<void> {
     await $fetch(`/portal/comment/${id}/like`, {
       method: 'POST',
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
@@ -92,7 +105,8 @@ export function useCommunity() {
     const res = await $fetch<{ total: number; records: Favorite[] }>('/portal/favorite/list', {
       method: 'GET',
       params: { targetType, page, size: pageSize },
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
     return {
       list: res?.records || [],
@@ -104,7 +118,8 @@ export function useCommunity() {
     await $fetch('/portal/favorite', {
       method: 'POST',
       body: data,
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
@@ -112,7 +127,8 @@ export function useCommunity() {
     await $fetch('/portal/favorite/remove', {
       method: 'POST',
       body: { targetType, targetId },
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
@@ -120,7 +136,8 @@ export function useCommunity() {
     const res = await $fetch<boolean>('/portal/favorite/check', {
       method: 'GET',
       params: { targetType, targetId },
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
     return !!res
   }
@@ -128,7 +145,8 @@ export function useCommunity() {
   async function getNotificationList(_query: NotificationListQuery = {}): Promise<NotificationListResponse> {
     const res = await $fetch<Record<string, any>[]>('/portal/notification/list', {
       method: 'GET',
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
     const list = (res || []).map(normalizeNotification)
     const unreadCount = list.filter(item => !item.isRead).length
@@ -144,7 +162,8 @@ export function useCommunity() {
   async function markNotificationRead(id: string): Promise<void> {
     await $fetch(`/portal/notification/${id}/read`, {
       method: 'POST',
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
@@ -157,7 +176,8 @@ export function useCommunity() {
   async function getUnreadNotificationCount(): Promise<{ count: number }> {
     return await $fetch<{ count: number }>('/portal/notification/unread-count', {
       method: 'GET',
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
@@ -165,7 +185,8 @@ export function useCommunity() {
     const res = await $fetch<Tag[]>('/portal/tag/list', {
       method: 'GET',
       params: { type },
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
     return res || []
   }
@@ -174,14 +195,16 @@ export function useCommunity() {
     await $fetch('/portal/tag', {
       method: 'POST',
       body: { name, type },
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
   async function getBrowseHistoryList(): Promise<{ list: BrowseHistory[]; total: number }> {
     const res = await $fetch<Record<string, any>[]>('/portal/browse-history/list', {
       method: 'GET',
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
     const list = (res || []).map(normalizeBrowseHistory)
     return {
@@ -194,14 +217,16 @@ export function useCommunity() {
     await $fetch('/portal/browse-history', {
       method: 'POST',
       body: data,
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 
   async function clearBrowseHistory(): Promise<void> {
     await $fetch('/portal/browse-history/clear', {
       method: 'POST',
-      baseURL: config.public.apiBase
+      baseURL: config.public.apiBase,
+      headers: getAuthHeaders()
     })
   }
 

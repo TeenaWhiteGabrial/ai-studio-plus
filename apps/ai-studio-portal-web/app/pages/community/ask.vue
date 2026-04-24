@@ -180,7 +180,8 @@ onMounted(() => {
 }
 
 .editor-container {
-  @apply border border-gray-200 rounded-lg overflow-hidden;
+  @apply border border-gray-200 rounded-lg;
+  overflow: visible;
 }
 
 .editor-fallback {
@@ -188,9 +189,12 @@ onMounted(() => {
 }
 
 .editor-container :deep(.ql-toolbar) {
+  position: sticky;
+  top: 78px;
+  z-index: 30;
   border: none;
   border-bottom: 1px solid #eee;
-  @apply bg-gray-50;
+  @apply bg-gray-50 shadow-sm;
 }
 
 .editor-container :deep(.ql-container) {

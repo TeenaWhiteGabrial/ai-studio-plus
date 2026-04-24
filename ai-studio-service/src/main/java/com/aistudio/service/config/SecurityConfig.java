@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -55,39 +56,47 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // 公开接口 - Spring Security 使用不含 context-path 的路径
+                // Public endpoints
                 .requestMatchers(
-                    // 基础公开接口
                     "/auth/login", "/auth/public-key", "/auth/gen-hash", "/auth/token",
-                    // Admin 端公开接口
                     "/admin/auth/login", "/admin/auth/public-key", "/admin/auth/gen-hash", "/admin/auth/token",
-                    // Console 端公开接口
                     "/console/auth/login", "/console/auth/public-key", "/console/auth/token",
-                    // Open 开放接口
                     "/open/**",
-                    // Portal 公开接口（无需认证）
                     "/portal/open/**",
-                    // Swagger
                     "/doc.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**"
                 ).permitAll()
-                // 认证接口（需登录但不限角色）
+                // Authenticated profile/account endpoints
                 .requestMatchers(
                     "/auth/user-info", "/auth/avatar", "/auth/update-profile", "/auth/change-password",
                     "/admin/auth/user-info",
                     "/console/auth/user-info", "/console/auth/avatar", "/console/auth/update-profile", "/console/auth/change-password"
                 ).authenticated()
-                // Admin 端接口（需特定角色）
+                // Portal public read endpoints
+                .requestMatchers(HttpMethod.GET,
+                    "/portal/article/list",
+                    "/portal/article/*",
+                    "/portal/question/list",
+                    "/portal/question/*",
+                    "/portal/question/*/answers",
+                    "/portal/comment/list",
+                    "/portal/tag/list"
+                ).permitAll()
+                // Admin role endpoints
                 .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "OP_ADMIN", "DEPT_ADMIN")
-                // Console 端接口
+                // Console role endpoints
                 .requestMatchers("/console/**").hasRole("USER")
-                // Portal 社区认证操作（需登录但不限角色）
+                // Portal endpoints requiring login
                 .requestMatchers(
-                    "/portal/article", "/portal/article/{id}",
-                    "/portal/question", "/portal/question/{id}",
-                    "/portal/question/{questionId}/answer",
-                    "/portal/question/{questionId}/answers",
+                    "/portal/article/*/like",
+                    "/portal/article/*/is-liked",
+                    "/portal/question",
+                    "/portal/question/*",
+                    "/portal/question/*/delete",
+                    "/portal/question/*/answer",
                     "/portal/answer/**",
-                    "/portal/comment/**",
+                    "/portal/comment",
+                    "/portal/comment/*/delete",
+                    "/portal/comment/*/like",
                     "/portal/favorite/**",
                     "/portal/browse-history/**",
                     "/portal/notification/**",
@@ -95,7 +104,7 @@ public class SecurityConfig {
                     "/portal/user/profile",
                     "/oss/**"
                 ).authenticated()
-                // Admin 下架接口（仅超级管理员）
+                // Only super admin
                 .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                 .anyRequest().authenticated()
             )
@@ -104,13 +113,13 @@ public class SecurityConfig {
                     res.setStatus(401);
                     res.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     res.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                    res.getWriter().write(objectMapper.writeValueAsString(Result.error(401, "未认证，请先登录")));
+                    res.getWriter().write(objectMapper.writeValueAsString(Result.error(401, "Unauthorized, please login first")));
                 })
                 .accessDeniedHandler((req, res, e) -> {
                     res.setStatus(403);
                     res.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     res.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                    res.getWriter().write(objectMapper.writeValueAsString(Result.error(403, "无权限访问")));
+                    res.getWriter().write(objectMapper.writeValueAsString(Result.error(403, "Forbidden")));
                 })
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

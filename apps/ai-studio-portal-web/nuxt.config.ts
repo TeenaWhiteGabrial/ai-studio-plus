@@ -64,6 +64,10 @@ export default defineNuxtConfig({
         target: 'http://localhost:8080/ai-studio/v1/file',
         changeOrigin: true,
       },
+      '/oss': {
+        target: 'http://localhost:8080/ai-studio/v1/oss',
+        changeOrigin: true,
+      },
     },
   },
 })
