@@ -6,7 +6,7 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { resolve } from 'path'
 
 export default defineConfig({
-  base: '/console/',
+  base: '/ai-studio-plus-console-web/',
   plugins: [
     vue(),
     AutoImport({
