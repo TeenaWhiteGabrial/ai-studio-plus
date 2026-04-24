@@ -36,7 +36,7 @@ declare module 'vue' {
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
     ElOption: typeof import('element-plus/es')['ElOption']
     ElPagination: typeof import('element-plus/es')['ElPagination']
-    ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
+    ElRadio: typeof import('element-plus/es')['ElRadio']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSelect: typeof import('element-plus/es')['ElSelect']
@@ -58,5 +58,8 @@ declare module 'vue' {
     TutorialDialog: typeof import('./components/ResourceCenter/TutorialDialog.vue')['default']
     TutorialTab: typeof import('./components/ResourceCenter/TutorialTab.vue')['default']
     VersionListDialog: typeof import('./components/ResourceCenter/VersionListDialog.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

@@ -1,8 +1,8 @@
 module.exports = {
     apps: [
         {
-            name: 'cloud-market-portal-web',
-            port: '3002',
+            name: 'ai-studio-portal-web',
+            port: '3000',
             // 优化执行模式：根据 CPU 核心数智能分配
             exec_mode: 'fork',
             // instances: 'max', // 根据 CPU 核心数自动创建实例
