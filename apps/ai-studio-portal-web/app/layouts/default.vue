@@ -1,183 +1,193 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- 顶部导航栏 -->
+  <div class="portal-shell">
     <HeaderApolloNavbar />
-    <!-- 主要内容区域 - 三栏布局 -->
-    <main class="main-layout">
-      <!-- 左侧边栏 -->
-      <aside class="left-sidebar" :class="{ 'hidden-mobile': showMobileLeftSidebar }">
+
+    <main class="csdn-container portal-main" :class="`mode-${layoutMode}`">
+      <aside v-if="showLeftSidebar" class="portal-left">
         <slot name="left-sidebar">
           <LeftSidebar />
         </slot>
       </aside>
-      <!-- 主内容区 -->
-      <div class="main-content">
+
+      <section class="portal-content">
         <slot />
-      </div>
-      <!-- 右侧边栏 -->
-      <aside class="right-sidebar" :class="{ 'hidden-mobile': showMobileRightSidebar }">
+      </section>
+
+      <aside v-if="showRightSidebar" class="portal-right">
         <slot name="right-sidebar">
           <RightSidebar />
         </slot>
       </aside>
     </main>
-    <!-- 底部信息栏 -->
+
     <FooterApollo />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TokenResponse } from '~~/shared/types/auth'
-import { ROLE_STATUS } from '~~/shared/types/auth'
+import type { TokenResponse, UserInfo } from '~~/shared/types/auth'
 
-// 显式导入头部组件和底部信息栏
 import HeaderApolloNavbar from '~/components/Header/ApolloNavbar.vue'
 import LeftSidebar from '~/components/Sidebar/LeftSidebar.vue'
 import RightSidebar from '~/components/Sidebar/RightSidebar.vue'
 
-// 响应式侧边栏控制
-const showMobileLeftSidebar = ref(false)
-const showMobileRightSidebar = ref(false)
-
+const route = useRoute()
 const config = useRuntimeConfig()
 
-async function login() {
+const normalizedPath = computed(() => route.path.replace(/^\//, ''))
+
+const isFocusPage = computed(() => {
+  return /^(community\/write|community\/ask|profile(?:\/|$))/.test(normalizedPath.value)
+})
+
+const isDetailPage = computed(() => {
+  return /^(community\/article|community\/question|resources\/[^/]+\/[^/]+)/.test(normalizedPath.value)
+})
+
+const layoutMode = computed<'three' | 'content-right' | 'single'>(() => {
+  if (isFocusPage.value) {
+    return 'single'
+  }
+  if (isDetailPage.value) {
+    return 'content-right'
+  }
+  return 'three'
+})
+
+const showLeftSidebar = computed(() => {
+  return layoutMode.value === 'three'
+})
+
+const showRightSidebar = computed(() => {
+  return layoutMode.value !== 'single'
+})
+
+async function loginByCode() {
   try {
     const authStore = useAuthStore()
-    const searchParam = new URLSearchParams(window.location.href)
-    const paramCode = searchParam.get('##code')
-    if (!paramCode)
-      return Promise.resolve()
+    const url = new URL(window.location.href)
+    const hashCodeMatch = window.location.hash.match(/code=([^&]+)/)
+    const hashCode = hashCodeMatch?.[1] ? decodeURIComponent(hashCodeMatch[1]) : ''
+    const paramCode = url.searchParams.get('code') || hashCode
+    if (!paramCode) {
+      return
+    }
 
-    const { code, data, message } = await useSimpleFetch<TokenResponse>('/prod-api/auth/singleLogin', {
-      params: {
-        code: paramCode
-      },
+    const { code, data } = await useSimpleFetch<TokenResponse>('/auth/singleLogin', {
+      params: { code: paramCode },
       noToken: true
     })
-    if (code === 200 && data) {
+
+    if (code === 200 && data?.access_token) {
       authStore.setToken(data.access_token)
-      // 登录成功后跳转
       navigateTo('/')
     }
-    else {
-      console.error('登录失败:', message || '未知错误')
-    }
-  }
-  catch (error) {
-    console.error('登录过程中发生错误:', error)
+  } catch (error) {
+    console.error('单点登录失败:', error)
   }
 }
 
-async function getUserInfo() {
+async function syncUserInfo() {
   const authStore = useAuthStore()
-  if (!!authStore.token) {
-    const userRes = await useSimpleFetch<{
-      code: number
-      msg: string
-      roles: string[]
-      user: any
-    }>('/prod-api/system/user/getInfo', {})
-    if (userRes.code === 200 && userRes.data.user) {
-      authStore.setLoginInfo({
-        userName: userRes.data.user.nickName,
-        phone: userRes.data.user.phonenumber,
-        email: userRes.data.user.email,
-        roles: userRes.data.roles as ROLE_STATUS[]
-      })
-    }
-    else {
-      ElMessage.error(userRes.data.msg || '获取用户信息失败')
-      return Promise.resolve()
-    }
-    const { code, msg, data } = await useSimpleFetch<{
-      code: string
-      msg: string
-      data: {
-        userId: string,
-        applied: string[],
-        userStatus?: string[]
-      }
-    }>('/prod-api/cloudMarket/user/getUserInfo', {})
-    if (code === 200 && data.data && data.data.userStatus) {
-      const roleInfo: ROLE_STATUS[] = []
-      if (data.data.userStatus.includes('personal_approved')) {
-        roleInfo.push(ROLE_STATUS.PERSONAL)
-      }
-      if (data.data.userStatus.includes('business_approved')) {
-        roleInfo.push(ROLE_STATUS.BUSINESS)
-      }
-      if (data.data.userStatus.includes('service_provider_approved')) {
-        roleInfo.push(ROLE_STATUS.SERVICE_PROVIDER)
-      }
-      authStore.setLoginInfo({
-        userId: data.data.userId,
-        roles: roleInfo // 审核通过的权限
-      })
-    }
-    else {
-      ElMessage.error(msg || '获取用户信息失败')
-      return Promise.resolve()
-    }
+  if (!authStore.token) {
+    return
   }
+  const userRes = await useSimpleFetch<UserInfo>('/auth/user-info')
+  if (userRes.code === 200 && userRes.data) {
+    authStore.setLoginInfo(userRes.data)
+    return
+  }
+  ElMessage.error(userRes.msg || userRes.message || '获取用户信息失败')
 }
 
 onMounted(async () => {
   if (import.meta.client) {
-    // 动态导入 microApp 以确保仅在客户端加载
     const { default: microApp } = await import('@micro-zoe/micro-app')
     microApp.start()
   }
+
   if (config.public.loginType === 'maxkey') {
-    await login()
-    await getUserInfo()
+    await loginByCode()
   }
-  else if (config.public.loginType === 'own') {
-    await getUserInfo()
-  }
+
+  await syncUserInfo()
 })
 </script>
 
 <style scoped>
-.main-layout {
-  @apply flex w-full max-w-[1400px] mx-auto px-4 gap-6 pt-6;
+.portal-shell {
+  min-height: 100vh;
+  background: var(--csdn-bg);
 }
 
-.left-sidebar {
-  @apply w-60 flex-shrink-0;
+.portal-main {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr) 300px;
+  gap: 16px;
+  padding: 14px 0 18px;
 }
 
-.right-sidebar {
-  @apply w-72 flex-shrink-0;
+.portal-main.mode-content-right {
+  grid-template-columns: minmax(0, 1fr) 300px;
 }
 
-.main-content {
-  @apply flex-1 min-w-0;
+.portal-main.mode-single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1120px;
 }
 
-/* 响应式 - 移动端隐藏左侧边栏 */
-@media (max-width: 768px) {
-  .main-layout {
-    @apply px-2 gap-4;
+.portal-left,
+.portal-right {
+  position: sticky;
+  top: 78px;
+  align-self: start;
+  max-height: calc(100vh - 92px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.portal-content {
+  min-width: 0;
+}
+
+.portal-main.mode-single .portal-content {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1400px) {
+  .portal-main {
+    grid-template-columns: 220px minmax(0, 1fr) 280px;
   }
 
-  .left-sidebar {
-    @apply hidden;
-  }
-
-  .left-sidebar:not(.hidden-mobile) {
-    @apply block fixed left-0 top-[60px] bottom-0 w-60 z-50 bg-white shadow-xl;
+  .portal-main.mode-content-right {
+    grid-template-columns: minmax(0, 1fr) 280px;
   }
 }
 
-/* 响应式 - 平板隐藏右侧边栏 */
+@media (max-width: 1200px) {
+  .portal-main.mode-three {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+
+  .portal-main.mode-three .portal-left {
+    display: none;
+  }
+}
+
 @media (max-width: 1024px) {
-  .right-sidebar {
-    @apply hidden;
+  .portal-main,
+  .portal-main.mode-content-right,
+  .portal-main.mode-single,
+  .portal-main.mode-three {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: none;
   }
 
-  .right-sidebar:not(.hidden-mobile) {
-    @apply block fixed right-0 top-[60px] bottom-0 w-72 z-50 bg-white shadow-xl;
+  .portal-left,
+  .portal-right {
+    display: none;
   }
 }
 </style>

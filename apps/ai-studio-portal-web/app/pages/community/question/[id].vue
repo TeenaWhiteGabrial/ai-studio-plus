@@ -1,371 +1,401 @@
 <template>
-  <div class="question-detail-page">
-    <!-- 主内容区 -->
-    <div class="main-area">
-      <div v-if="loading" class="text-center py-12">
-        加载中...
-      </div>
-      <div v-else-if="!question" class="text-center py-12">
-        问题不存在
-      </div>
-      <template v-else>
-        <!-- 问题内容 -->
-        <article class="question-container bg-white rounded-lg p-6">
-          <div class="question-header">
+  <div class="question-page">
+    <div v-if="loading" class="csdn-card csdn-empty">问题加载中...</div>
+    <div v-else-if="!question" class="csdn-card csdn-empty">问题不存在或已删除</div>
+
+    <template v-else>
+      <article class="csdn-card question-card">
+        <header class="question-header">
+          <div class="title-row">
             <h1 class="question-title">{{ question.title }}</h1>
-            <el-tag v-if="question.isResolved" type="success" size="small">已解决</el-tag>
-          </div>
-          <div class="question-meta">
-            <div class="author-info">
-              <el-avatar v-if="question.authorAvatar" :src="question.authorAvatar" :size="32" />
-              <span class="author-name">{{ question.authorName }}</span>
-            </div>
-            <div class="meta-info">
-              <span>{{ formatTime(question.createTime) }}</span>
-              <span class="split">|</span>
-              <span>{{ question.viewCount }} 阅读</span>
-            </div>
-          </div>
-          <!-- 标签 -->
-          <div v-if="question.tags && question.tags.length" class="question-tags">
-            <el-tag v-for="tag in question.tags" :key="tag" size="small" class="mr-2">
-              {{ tag }}
-            </el-tag>
-          </div>
-          <!-- 问题内容 -->
-          <div class="question-content" v-html="question.content"></div>
-          <!-- 操作栏 -->
-          <div class="question-actions">
-            <el-button @click="handleFavorite">
-              <Icon name="material-symbols:bookmark-outline" class="mr-1" />
-              收藏
-            </el-button>
-          </div>
-        </article>
-
-        <!-- 回答列表 -->
-        <div class="answer-section bg-white rounded-lg p-6 mt-6">
-          <div class="answer-header">
-            <h3>
-              <Icon name="material-symbols:chat-bubble" class="mr-2" />
-              {{ question.answerCount }} 个回答
-            </h3>
+            <span class="status-tag" :class="{ resolved: resolved }">{{ resolved ? '已解决' : '待解决' }}</span>
           </div>
 
-          <!-- 回答列表 -->
-          <div v-if="loadingAnswers" class="text-center py-4 text-gray-400">
-            加载中...
-          </div>
-          <div v-else-if="answers.length === 0" class="text-center py-8 text-gray-400">
-            暂无回答，快来抢沙发吧
-          </div>
-          <div v-else class="answer-list">
-            <div
-              v-for="answer in answers"
-              :key="answer.id"
-              class="answer-item"
-              :class="{ accepted: answer.isAccepted }"
-            >
-              <div class="answer-author">
-                <el-avatar v-if="answer.authorAvatar" :src="answer.authorAvatar" :size="40" />
-                <div class="author-info">
-                  <span class="author-name">{{ answer.authorName }}</span>
-                  <span class="answer-time">{{ formatTime(answer.createTime) }}</span>
-                </div>
-              </div>
-              <div class="answer-content" v-html="answer.content"></div>
-              <div class="answer-actions">
-                <el-button
-                  :type="answer.isAccepted ? 'success' : 'default'"
-                  :disabled="question.isResolved || !canAccept"
-                  @click="handleAccept(answer)"
-                >
-                  <Icon name="material-symbols:check-circle" class="mr-1" />
-                  {{ answer.isAccepted ? '已采纳' : '采纳' }}
-                </el-button>
-                <el-button @click="handleLikeAnswer(answer)">
-                  <Icon name="material-symbols:favorite-outline" class="mr-1" />
-                  {{ answer.likeCount }}
-                </el-button>
-              </div>
+          <div class="meta-row">
+            <div class="author-meta">
+              <span>{{ question.authorName || '匿名用户' }}</span>
+              <span class="dot">·</span>
+              <span>{{ formatTime(timeValue) }}</span>
+            </div>
+            <div class="stats-meta">
+              <span><Icon name="material-symbols:visibility-outline" size="16" /> {{ viewCount }}</span>
+              <span><Icon name="material-symbols:chat-bubble-outline" size="16" /> {{ answerCount }}</span>
             </div>
           </div>
+        </header>
 
-          <!-- 回答表单 -->
-          <div class="answer-form mt-6">
-            <h3>
-              <Icon name="material-symbols:edit" class="mr-2" />
-              撰写回答
-            </h3>
-            <div v-if="!authStore.token" class="text-center py-4 text-gray-400">
-              <span @click="goToLogin" class="text-primary cursor-pointer">登录</span>后即可回答
-            </div>
-            <div v-else>
-              <el-input
-                v-model="answerContent"
-                type="textarea"
-                :rows="6"
-                placeholder="请输入回答内容..."
-              />
-              <div class="mt-4 text-right">
-                <el-button type="primary" :loading="submitting" @click="handleSubmitAnswer">
-                  提交回答
-                </el-button>
-              </div>
-            </div>
-          </div>
+        <div class="csdn-prose question-content" v-html="question.content" />
+
+        <div class="action-row">
+          <el-button :type="isFavorited ? 'primary' : 'default'" @click="handleFavorite">
+            <Icon :name="isFavorited ? 'material-symbols:bookmark' : 'material-symbols:bookmark-outline'" size="17" />
+            <span>{{ isFavorited ? '已收藏' : '收藏问题' }}</span>
+          </el-button>
         </div>
-      </template>
-    </div>
+      </article>
+
+      <section class="csdn-card answer-card">
+        <header class="answer-head">
+          <h2>全部回答（{{ answers.length }}）</h2>
+        </header>
+
+        <div v-if="loadingAnswers" class="csdn-empty">回答加载中...</div>
+        <div v-else-if="answers.length === 0" class="csdn-empty">还没有回答，期待你的分享。</div>
+        <div v-else class="answer-list">
+          <article
+            v-for="answer in answers"
+            :key="answer.id"
+            class="answer-item"
+            :class="{ accepted: isAccepted(answer) }"
+          >
+            <header class="answer-meta">
+              <div class="author">
+                <span>{{ answer.authorName || '匿名用户' }}</span>
+                <span class="dot">·</span>
+                <span>{{ formatTime(answer.createTime || answer.createdAt || '') }}</span>
+              </div>
+              <span v-if="isAccepted(answer)" class="best-badge">最佳答案</span>
+            </header>
+
+            <div class="csdn-prose answer-content" v-html="answer.content" />
+
+            <footer class="answer-actions">
+              <el-button size="small" @click="handleLikeAnswer(answer)">
+                <Icon name="material-symbols:thumb-up-outline" size="16" />
+                <span>{{ answer.likeCount ?? answer.likesCount ?? 0 }}</span>
+              </el-button>
+
+              <el-button
+                v-if="canAccept && !resolved"
+                size="small"
+                type="success"
+                @click="handleAccept(answer)"
+              >
+                <Icon name="material-symbols:check-circle-outline" size="16" />
+                <span>采纳</span>
+              </el-button>
+            </footer>
+          </article>
+        </div>
+      </section>
+
+      <section class="csdn-card answer-form-card">
+        <h3>我要回答</h3>
+        <div v-if="!authStore.token" class="csdn-empty">
+          请先 <span class="csdn-link" @click="goToLogin">登录</span> 后再回答
+        </div>
+        <template v-else>
+          <el-input
+            v-model="answerContent"
+            type="textarea"
+            :rows="6"
+            placeholder="请尽量给出可执行的思路、代码片段或定位方式。"
+          />
+          <div class="submit-row">
+            <el-button type="primary" :loading="submitting" @click="handleSubmitAnswer">提交回答</el-button>
+          </div>
+        </template>
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Question } from '~~/shared/types/question'
-import type { Answer } from '~~/shared/types/question'
+import type { Answer, Question } from '~~/shared/types/question'
 
 const route = useRoute()
-const { getQuestionDetail, getAnswerList, createAnswer, acceptAnswer, likeAnswer } = useQuestion()
-const { createBrowseHistory } = useCommunity()
 const authStore = useAuthStore()
+const { getQuestionDetail, getAnswerList, createAnswer, acceptAnswer, likeAnswer } = useQuestion()
+const { checkFavorite, createFavorite, deleteFavorite, createBrowseHistory } = useCommunity()
 
 const question = ref<Question | null>(null)
 const answers = ref<Answer[]>([])
+
 const loading = ref(true)
 const loadingAnswers = ref(false)
-const answerContent = ref('')
 const submitting = ref(false)
 
+const isFavorited = ref(false)
+const answerContent = ref('')
+
+const resolved = computed(() => Boolean(question.value?.isResolved || question.value?.hasBestAnswer))
+const viewCount = computed(() => question.value?.viewCount ?? question.value?.viewsCount ?? 0)
+const answerCount = computed(() => question.value?.answerCount ?? question.value?.answersCount ?? answers.value.length)
+const timeValue = computed(() => question.value?.createTime || question.value?.createdAt || '')
+
 const canAccept = computed(() => {
-  return authStore.token && authStore.userId === question.value?.authorId
+  if (!authStore.token || !question.value) return false
+  return String(authStore.userId || authStore.user_id || '') === String(question.value.authorId)
 })
 
 async function loadQuestion() {
   loading.value = true
   const id = route.params.id as string
   try {
-    const res = await getQuestionDetail(id)
-    question.value = res
-    // 创建浏览记录
+    question.value = await getQuestionDetail(id)
     if (authStore.token) {
       createBrowseHistory({ targetType: 'question', targetId: id })
+      isFavorited.value = await checkFavorite('question', id)
     }
-  }
-  catch (err) {
-    console.error('加载问题失败:', err)
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
 
 async function loadAnswers() {
   loadingAnswers.value = true
-  const id = route.params.id as string
   try {
-    const res = await getAnswerList(id)
-    answers.value = res || []
-  }
-  catch (err) {
-    console.error('加载回答失败:', err)
-  }
-  finally {
+    answers.value = await getAnswerList(route.params.id as string)
+  } finally {
     loadingAnswers.value = false
   }
 }
 
+function isAccepted(answer: Answer) {
+  if (answer.isAccepted || answer.isBest) return true
+  if (!question.value?.acceptedAnswerId) return false
+  return String(question.value.acceptedAnswerId) === String(answer.id)
+}
+
 async function handleSubmitAnswer() {
-  if (!answerContent.value.trim()) {
+  if (!authStore.token) {
+    goToLogin()
+    return
+  }
+  if (!question.value || !answerContent.value.trim()) {
     ElMessage.warning('请输入回答内容')
     return
   }
-  if (!question.value)
-    return
+
   submitting.value = true
   try {
     await createAnswer({
-      questionId: question.value.id,
-      content: answerContent.value
+      questionId: String(question.value.id),
+      content: answerContent.value.trim()
     })
-    ElMessage.success('回答成功')
     answerContent.value = ''
-    loadAnswers()
-    if (question.value) {
-      question.value.answerCount++
-    }
-  }
-  catch (err) {
-    ElMessage.error('回答失败')
-  }
-  finally {
+    ElMessage.success('回答已提交')
+    await loadAnswers()
+  } finally {
     submitting.value = false
   }
 }
 
 async function handleAccept(answer: Answer) {
-  if (!question.value || question.value.isResolved)
-    return
-  try {
-    const res = await acceptAnswer(question.value.id, answer.id)
-    if (res.code === 200) {
-      ElMessage.success('已采纳回答')
-      question.value.isResolved = true
-      question.value.acceptedAnswerId = answer.id
-      answer.isAccepted = true
-    }
-  }
-  catch (err) {
-    ElMessage.error('操作失败')
-  }
+  if (!question.value) return
+  await acceptAnswer(question.value.id, answer.id)
+  ElMessage.success('已采纳该回答')
+  await loadQuestion()
+  await loadAnswers()
 }
 
 async function handleLikeAnswer(answer: Answer) {
   if (!authStore.token) {
-    ElMessage.warning('请先登录')
+    goToLogin()
     return
   }
-  try {
-    await likeAnswer(answer.id)
-    answer.likeCount++
-  }
-  catch (err) {
-    ElMessage.error('操作失败')
+  await likeAnswer(answer.id)
+  if (answer.likeCount !== undefined) {
+    answer.likeCount += 1
+  } else if (answer.likesCount !== undefined) {
+    answer.likesCount += 1
   }
 }
 
-function handleFavorite() {
+async function handleFavorite() {
   if (!authStore.token) {
-    ElMessage.warning('请先登录')
+    goToLogin()
     return
   }
-  ElMessage.info('收藏功能开发中')
+  if (!question.value) return
+
+  const id = String(question.value.id)
+  if (isFavorited.value) {
+    await deleteFavorite('question', id)
+    isFavorited.value = false
+    ElMessage.success('已取消收藏')
+    return
+  }
+
+  await createFavorite({
+    targetType: 'question',
+    targetId: id
+  })
+  isFavorited.value = true
+  ElMessage.success('收藏成功')
 }
 
 function goToLogin() {
-  navigateTo(`/login?redirect=${route.fullPath}`)
+  goLoginPage(route.fullPath)
 }
 
-function formatTime(time: string) {
-  return new Date(time).toLocaleDateString('zh-CN')
+function formatTime(value: string) {
+  if (!value) return '刚刚'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '刚刚'
+  return date.toLocaleString('zh-CN')
 }
 
-onMounted(() => {
-  loadQuestion().then(() => {
-    loadAnswers()
-  })
+onMounted(async () => {
+  await loadQuestion()
+  await loadAnswers()
 })
 </script>
 
 <style scoped>
-.question-detail-page {
-  @apply flex gap-6;
+.question-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.main-area {
-  @apply flex-1 min-w-0;
-}
-
-.question-container {
-  @apply mb-6;
+.question-card,
+.answer-card,
+.answer-form-card {
+  padding: 18px 22px;
 }
 
 .question-header {
-  @apply flex items-start gap-3 mb-4;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--csdn-line);
+}
+
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .question-title {
-  @apply text-xl font-bold text-gray-800 flex-1;
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.35;
 }
 
-.question-meta {
-  @apply flex items-center justify-between mb-4 pb-4 border-b border-gray-100;
+.status-tag {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: #b26a00;
+  background: #fff6e6;
 }
 
-.author-info {
-  @apply flex items-center gap-2;
+.status-tag.resolved {
+  color: #0f7a3f;
+  background: #e9f9f0;
 }
 
-.author-name {
-  @apply font-medium text-gray-700;
+.meta-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.meta-info {
-  @apply flex items-center gap-2 text-sm text-gray-400;
+.author-meta,
+.stats-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--csdn-muted);
+  font-size: 13px;
 }
 
-.split {
-  @apply text-gray-300;
+.stats-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
-.question-tags {
-  @apply mb-4;
+.dot {
+  color: #c0c3cc;
 }
 
 .question-content {
-  @apply text-gray-700 leading-relaxed;
+  margin-top: 14px;
 }
 
-.question-content :deep(p) {
-  @apply mb-4;
+.action-row {
+  margin-top: 18px;
 }
 
-.question-content :deep(pre) {
-  @apply bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
-}
-
-.question-actions {
-  @apply flex items-center gap-4 mt-6 pt-6 border-t border-gray-100;
-}
-
-.answer-section {
-  @apply mb-6;
-}
-
-.answer-header {
-  @apply mb-4;
-}
-
-.answer-header h3 {
-  @apply text-lg font-medium text-gray-800 flex items-center;
+.answer-head h2,
+.answer-form-card h3 {
+  margin: 0;
+  font-size: 20px;
 }
 
 .answer-list {
-  @apply space-y-6;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .answer-item {
-  @apply pb-6 border-b border-gray-100 last:border-0;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--csdn-line);
+}
+
+.answer-item:last-child {
+  border-bottom: 0;
 }
 
 .answer-item.accepted {
-  @apply bg-green-50 p-4 rounded-lg -mx-4;
+  background: #f8fffb;
 }
 
-.answer-author {
-  @apply flex items-center gap-3 mb-3;
+.answer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.answer-time {
-  @apply text-xs text-gray-400;
+.answer-meta .author {
+  font-size: 13px;
+  color: var(--csdn-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.best-badge {
+  color: #0f7a3f;
+  background: #e9f9f0;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 2px 10px;
 }
 
 .answer-content {
-  @apply text-gray-700 leading-relaxed mb-4;
-}
-
-.answer-content :deep(p) {
-  @apply mb-3;
+  margin-top: 8px;
 }
 
 .answer-actions {
-  @apply flex items-center gap-3;
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.answer-form {
-  @apply pt-6 border-t border-gray-100;
+.submit-row {
+  margin-top: 10px;
+  text-align: right;
 }
 
-.answer-form h3 {
-  @apply text-lg font-medium text-gray-800 mb-4 flex items-center;
+@media (max-width: 768px) {
+  .question-card,
+  .answer-card,
+  .answer-form-card {
+    padding: 16px;
+  }
+
+  .question-title {
+    font-size: 24px;
+  }
 }
 </style>

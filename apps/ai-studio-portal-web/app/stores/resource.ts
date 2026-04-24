@@ -16,10 +16,11 @@ export const useResourceStore = defineStore('resourceStore', {
          * 初始化资源列表
          */
         async initResources() {
-            this.resources = await useSimpleFetch<Resource[]>('/gateway/portal/open/units', {
+            const res = await useSimpleFetch<Resource[]>('/gateway/portal/open/units', {
                 method: 'POST',
                 body: {}
             });
+            this.resources = res.data || []
             this.initialized = true;
         },
         // 筛选出指定类型的资源

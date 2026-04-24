@@ -2,6 +2,7 @@ package com.aistudio.service.controller.admin;
 
 import com.aistudio.service.common.Result;
 import com.aistudio.service.common.SecurityUtils;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.McpServerRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.McpServer;
@@ -43,6 +44,14 @@ public class AdminMcpController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN')")
     public Result<McpServer> detail(@PathVariable Long id) {
         return Result.success(mcpServerService.getMcpServerById(id));
+    }
+
+    @Operation(summary = "审核 MCP 服务器")
+    @PostMapping("/{id}/audit")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN')")
+    public Result<Void> audit(@PathVariable Long id, @Valid @RequestBody AuditRequest request) {
+        mcpServerService.auditMcpServer(id, request, securityUtils.getCurrentUserId());
+        return Result.success();
     }
 
     @Operation(summary = "创建 MCP 服务器")

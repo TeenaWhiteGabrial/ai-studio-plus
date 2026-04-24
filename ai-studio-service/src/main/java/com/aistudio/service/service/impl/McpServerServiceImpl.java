@@ -1,6 +1,7 @@
 package com.aistudio.service.service.impl;
 
 import com.aistudio.service.common.exception.BusinessException;
+import com.aistudio.service.dto.request.AuditRequest;
 import com.aistudio.service.dto.request.McpServerRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.McpServer;
@@ -15,6 +16,7 @@ import org.springframework.util.StringUtils;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,6 +64,19 @@ public class McpServerServiceImpl implements McpServerService {
         McpServer server = mcpServerMapper.selectById(id);
         if (server == null) throw new BusinessException(404, "MCP 服务器不存在");
         return server;
+    }
+
+    @Override
+    public void auditMcpServer(Long id, AuditRequest request, Long userId) {
+        McpServer server = getMcpServerById(id);
+        server.setStatus(request.getStatus());
+        server.setReviewTime(LocalDateTime.now());
+        if (request.getStatus() == 2) {
+            server.setReviewComment(request.getReviewComment());
+        } else {
+            server.setReviewComment(null);
+        }
+        mcpServerMapper.updateById(server);
     }
 
     @Override

@@ -11,6 +11,7 @@ export interface Comment {
   authorName: string
   authorAvatar?: string
   likeCount: number
+  liked?: boolean
   replyCount?: number
   replies?: Comment[]
   createTime: string
@@ -22,7 +23,7 @@ export interface Comment {
  */
 export interface Favorite {
   id: string
-  targetType: 'article' | 'question' | 'resource'
+  targetType: 'article' | 'question' | 'answer' | 'resource'
   targetId: string
   userId: string
   createTime: string
@@ -69,7 +70,7 @@ export interface CommentFormData {
  * 收藏创建参数
  */
 export interface FavoriteCreateData {
-  targetType: 'article' | 'question' | 'resource'
+  targetType: 'article' | 'question' | 'answer' | 'resource'
   targetId: string
 }
 

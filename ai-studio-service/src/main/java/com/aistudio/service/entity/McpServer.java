@@ -15,11 +15,28 @@ public class McpServer {
     private Long id;
     private String name;
     private String description;
+    private String serverType;
     private String apiEndpoint;
     private String authType;
     private String configJson;
-    private Integer status;
+
+    // 版本管理
+    private Long latestVersionId;
+    private String latestVersion;
+    private Integer totalVersions;
+
+    // 审核信息
+    private Integer status;            // 0-待审核 1-通过 2-拒绝
+    private LocalDateTime reviewTime;    // 审核时间
+    private String reviewComment;       // 审核备注
     private Long createdBy;
+    private Long creatorId;
+    private Long deptId;
+
+    // 连接测试
+    private LocalDateTime lastTestAt;
+    private String lastTestResult;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

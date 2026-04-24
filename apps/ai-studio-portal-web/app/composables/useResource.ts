@@ -1,102 +1,139 @@
 import type { Resource } from '~~/shared/types/resource'
 
-/**
- * 资源类型
- */
 export type ResourceType = 'skill' | 'plugin' | 'tutorial'
 
-/**
- * 资源列表查询参数
- */
 export interface ResourceListQuery {
   page?: number
   pageSize?: number
   type: ResourceType
   keyword?: string
-  categoryId?: string
-  tagIds?: string[]
+  category?: string
+  tag?: string
   sort?: 'latest' | 'hot' | 'recommend'
 }
 
-/**
- * 资源列表响应
- */
 export interface ResourceListResponse {
   records: Resource[]
   total: number
 }
 
-/**
- * 资源相关 API
- */
+interface OpenResult<T> {
+  code: number
+  message: string
+  data: T
+}
+
+interface OpenPage<T> {
+  records: T[]
+  total: number
+}
+
+function normalizeResource(type: ResourceType, item: Record<string, any>): Resource {
+  return {
+    ...item,
+    id: item.id,
+    type,
+    name: item.name || item.title || '',
+    title: item.title || item.name || '',
+    introduction: item.introduction || item.description || '',
+    description: item.description || item.introduction || '',
+    photo: item.photo || item.coverImage || item.icon || '',
+    coverImage: item.coverImage || item.photo || item.icon || '',
+    categoryName: item.categoryName || item.category || '',
+    publishTime: item.publishTime || item.createdAt || item.createTime || '',
+    createTime: item.createTime || item.createdAt || '',
+    updateTime: item.updateTime || item.updatedAt || '',
+    viewCount: item.viewCount ?? 0,
+    downloadCount: item.downloadCount ?? 0
+  } as Resource
+}
+
+function parseOpenPage<T>(raw: OpenResult<OpenPage<T>> | OpenPage<T>): OpenPage<T> {
+  if (raw && typeof raw === 'object' && 'data' in raw) {
+    return (raw as OpenResult<OpenPage<T>>).data || { records: [], total: 0 }
+  }
+  return raw as OpenPage<T>
+}
+
+function unwrapOpenResult<T>(raw: OpenResult<T> | T): T {
+  if (raw && typeof raw === 'object' && 'data' in (raw as Record<string, any>) && 'code' in (raw as Record<string, any>)) {
+    return (raw as OpenResult<T>).data
+  }
+  return raw as T
+}
+
 export function useResource() {
   const config = useRuntimeConfig()
+  const apiBase = (config.public.apiBase || '/').replace(/\/$/, '')
 
-  /**
-   * 获取资源列表
-   */
+  const toDownloadUrl = (path: string) => `${apiBase}${path}`
+
   async function getResourceList(query: ResourceListQuery): Promise<ResourceListResponse> {
-    const res = await $fetch<ResourceListResponse>(`/portal/resource/${query.type}/list`, {
-      method: 'GET',
-      params: query,
-      baseURL: config.public.apiBase
-    })
-    return res
+    const params = {
+      page: query.page || 1,
+      size: query.pageSize || 10,
+      keyword: query.keyword,
+      category: query.category,
+      tag: query.tag,
+      sort: query.sort
+    }
+
+    const raw = await $fetch<OpenResult<OpenPage<Record<string, any>>> | OpenPage<Record<string, any>>>(
+      `/portal/open/resource/${query.type}/list`,
+      {
+        method: 'GET',
+        params,
+        baseURL: config.public.apiBase
+      }
+    )
+
+    const page = parseOpenPage(raw)
+    return {
+      total: page.total || 0,
+      records: (page.records || []).map(item => normalizeResource(query.type, item))
+    }
   }
 
-  /**
-   * 获取资源详情
-   */
-  async function getResourceDetail(type: ResourceType, id: string): Promise<Resource> {
-    const res = await $fetch<Resource>(`/portal/resource/${type}/${id}`, {
-      method: 'GET',
-      baseURL: config.public.apiBase
-    })
-    return res
+  async function getResourceDetail(type: ResourceType, id: string | number): Promise<Resource> {
+    const raw = await $fetch<OpenResult<Record<string, any>> | Record<string, any>>(
+      `/portal/open/resource/${type}/${id}`,
+      {
+        method: 'GET',
+        baseURL: config.public.apiBase
+      }
+    )
+    const data = unwrapOpenResult(raw) || {}
+    return normalizeResource(type, data)
   }
 
-  /**
-   * 获取热门资源列表
-   */
   async function getHotResources(type: ResourceType, size = 10): Promise<Resource[]> {
-    const res = await $fetch<{ records: Resource[] }>(`/portal/resource/${type}/list`, {
-      method: 'GET',
-      params: { sort: 'hot', size },
-      baseURL: config.public.apiBase
+    const res = await getResourceList({
+      type,
+      page: 1,
+      pageSize: size,
+      sort: 'hot'
     })
-    return res?.records || []
+    return res.records
   }
 
-  /**
-   * 下载 Skill ZIP
-   */
   function downloadSkill(id: number | string) {
-    window.open(`${config.public.apiBase}/portal/open/resource/skill/${id}/download`, '_blank')
+    window.open(toDownloadUrl(`/portal/open/resource/skill/${id}/download`), '_blank')
   }
 
-  /**
-   * 下载 Plugin
-   */
   function downloadPlugin(id: number | string) {
-    window.open(`${config.public.apiBase}/portal/open/resource/plugin/${id}/download`, '_blank')
+    window.open(toDownloadUrl(`/portal/open/resource/plugin/${id}/download`), '_blank')
   }
 
-  /**
-   * 获取教程视频播放地址
-   */
   async function getTutorialVideoUrl(id: number | string): Promise<string> {
-    const res = await $fetch<{ data: string }>(`/portal/open/resource/tutorial/${id}/video`, {
+    const raw = await $fetch<OpenResult<string> | string>(`/portal/open/resource/tutorial/${id}/video`, {
       method: 'GET',
       baseURL: config.public.apiBase
     })
-    return res?.data || ''
+    return unwrapOpenResult(raw) || ''
   }
 
-  /**
-   * 下载教程 ZIP 附件
-   */
   function downloadTutorialZip(id: number | string) {
-    window.open(`${config.public.apiBase}/portal/open/resource/tutorial/${id}/zip`, '_blank')
+    window.open(toDownloadUrl(`/portal/open/resource/tutorial/${id}/zip`), '_blank')
   }
 
   return {

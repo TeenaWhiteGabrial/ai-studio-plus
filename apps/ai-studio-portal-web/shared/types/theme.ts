@@ -14,14 +14,14 @@ export interface ThemeConfig {
 
 // 默认主题配置
 export const defaultTheme: ThemeConfig = {
-    primary: '#3b82f6',
-    primaryDark: '#2563eb',
-    primaryDarker: '#1d4ed8',
-    primaryPale: '#1d4ed8',
+    primary: '#2563eb',
+    primaryDark: '#1d4ed8',
+    primaryDarker: '#1e40af',
+    primaryPale: '#3b82f6',
     primaryLight: '#dbeafe',
-    primaryLighter: '#f0f9ff',
-    primaryFaint: '#f8fafc',
-    primaryTransparent: '#3b82f680',
-    primarySubtle: '#3b82f633',
+    primaryLighter: '#eff6ff',
+    primaryFaint: '#f5f8ff',
+    primaryTransparent: '#2563eb80',
+    primarySubtle: '#2563eb33',
     primaryText: '#ffffff'
 }

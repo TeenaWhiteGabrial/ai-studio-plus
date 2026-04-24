@@ -1,25 +1,22 @@
 <template>
-  <div class="resource-card card-hover-shadow" @click="handleClick">
-    <!-- 封面图 -->
-    <div v-if="resource.photo" class="card-cover">
-      <img :src="resource.photo" :alt="resource.name" class="cover-image" />
-    </div>
-    <div v-else class="card-cover default-cover">
-      <Icon :name="resourceIcon" class="cover-icon" />
-    </div>
-    <!-- 内容区 -->
-    <div class="card-content">
-      <h3 class="card-title text-overflow-2">{{ resource.name }}</h3>
-      <p v-if="resource.introduction" class="card-intro text-overflow-2">{{ resource.introduction }}</p>
-      <!-- 分类标签 -->
-      <div class="card-meta">
-        <el-tag v-if="resource.categoryName" size="small" type="info">
-          {{ resource.categoryName }}
-        </el-tag>
-        <span class="publish-time">{{ formatTime(resource.publishTime || resource.createTime) }}</span>
+  <article class="resource-card csdn-card csdn-hover-card" @click="handleClick">
+    <div class="resource-cover">
+      <img v-if="coverUrl" :src="coverUrl" :alt="resourceName">
+      <div v-else class="cover-fallback">
+        <Icon :name="resourceIcon" size="32" />
       </div>
     </div>
-  </div>
+
+    <div class="resource-body">
+      <h3 class="resource-title text-overflow-2">{{ resourceName }}</h3>
+      <p class="resource-intro text-overflow-3">{{ introText || '暂无介绍' }}</p>
+
+      <div class="resource-foot">
+        <span class="type-tag">{{ typeText }}</span>
+        <span class="time">{{ formatTime(timeValue) }}</span>
+      </div>
+    </div>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -30,71 +27,100 @@ const props = defineProps<{
   type?: 'skill' | 'plugin' | 'tutorial'
 }>()
 
-const resourceType = computed(() => props.type || props.resource.type || 'skill')
+const resourceType = computed(() => (props.type || props.resource.type || 'skill') as 'skill' | 'plugin' | 'tutorial')
+
+const resourceName = computed(() => props.resource.name || props.resource.title || '未命名资源')
+const introText = computed(() => props.resource.introduction || props.resource.description || '')
+const coverUrl = computed(() => props.resource.photo || props.resource.coverImage || props.resource.icon || '')
+const timeValue = computed(() => props.resource.publishTime || props.resource.createTime || props.resource.createdAt || '')
+
+const typeText = computed(() => {
+  if (resourceType.value === 'skill') return 'Skill'
+  if (resourceType.value === 'plugin') return 'Plugin'
+  return 'Tutorial'
+})
 
 const resourceIcon = computed(() => {
-  switch (resourceType.value) {
-    case 'skill':
-      return 'material-symbols:smart-toy'
-    case 'plugin':
-      return 'material-symbols:extension'
-    case 'tutorial':
-      return 'material-symbols:menu-book'
-    default:
-      return 'material-symbols:folder'
-  }
+  if (resourceType.value === 'skill') return 'material-symbols:psychology-alt-outline'
+  if (resourceType.value === 'plugin') return 'material-symbols:extension-outline'
+  return 'material-symbols:play-lesson-outline'
 })
 
 function handleClick() {
   navigateTo(`/resources/${resourceType.value}/${props.resource.id}`)
 }
 
-function formatTime(time: string) {
-  if (!time)
-    return ''
-  const date = new Date(time)
+function formatTime(value: string) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
   return date.toLocaleDateString('zh-CN')
 }
 </script>
 
 <style scoped>
 .resource-card {
-  @apply bg-white rounded-lg overflow-hidden cursor-pointer transition-all duration-300;
+  overflow: hidden;
+  cursor: pointer;
 }
 
-.card-cover {
-  @apply w-full h-36 overflow-hidden bg-gray-100 flex items-center justify-center;
+.resource-cover {
+  width: 100%;
+  height: 140px;
+  background: #f2f5fb;
 }
 
-.cover-image {
-  @apply w-full h-full object-cover;
+.resource-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.default-cover {
-  @apply bg-gradient-to-br from-primary-faint to-primary-light;
+.cover-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--csdn-primary);
+  background: linear-gradient(145deg, #eaf2ff, #f9fbff);
 }
 
-.cover-icon {
-  @apply text-5xl text-primary;
+.resource-body {
+  padding: 12px;
 }
 
-.card-content {
-  @apply p-4;
+.resource-title {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-.card-title {
-  @apply text-base font-medium text-gray-800 mb-2;
+.resource-intro {
+  margin: 8px 0 10px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--csdn-subtext);
+  min-height: 64px;
 }
 
-.card-intro {
-  @apply text-sm text-gray-500 mb-3;
+.resource-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.card-meta {
-  @apply flex items-center justify-between;
+.type-tag {
+  border-radius: 999px;
+  background: var(--csdn-primary-soft);
+  color: var(--csdn-primary);
+  padding: 2px 8px;
+  font-size: 12px;
 }
 
-.publish-time {
-  @apply text-xs text-gray-400;
+.time {
+  color: var(--csdn-muted);
+  font-size: 12px;
 }
 </style>

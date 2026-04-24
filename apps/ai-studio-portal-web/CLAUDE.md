@@ -33,7 +33,6 @@
 | `NUXT_REGISTER_URL` | 注册地址 |
 | `NUXT_TOKEN_TYPE` | Token 模式（如 `Bearer`） |
 | `NUXT_APP_BASE_URL` | 项目基础路由 |
-| `NUXT_SUPPLIER_MICRO_URL` | 服务商工作台微前端地址 |
 
 ## 项目目录结构
 

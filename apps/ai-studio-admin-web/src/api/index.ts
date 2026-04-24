@@ -35,6 +35,10 @@ export const skillApi = {
 
 export const mcpApi = {
   list: (params: any) => request.get('/mcp/list', { params }),
+  detail: (id: number) => request.get(`/mcp/${id}`),
+  // 审核
+  audit: (id: number, data: { status: number; reviewComment?: string }) => request.post(`/mcp/${id}/audit`, data),
+  // CRUD
   create: (data: any) => request.post('/mcp', data),
   update: (id: number, data: any) => request.post(`/mcp/${id}`, data),
   delete: (id: number) => request.post(`/mcp/${id}/delete`),

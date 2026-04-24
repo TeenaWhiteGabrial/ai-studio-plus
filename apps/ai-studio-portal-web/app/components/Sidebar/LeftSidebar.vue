@@ -1,46 +1,53 @@
 <template>
-  <div class="left-sidebar-content">
-    <!-- 资源分类导航 -->
-    <div class="sidebar-card">
-      <div class="sidebar-title">
-        <Icon name="material-symbols:category" class="mr-2" />
-        资源分类
-      </div>
-      <div class="category-list">
-        <div
-          v-for="item in resourceCategories"
-          :key="item.path"
-          class="category-item"
-          :class="{ active: currentResourceType === item.type }"
-          @click="handleCategoryClick(item)"
-        >
-          <Icon :name="item.icon" class="mr-2" />
-          <span>{{ item.name }}</span>
-        </div>
-      </div>
-    </div>
+  <div class="left-wrap">
+    <section class="csdn-card panel quick-nav">
+      <h3 class="panel-title">频道导航</h3>
+      <button
+        v-for="item in channelItems"
+        :key="item.key"
+        class="nav-item"
+        :class="{ active: item.active }"
+        @click="navigateTo(item.to)"
+      >
+        <Icon :name="item.icon" size="18" />
+        <span>{{ item.label }}</span>
+      </button>
+    </section>
 
-    <!-- 热门标签 -->
-    <div class="sidebar-card mt-4">
-      <div class="sidebar-title">
-        <Icon name="material-symbols:tag" class="mr-2" />
-        热门标签
-      </div>
+    <section class="csdn-card panel resource-nav">
+      <h3 class="panel-title">资源分类</h3>
+      <button
+        v-for="item in resourceItems"
+        :key="item.type"
+        class="nav-item"
+        :class="{ active: currentType === item.type }"
+        @click="navigateTo(`/resources?type=${item.type}`)"
+      >
+        <Icon :name="item.icon" size="18" />
+        <span>{{ item.label }}</span>
+      </button>
+    </section>
+
+    <section class="csdn-card panel">
+      <h3 class="panel-title">热门标签</h3>
       <div class="tag-list">
-        <el-tag
-          v-for="tag in hotTags"
+        <button
+          v-for="tag in displayTags"
           :key="tag.id"
-          class="tag-item"
-          :style="{ '--tag-color': tag.color || '#3b82f6' }"
-          @click="handleTagClick(tag)"
+          class="tag-btn"
+          @click="navigateTo(`/community?tagId=${tag.id}`)"
         >
-          {{ tag.name }}
-        </el-tag>
-        <div v-if="loadingTags" class="text-center text-gray-400 py-2">
-          加载中...
-        </div>
+          # {{ tag.name }}
+        </button>
       </div>
-    </div>
+      <div v-if="loadingTags" class="csdn-empty">标签加载中...</div>
+    </section>
+
+    <section class="csdn-card panel creator">
+      <h3 class="panel-title">创作中心</h3>
+      <p class="creator-desc">发布问题、参与讨论，积累你的技术影响力。</p>
+      <el-button type="primary" class="w-full" @click="goAsk">发布问题</el-button>
+    </section>
   </div>
 </template>
 
@@ -48,94 +55,150 @@
 import type { Tag } from '~~/shared/types/community'
 
 const route = useRoute()
+const authStore = useAuthStore()
 const { getTagList } = useCommunity()
 
 const loadingTags = ref(false)
-const hotTags = ref<(Tag & { color?: string })[]>([])
+const displayTags = ref<Tag[]>([])
 
-// 资源分类
-const resourceCategories = [
-  { name: '技能', type: 'skill', path: '/resources', icon: 'material-symbols:smart-toy' },
-  { name: '插件', type: 'plugin', path: '/resources', icon: 'material-symbols:extension' }
+const channelItems = computed(() => [
+  {
+    key: 'home',
+    label: '推荐首页',
+    icon: 'material-symbols:home-outline',
+    to: '/',
+    active: route.path === '/'
+  },
+  {
+    key: 'community',
+    label: '技术社区',
+    icon: 'material-symbols:forum-outline',
+    to: '/community',
+    active: route.path.startsWith('/community')
+  },
+  {
+    key: 'resources',
+    label: '资源中心',
+    icon: 'material-symbols:folder-managed-outline',
+    to: '/resources',
+    active: route.path.startsWith('/resources')
+  },
+  {
+    key: 'profile',
+    label: '我的主页',
+    icon: 'material-symbols:person-outline',
+    to: '/profile',
+    active: route.path.startsWith('/profile')
+  }
+])
+
+const resourceItems = [
+  { type: 'skill', label: 'Skills', icon: 'material-symbols:psychology-alt-outline' },
+  { type: 'plugin', label: 'Plugins', icon: 'material-symbols:extension-outline' },
+  { type: 'tutorial', label: 'Tutorials', icon: 'material-symbols:play-lesson-outline' }
 ]
 
-const currentResourceType = computed(() => {
-  const type = route.params.type
-  return type as string || 'skill'
+const currentType = computed(() => {
+  if (!route.path.startsWith('/resources')) {
+    return ''
+  }
+  return String(route.query.type || 'skill')
 })
 
-// 加载热门标签
-async function loadHotTags() {
+async function loadTags() {
   loadingTags.value = true
   try {
-    const res = await getTagList()
-    // 取前20个标签
-    hotTags.value = (res || []).slice(0, 20).map((tag: Tag, index: number) => ({
-      ...tag,
-      color: tagColors[index % tagColors.length]
-    }))
-  }
-  catch (err) {
-    console.error('加载标签失败:', err)
+    const tags = await getTagList()
+    displayTags.value = (tags || []).slice(0, 18)
   }
   finally {
     loadingTags.value = false
   }
 }
 
-const tagColors = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
-]
-
-function handleCategoryClick(item: typeof resourceCategories[0]) {
-  navigateTo(`${item.path}?type=${item.type}`)
+function goAsk() {
+  if (!authStore.token) {
+    goLoginPage()
+    return
+  }
+  navigateTo('/community/ask')
 }
 
-function handleTagClick(tag: Tag & { color?: string }) {
-  navigateTo(`/community?tagId=${tag.id}`)
-}
-
-onMounted(() => {
-  loadHotTags()
-})
+onMounted(loadTags)
 </script>
 
 <style scoped>
-.sidebar-card {
-  @apply bg-white rounded-lg p-4 shadow-sm;
+.left-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.sidebar-title {
-  @apply text-base font-medium text-gray-800 mb-4 flex items-center;
+.panel {
+  padding: 14px;
 }
 
-.category-list {
-  @apply space-y-1;
+.panel-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--csdn-text);
 }
 
-.category-item {
-  @apply flex items-center px-3 py-2 rounded-lg cursor-pointer transition-all duration-200;
-  @apply hover:bg-gray-100 hover:text-primary;
+.nav-item {
+  width: 100%;
+  height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--csdn-subtext);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.category-item.active {
-  @apply bg-primary-faint text-primary font-medium;
+.nav-item:hover {
+  background: var(--csdn-hover);
+  color: var(--csdn-primary);
+}
+
+.nav-item.active {
+  background: var(--csdn-primary-soft);
+  color: var(--csdn-primary);
+  font-weight: 600;
 }
 
 .tag-list {
-  @apply flex flex-wrap gap-2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.tag-item {
-  @apply cursor-pointer transition-all duration-200;
-  background-color: color-mix(in srgb, var(--tag-color) 10%, transparent);
-  border-color: color-mix(in srgb, var(--tag-color) 30%, transparent);
-  color: var(--tag-color);
+.tag-btn {
+  border: 1px solid var(--csdn-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--csdn-subtext);
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.tag-item:hover {
-  background-color: color-mix(in srgb, var(--tag-color) 20%, transparent);
-  border-color: var(--tag-color);
+.tag-btn:hover {
+  border-color: #bdd2ff;
+  color: var(--csdn-primary);
+  background: #f7fbff;
+}
+
+.creator-desc {
+  margin: 0 0 10px;
+  color: var(--csdn-muted);
+  line-height: 1.6;
+  font-size: 13px;
 }
 </style>

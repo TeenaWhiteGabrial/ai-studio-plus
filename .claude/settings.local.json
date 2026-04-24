@@ -129,7 +129,8 @@
       "Bash(netstat -ano | findstr LISTENING | findstr :8080)",
       "Bash(C:\\\\\\\\Users\\\\\\\\zhangkunlun01\\\\\\\\.local\\\\\\\\bin\\\\\\\\claude.exe update:*)",
       "Bash(mysql -h 39.105.212.130 -uroot -pDevRoot@2026 ai-studio-plus)",
-      "Bash(echo \"SQL 执行结果: $?\")"
+      "Bash(echo \"SQL 执行结果: $?\")",
+      "Bash(python3 *)"
     ]
   }
 }

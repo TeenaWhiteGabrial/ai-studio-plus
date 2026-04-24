@@ -12,17 +12,18 @@ const privateKey = 'MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAqhHyZfSsYour
     'UP8iWi1Qw0Y='
 
 /**
- * RSA加密函数 - 异步版本
+ * RSA加密函数 - 使用指定公钥
+ * @param publicKey 加密使用的公钥
  * @param message 需要加密的消息
- * @returns 加密后的字符串
+ * @returns 加密结果
  */
-export const RSAEncrypt = async (message: string): Promise<string> => {
+export const RSAEncrypt = async (publicKey: string, message: string): Promise<{ success: boolean; encryptedPassword?: string }> => {
   // 确保在客户端环境下运行
   if (!import.meta.client) {
     console.warn('JSEncrypt只能在客户端环境使用');
-    return message; // 服务端返回原始文本
+    return { success: false };
   }
-  
+
   try {
     // 动态导入JSEncrypt
     // @ts-ignore
@@ -30,11 +31,15 @@ export const RSAEncrypt = async (message: string): Promise<string> => {
     const jsencrypt = new JSEncrypt();
     // 设置公钥
     jsencrypt.setPublicKey(publicKey);
-    // 执行加密，失败时返回原消息
-    return jsencrypt.encrypt(message) || message;
+    // 执行加密
+    const encryptedPassword = jsencrypt.encrypt(message);
+    if (encryptedPassword) {
+      return { success: true, encryptedPassword };
+    }
+    return { success: false };
   } catch (error) {
     console.error('加密失败:', error);
-    return message;
+    return { success: false };
   }
 };
 
@@ -49,7 +54,7 @@ export const RSADecrypt = async (message: string): Promise<string> => {
     console.warn('JSEncrypt只能在客户端环境使用');
     return message; // 服务端返回原始文本
   }
-  
+
   try {
     // 动态导入JSEncrypt
     // @ts-ignore
@@ -67,7 +72,7 @@ export const RSADecrypt = async (message: string): Promise<string> => {
 
 // 保留原有的同步函数，但改为异步实现的包装器，保持向后兼容
 export async function encrypt(txt: string) {
-  return await RSAEncrypt(txt);
+  return await RSAEncrypt(publicKey, txt);
 }
 
 export async function decrypt(txt: string) {

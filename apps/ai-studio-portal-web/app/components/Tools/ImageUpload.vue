@@ -228,7 +228,7 @@
         if (param && param.file) {
             formData.append('file', param.file)
         }
-        const { success, msg, data } = await useSimpleFetch('/prod-api/file/uploadFile',
+        const { success, msg, data } = await useSimpleFetch('/file/uploadFile',
         {
             method:'post',
             body: formData

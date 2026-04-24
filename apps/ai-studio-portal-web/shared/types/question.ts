@@ -8,16 +8,22 @@ export interface Question {
   authorId: string
   authorName: string
   authorAvatar?: string
-  tags: string[]
+  tags: string[] | string
   viewCount: number
+  viewsCount?: number
   answerCount: number
+  answersCount?: number
   likeCount: number
+  likesCount?: number
   favoriteCount: number
   status: 'draft' | 'published' | 'deleted' | 'closed'
   isResolved: boolean
+  hasBestAnswer?: number
   acceptedAnswerId?: string
   createTime: string
+  createdAt?: string
   updateTime: string
+  updatedAt?: string
   publishTime?: string
 }
 
@@ -32,9 +38,13 @@ export interface Answer {
   authorName: string
   authorAvatar?: string
   likeCount: number
+  likesCount?: number
   isAccepted: boolean
+  isBest?: number
   createTime: string
+  createdAt?: string
   updateTime: string
+  updatedAt?: string
 }
 
 /**

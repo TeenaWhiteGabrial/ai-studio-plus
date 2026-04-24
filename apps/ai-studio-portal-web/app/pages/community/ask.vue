@@ -40,13 +40,18 @@
       <div class="form-item">
         <label class="form-label">问题详情</label>
         <div class="editor-container">
-          <QuillEditor
-            v-model:content="formData.content"
-            contentType="html"
-            :toolbar="toolbarOptions"
-            placeholder="请详细描述您的问题..."
-            theme="snow"
-          />
+          <ClientOnly>
+            <QuillEditor
+              v-model:content="formData.content"
+              contentType="html"
+              :toolbar="toolbarOptions"
+              placeholder="请详细描述您的问题..."
+              theme="snow"
+            />
+            <template #fallback>
+              <div class="editor-fallback">编辑器加载中...</div>
+            </template>
+          </ClientOnly>
         </div>
       </div>
 
@@ -71,8 +76,13 @@
 </template>
 
 <script setup lang="ts">
-import { QuillEditor } from '@vueup/vue-quill'
+import { defineAsyncComponent } from 'vue'
+
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
+
+const QuillEditor = defineAsyncComponent(() =>
+  import('@vueup/vue-quill').then(module => module.QuillEditor)
+)
 
 definePageMeta({
   middleware: ['auth']
@@ -171,6 +181,10 @@ onMounted(() => {
 
 .editor-container {
   @apply border border-gray-200 rounded-lg overflow-hidden;
+}
+
+.editor-fallback {
+  @apply min-h-[250px] flex items-center justify-center text-gray-400 bg-gray-50;
 }
 
 .editor-container :deep(.ql-toolbar) {

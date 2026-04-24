@@ -1,70 +1,55 @@
 <template>
   <div class="resources-page">
-    <!-- 主内容区 -->
-    <div class="main-area">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <h1 class="page-title">资源中心</h1>
+    <section class="csdn-card filter-bar">
+      <div class="type-tabs">
+        <button
+          v-for="tab in resourceTabs"
+          :key="tab.type"
+          class="tab-btn"
+          :class="{ active: currentType === tab.type }"
+          @click="switchType(tab.type)"
+        >
+          <Icon :name="tab.icon" size="17" />
+          <span>{{ tab.name }}</span>
+        </button>
       </div>
 
-      <!-- Tab 切换 -->
-      <div class="tab-container">
-        <div class="tab-list">
-          <span
-            v-for="tab in resourceTabs"
-            :key="tab.type"
-            class="tab-item"
-            :class="{ active: currentType === tab.type }"
-            @click="switchType(tab.type)"
-          >
-            <Icon :name="tab.icon" class="mr-1" />
-            {{ tab.name }}
-          </span>
-        </div>
-        <!-- 排序 -->
-        <div class="sort-select">
-          <el-select v-model="currentSort" @change="handleSortChange">
-            <el-option label="最新发布" value="latest" />
-            <el-option label="最热门" value="hot" />
-            <el-option label="推荐" value="recommend" />
-          </el-select>
-        </div>
-      </div>
-
-      <!-- 搜索 -->
-      <div class="search-bar">
+      <div class="search-sort">
         <el-input
           v-model="keyword"
-          placeholder="搜索资源..."
+          placeholder="搜索资源名称、描述"
+          class="keyword-input"
+          clearable
           @keyup.enter="handleSearch"
         >
           <template #append>
             <el-button @click="handleSearch">
-              <Icon name="material-symbols:search" />
+              <Icon name="material-symbols:search" size="18" />
             </el-button>
           </template>
         </el-input>
-      </div>
 
-      <!-- 资源列表 -->
-      <div v-if="loading" class="text-center py-12 text-gray-400">
-        加载中...
+        <el-select v-model="currentSort" class="sort-select" @change="handleSortChange">
+          <el-option label="最新发布" value="latest" />
+          <el-option label="热门资源" value="hot" />
+          <el-option label="推荐优先" value="recommend" />
+        </el-select>
       </div>
-      <div v-else-if="resourceList.length > 0" class="resource-grid">
+    </section>
+
+    <section class="content-section">
+      <div v-if="loading" class="csdn-empty">加载中...</div>
+      <div v-else-if="resourceList.length === 0" class="csdn-card csdn-empty empty-card">暂无资源</div>
+      <div v-else class="resource-grid">
         <ResourceCard
           v-for="resource in resourceList"
           :key="resource.id"
           :resource="resource"
-          :type="currentType as 'skill' | 'plugin' | 'tutorial'"
+          :type="currentType"
         />
       </div>
-      <div v-else class="empty-state">
-        <Icon name="material-symbols:folder-open" class="text-6xl text-gray-300 mb-4" />
-        <p>暂无资源</p>
-      </div>
 
-      <!-- 分页 -->
-      <div v-if="totalCount > pageSize" class="pagination-container">
+      <div v-if="totalCount > pageSize" class="pagination-wrap">
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="pageSize"
@@ -73,36 +58,39 @@
           @current-change="handlePageChange"
         />
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Resource } from '~~/shared/types/resource'
+import type { ResourceType } from '~/composables/useResource'
 
 const route = useRoute()
 const router = useRouter()
 const { getResourceList } = useResource()
 
-const resourceTabs = [
-  { name: '技能', type: 'skill', icon: 'material-symbols:smart-toy' },
-  { name: '插件', type: 'plugin', icon: 'material-symbols:extension' }
+const resourceTabs: Array<{ name: string; type: ResourceType; icon: string }> = [
+  { name: 'Skill', type: 'skill', icon: 'material-symbols:psychology-alt-outline' },
+  { name: 'Plugin', type: 'plugin', icon: 'material-symbols:extension-outline' },
+  { name: 'Tutorial', type: 'tutorial', icon: 'material-symbols:play-lesson-outline' }
 ]
 
-const currentType = ref((route.query.type as string) || 'skill')
+const currentType = ref<ResourceType>((route.query.type as ResourceType) || 'skill')
 const currentSort = ref((route.query.sort as string) || 'latest')
 const keyword = ref((route.query.keyword as string) || '')
-const currentPage = ref(1)
+const currentPage = ref(Number(route.query.page || 1))
 const pageSize = 12
-const totalCount = ref(0)
+
 const loading = ref(false)
+const totalCount = ref(0)
 const resourceList = ref<Resource[]>([])
 
 async function loadResources() {
   loading.value = true
   try {
     const res = await getResourceList({
-      type: currentType.value as 'skill' | 'plugin',
+      type: currentType.value,
       sort: currentSort.value as 'latest' | 'hot' | 'recommend',
       keyword: keyword.value || undefined,
       page: currentPage.value,
@@ -110,16 +98,24 @@ async function loadResources() {
     })
     resourceList.value = res.records || []
     totalCount.value = res.total || 0
-  }
-  catch (err) {
-    console.error('加载资源失败:', err)
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
 
-function switchType(type: string) {
+function updateQuery() {
+  router.replace({
+    path: '/resources',
+    query: {
+      type: currentType.value,
+      sort: currentSort.value,
+      keyword: keyword.value || undefined,
+      page: currentPage.value
+    }
+  })
+}
+
+function switchType(type: ResourceType) {
   currentType.value = type
   currentPage.value = 1
   updateQuery()
@@ -140,91 +136,110 @@ function handleSearch() {
 
 function handlePageChange(page: number) {
   currentPage.value = page
+  updateQuery()
   loadResources()
 }
 
-function updateQuery() {
-  router.replace({
-    query: {
-      type: currentType.value,
-      sort: currentSort.value,
-      keyword: keyword.value,
-      page: currentPage.value
-    }
-  })
-}
-
-onMounted(() => {
-  loadResources()
-})
+onMounted(loadResources)
 </script>
 
 <style scoped>
 .resources-page {
-  @apply flex gap-6;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.main-area {
-  @apply flex-1 min-w-0;
+.filter-bar {
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.page-header {
-  @apply mb-6;
+.type-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.page-title {
-  @apply text-2xl font-bold text-gray-800;
+.tab-btn {
+  height: 36px;
+  border: 1px solid var(--csdn-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--csdn-subtext);
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
 }
 
-.tab-container {
-  @apply flex items-center justify-between mb-4 bg-white p-2 rounded-lg;
+.tab-btn:hover {
+  color: var(--csdn-primary);
+  border-color: #bdd2ff;
 }
 
-.tab-list {
-  @apply flex gap-2;
+.tab-btn.active {
+  color: var(--csdn-primary);
+  background: var(--csdn-primary-soft);
+  border-color: #a9c5ff;
+  font-weight: 600;
 }
 
-.tab-item {
-  @apply flex items-center px-4 py-2 rounded-lg cursor-pointer transition-all text-gray-600;
+.search-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.tab-item:hover {
-  @apply bg-gray-100;
-}
-
-.tab-item.active {
-  @apply bg-primary text-white;
+.keyword-input {
+  width: 300px;
 }
 
 .sort-select {
-  @apply w-32;
+  width: 130px;
 }
 
-.search-bar {
-  @apply mb-6;
+.content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .resource-grid {
-  @apply grid grid-cols-4 gap-4;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.empty-state {
-  @apply flex flex-col items-center justify-center py-16 text-gray-400;
+.empty-card {
+  padding: 24px;
 }
 
-.pagination-container {
-  @apply flex justify-center mt-8;
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 2px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .resource-grid {
-    @apply grid-cols-3;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 900px) {
-  .resource-grid {
-    @apply grid-cols-2;
+  .search-sort {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .keyword-input {
+    width: 100%;
   }
 }
 </style>

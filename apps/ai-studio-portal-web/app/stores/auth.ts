@@ -1,142 +1,300 @@
-/**
- *
- * maxkey登录相关信息，以此为准
- */
+import JSEncrypt from 'jsencrypt'
+
+interface LoginResponse {
+  code: number
+  message: string
+  msg: string
+  data: {
+    token: string
+  }
+}
+
+interface UserInfoResponse {
+  code: number
+  message: string
+  msg: string
+  data: UserInfo
+}
 
 export const useAuthStore = defineStore('authStore', {
-    state: (): UserInfo => ({
-        userName: '', // 显示用户名
-        phone: '', // 手机号
-        email: '', // 邮箱
-        token: getCookieToken(), // token
-        userId: '', // 用户ID
-        roles:[], // 角色权限组
-    }),
-    actions: {
-        /**
-         * 清除登录信息
-         */
-        clearLoginInfo() {
-            this.userName = ''
-            this.phone = ''
-            this.email = ''
-            this.token = ''
-            this.userId = ''
-            this.roles = []
-            removeCookieToken()
+  state: (): UserInfo => ({
+    userName: '',
+    username: '',
+    phone: '',
+    email: '',
+    token: getCookieToken(),
+    userId: '',
+    avatar: '',
+    roles: [],
+    deptId: undefined,
+    deptName: undefined,
+    teamId: undefined,
+    teamName: undefined,
+    user_id: undefined,
+    id: undefined,
+    real_name: undefined,
+    dept_id: undefined,
+    dept_name: undefined,
+    team_id: undefined,
+    team_name: undefined,
+  }),
+  actions: {
+    saveRememberedCredentials(username: string, password: string) {
+      if (!import.meta.client) {
+        return
+      }
+      localStorage.setItem('rememberedUsername', username)
+      localStorage.setItem('rememberedPassword', btoa(password))
+    },
+
+    getRememberedCredentials(): { username: string; password: string } | null {
+      if (!import.meta.client) {
+        return null
+      }
+      const username = localStorage.getItem('rememberedUsername')
+      const password = localStorage.getItem('rememberedPassword')
+      if (username && password) {
+        return { username, password: atob(password) }
+      }
+      return null
+    },
+
+    clearRememberedCredentials() {
+      if (!import.meta.client) {
+        return
+      }
+      localStorage.removeItem('rememberedUsername')
+      localStorage.removeItem('rememberedPassword')
+    },
+
+    clearLoginInfo() {
+      this.userName = ''
+      this.username = ''
+      this.phone = ''
+      this.email = ''
+      this.token = ''
+      this.userId = ''
+      this.avatar = ''
+      this.roles = []
+      this.deptId = undefined
+      this.deptName = undefined
+      this.teamId = undefined
+      this.teamName = undefined
+      this.user_id = undefined
+      this.id = undefined
+      this.real_name = undefined
+      this.dept_id = undefined
+      this.dept_name = undefined
+      this.team_id = undefined
+      this.team_name = undefined
+      removeCookieToken()
+
+      if (import.meta.client) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('userInfo')
+      }
+    },
+
+    setLoginInfo(info: Partial<UserInfo> & Record<string, any>) {
+      const has = (key: string) => Object.prototype.hasOwnProperty.call(info, key)
+
+      if (has('token')) {
+        this.token = info.token || ''
+      }
+
+      if (has('user_id')) {
+        this.user_id = info.user_id
+        this.id = info.user_id
+        this.userId = info.user_id !== undefined && info.user_id !== null ? String(info.user_id) : ''
+      }
+
+      if (has('id')) {
+        this.id = info.id
+      }
+
+      if (has('userId')) {
+        this.userId = info.userId ? String(info.userId) : ''
+      }
+
+      if (has('username')) {
+        this.username = info.username || ''
+      }
+
+      if (has('userName')) {
+        this.userName = info.userName || ''
+        this.username = info.userName || this.username
+      }
+      else if (has('username')) {
+        this.userName = info.username || ''
+      }
+
+      if (has('real_name')) {
+        this.real_name = info.real_name
+      }
+
+      if (has('avatar')) {
+        this.avatar = info.avatar || ''
+      }
+
+      if (has('phone')) {
+        this.phone = info.phone || ''
+      }
+
+      if (has('email')) {
+        this.email = info.email || ''
+      }
+
+      if (has('dept_id')) {
+        this.dept_id = info.dept_id
+        this.deptId = info.dept_id
+      }
+
+      if (has('deptId')) {
+        this.deptId = info.deptId
+        this.dept_id = info.deptId
+      }
+
+      if (has('dept_name')) {
+        this.dept_name = info.dept_name
+        this.deptName = info.dept_name
+      }
+
+      if (has('deptName')) {
+        this.deptName = info.deptName
+        this.dept_name = info.deptName
+      }
+
+      if (has('team_id')) {
+        this.team_id = info.team_id
+        this.teamId = info.team_id
+      }
+
+      if (has('teamId')) {
+        this.teamId = info.teamId
+        this.team_id = info.teamId
+      }
+
+      if (has('team_name')) {
+        this.team_name = info.team_name
+        this.teamName = info.team_name
+      }
+
+      if (has('teamName')) {
+        this.teamName = info.teamName
+        this.team_name = info.teamName
+      }
+
+      if (Array.isArray(info.roles)) {
+        this.roles = [...new Set(info.roles)]
+      }
+    },
+
+    setToken(token: string) {
+      this.token = token
+      setCookieToken(token)
+      if (import.meta.client) {
+        localStorage.setItem('token', token)
+      }
+    },
+
+    async login(username: string, password: string) {
+      this.clearLoginInfo()
+      const config = useRuntimeConfig()
+
+      const keyRes = await $fetch<{ data: string }>('/auth/public-key')
+      if (!keyRes?.data) {
+        throw new Error('获取公钥失败')
+      }
+
+      const encryptor = new JSEncrypt()
+      encryptor.setPublicKey(keyRes.data)
+      const encryptedPassword = encryptor.encrypt(password)
+      if (!encryptedPassword) {
+        throw new Error('密码加密失败')
+      }
+
+      const tokenRes = await $fetch<LoginResponse>('/auth/token', {
+        method: 'POST',
+        body: {
+          username,
+          password: encryptedPassword,
         },
+      })
 
-        /**
-         * 修改密码
-         */
-        async changePassword(oldPassword: string, newPassword: string) {
-            try {
-                const res = await useSimpleFetch<{
-                    code: number
-                    msg: string
-                }>('/prod-api/auth/change-password', {
-                    method: 'POST',
-                    body: { oldPassword, newPassword }
-                })
-                if (res.code === 200) {
-                    return { success: true, message: '密码修改成功' }
-                } else {
-                    return { success: false, message: res.msg || '密码修改失败' }
-                }
-            } catch (err) {
-                return { success: false, message: err instanceof Error ? err.message : '密码修改请求失败' }
-            }
+      if (tokenRes?.code !== 200 || !tokenRes?.data?.token) {
+        throw new Error(tokenRes?.message || tokenRes?.msg || '登录失败')
+      }
+
+      const token = tokenRes.data.token
+      this.setToken(token)
+      const authHeader = config.public.tokenType ? `${config.public.tokenType} ${token}` : token
+
+      const userRes = await $fetch<UserInfoResponse>('/auth/user-info', {
+        headers: {
+          Authorization: authHeader,
         },
-        /**
-         * 设置除token外的登录信息
-         * @param info 登录信息
-         */
-        setLoginInfo(info: UserInfo) {
-            info.userId && (this.userId = info.userId)
-            info.userName && (this.userName = info.userName)
-            info.phone && (this.phone = info.phone)
-            info.email && (this.email = info.email)
-            if (info.roles && info.roles.length > 0) {
-                // 使用Set对象去除重复角色
-                this.roles = [...new Set([...(this.roles || []), ...info.roles])]
+      })
+      if (userRes?.code !== 200 || !userRes?.data) {
+        throw new Error(userRes?.message || userRes?.msg || '获取用户信息失败')
+      }
+
+      const data = { ...(userRes.data as Record<string, any>), token }
+      this.setLoginInfo(data)
+
+      if (import.meta.client) {
+        localStorage.setItem('userInfo', JSON.stringify(data))
+      }
+    },
+
+    async logout() {
+      try {
+        const config = useRuntimeConfig()
+        const authHeader = this.token
+          ? (config.public.tokenType ? `${config.public.tokenType} ${this.token}` : this.token)
+          : undefined
+        await $fetch('/auth/logout', {
+          method: 'POST',
+          headers: authHeader
+            ? {
+              Authorization: authHeader,
             }
-        },
-        /**
-         * 设置 token，同时将已登录设为true
-         * @param token token
-         */
-        setToken(token: string) {
-            this.token = token
-            setCookieToken(token)
-        },
-        /**
-         * 自有登录方法
-         * @param username 用户名
-         * @param password 密码
-         * @param code 验证码
-         * @param uuid 验证码key
-         * @returns 登录结果
-         */
-        async ownLogin(username: string, password: string, code: string, uuid: string){
-            try {
-                // 登录前先清理一遍登录信息
-                this.clearLoginInfo()
+            : undefined,
+        })
+      } catch (err) {
+        console.error('退出请求失败:', err)
+      } finally {
+        this.clearLoginInfo()
+      }
+    },
 
-                // 第一步：获取Token
-                const tokenResponse = await useSimpleFetch<{
-                    code: number
-                    msg: string
-                    data: { token: string }
-                }>('/prod-api/auth/token', {
-                    method: 'POST',
-                    body: {
-                        username,
-                        password,
-                        code,
-                        uuid
-                    }})
-                if (tokenResponse.code !== 200 || !tokenResponse.data) {
-                    return { success: false, message: tokenResponse.msg || '登录失败' }
-                }
-
-                // 存储token到cookie
-                this.setToken(tokenResponse.data.token)
-
-                // 第二步：获取用户信息
-                const userInfoResponse = await useSimpleFetch<{
-                    code: number
-                    msg: string
-                    data: UserInfo
-                }>('/prod-api/auth/user-info', {
-                    method: 'GET'
-                })
-
-                if (userInfoResponse.code === 200 && userInfoResponse.data) {
-                    // 设置用户信息
-                    this.setLoginInfo(userInfoResponse.data)
-                    return { success: true, message: '登录成功' }
-                } else {
-                    return { success: false, message: userInfoResponse.msg || '获取用户信息失败' }
-                }
-            } catch (err) {
-                return { success: false, message: err instanceof Error ? err.message : '登录请求失败' }
-            }
-        }, 
-
-        async ownLogout(){
-
-            const res = await useSimpleFetch<{
-                code: number
-                msg: string
-            }>('/prod-api/auth/logout',{
-                method:'post'
-            })
-            if (res.code === 200) {
-                this.clearLoginInfo()
-                return { success: true, message: '登出成功' }
-            } else {
-                return { success: false, message: res.msg || '登出失败' }
-            }
+    async changePassword(oldPassword: string, newPassword: string) {
+      try {
+        const res = await useSimpleFetch<{
+          code: number
+          msg: string
+        }>('/auth/change-password', {
+          method: 'POST',
+          body: { oldPassword, newPassword },
+        })
+        if (res.code === 200) {
+          return { success: true, message: '密码修改成功' }
         }
-    }
+        return { success: false, message: res.msg || '密码修改失败' }
+      } catch (err) {
+        return { success: false, message: err instanceof Error ? err.message : '密码修改请求失败' }
+      }
+    },
+
+    hasRole(role: string) {
+      return this.roles?.includes(role) ?? false
+    },
+
+    isAdmin() {
+      return this.hasRole('OP_ADMIN') || this.hasRole('SUPER_ADMIN') || this.hasRole('DEPT_ADMIN')
+    },
+
+    isSuperAdmin() {
+      return this.hasRole('SUPER_ADMIN')
+    },
+  },
 })

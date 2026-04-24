@@ -25,13 +25,14 @@ export interface UserInfo {
     /** 登录用户ID */
     userId?: string
     userName?: string
+    username?: string
     phone?: string
     email?: string
-    id?: string
+    id?: string | number
     /** 头像 */
     avatar?: string
     /** 角色列表 */
-    roles?: ROLE_STATUS[]
+    roles?: string[]
     /**
      * 用户token
      */
@@ -44,4 +45,10 @@ export interface UserInfo {
     teamId?: number
     /** 团队名称 */
     teamName?: string
+    user_id?: number
+    real_name?: string
+    dept_id?: number
+    dept_name?: string
+    team_id?: number
+    team_name?: string
 }

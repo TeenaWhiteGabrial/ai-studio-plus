@@ -14,13 +14,19 @@ export interface Article {
   categoryId?: string
   categoryName?: string
   viewCount: number
+  viewsCount?: number
   likeCount: number
+  likesCount?: number
   commentCount: number
+  commentsCount?: number
   favoriteCount: number
   status: 'draft' | 'published' | 'deleted'
   createTime: string
+  createdAt?: string
   updateTime: string
+  updatedAt?: string
   publishTime?: string
+  publishedAt?: string
 }
 
 /**

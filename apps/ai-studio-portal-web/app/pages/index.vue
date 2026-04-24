@@ -1,238 +1,303 @@
 <template>
   <div class="home-page">
-    <!-- 主内容区 -->
-    <div class="main-area">
-      <!-- 本周精选 -->
-      <section class="featured-section">
-        <div class="section-header">
-          <Icon name="material-symbols:star" class="mr-2 text-yellow-500" />
-          <span>本周精选</span>
+    <section class="hero csdn-card">
+      <div class="hero-main">
+        <h1>AI Studio 技术社区</h1>
+        <p>分享实战、沉淀经验、发现高质量 AI 技术资源。</p>
+        <div class="hero-actions">
+          <el-button type="primary" @click="goAsk">发布问题</el-button>
+          <el-button @click="navigateTo('/community')">浏览社区</el-button>
+          <el-button @click="navigateTo('/resources')">进入资源中心</el-button>
         </div>
-        <div class="featured-grid">
-          <div
-            v-for="item in featuredItems"
-            :key="item.id"
-            class="featured-card card-hover-shadow"
-            @click="handleFeaturedClick(item)"
-          >
-            <div class="featured-cover">
-              <img v-if="item.coverImage" :src="item.coverImage" :alt="item.title" />
-              <div v-else class="default-cover">
-                <Icon name="material-symbols:article" class="text-4xl text-primary" />
-              </div>
-            </div>
-            <div class="featured-content">
-              <el-tag size="small" :type="item.type === 'article' ? 'primary' : 'success'">
-                {{ item.type === 'article' ? '文章' : '问答' }}
-              </el-tag>
-              <h4 class="featured-title text-overflow-2">{{ item.title }}</h4>
-              <div class="featured-meta">
-                <span>{{ item.author }}</span>
-                <span>{{ item.viewCount }} 阅读</span>
-              </div>
-            </div>
-          </div>
+      </div>
+      <div class="hero-side">
+        <div class="hero-metric">
+          <span class="value">{{ articleList.length }}</span>
+          <span class="label">推荐文章</span>
         </div>
-      </section>
+        <div class="hero-metric">
+          <span class="value">{{ questionList.length }}</span>
+          <span class="label">活跃问答</span>
+        </div>
+        <div class="hero-metric">
+          <span class="value">{{ latestResources.length }}</span>
+          <span class="label">最新资源</span>
+        </div>
+      </div>
+    </section>
 
-      <!-- 最新资源 -->
-      <section class="resource-section">
-        <div class="section-header">
-          <Icon name="material-symbols:new-release" class="mr-2 text-primary" />
-          <span>最新发布</span>
-          <div class="tab-switch ml-auto">
-            <span
-              v-for="tab in resourceTabs"
-              :key="tab.type"
-              class="tab-item"
-              :class="{ active: currentResourceTab === tab.type }"
-              @click="switchResourceTab(tab.type)"
-            >
-              {{ tab.name }}
-            </span>
-          </div>
+    <section class="feed-section">
+      <div class="section-head">
+        <h2 class="csdn-section-title">推荐文章</h2>
+        <NuxtLink to="/community?type=article" class="csdn-link">更多文章</NuxtLink>
+      </div>
+      <div v-if="loadingArticles" class="csdn-empty">加载中...</div>
+      <div v-else class="article-list">
+        <ArticleCard v-for="article in articleList" :key="article.id" :article="article" />
+      </div>
+    </section>
+
+    <section class="feed-section">
+      <div class="section-head">
+        <h2 class="csdn-section-title">精选问答</h2>
+        <NuxtLink to="/community?type=question" class="csdn-link">更多问答</NuxtLink>
+      </div>
+      <div v-if="loadingQuestions" class="csdn-empty">加载中...</div>
+      <div v-else class="question-list">
+        <QuestionCard v-for="question in questionList" :key="question.id" :question="question" />
+      </div>
+    </section>
+
+    <section class="resource-section">
+      <div class="section-head">
+        <h2 class="csdn-section-title">最新资源</h2>
+        <div class="resource-tabs">
+          <button
+            v-for="tab in resourceTabs"
+            :key="tab.value"
+            class="tab-btn"
+            :class="{ active: currentResourceTab === tab.value }"
+            @click="switchResourceTab(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
         </div>
-        <div v-if="loadingResources" class="text-center py-8 text-gray-400">
-          加载中...
-        </div>
-        <div v-else class="resource-grid">
-          <ResourceCard
-            v-for="resource in latestResources"
-            :key="resource.id"
-            :resource="resource"
-            :type="currentResourceTab as 'skill' | 'plugin' | 'tutorial'"
-          />
-        </div>
-        <div v-if="!loadingResources && latestResources.length === 0" class="text-center py-8 text-gray-400">
-          暂无数据
-        </div>
-      </section>
-    </div>
+      </div>
+
+      <div v-if="loadingResources" class="csdn-empty">加载中...</div>
+      <div v-else class="resource-grid">
+        <ResourceCard
+          v-for="resource in latestResources"
+          :key="resource.id"
+          :resource="resource"
+          :type="currentResourceTab"
+        />
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Article } from '~~/shared/types/article'
+import type { Question } from '~~/shared/types/question'
 import type { Resource } from '~~/shared/types/resource'
+import type { ResourceType } from '~/composables/useResource'
 
-// 定义本周精选数据（后续可改为API获取）
-const featuredItems = ref([
-  {
-    id: '1',
-    title: 'AI大模型在企业应用中的最佳实践',
-    coverImage: '',
-    type: 'article',
-    author: '技术专家',
-    viewCount: 1256
-  },
-  {
-    id: '2',
-    title: '如何快速构建一个智能问答系统？',
-    coverImage: '',
-    type: 'question',
-    author: '开发者小王',
-    viewCount: 892
-  },
-  {
-    id: '3',
-    title: '使用Vue3和AI加速前端开发',
-    coverImage: '',
-    type: 'article',
-    author: '前端架构师',
-    viewCount: 2103
-  }
-])
-
-const resourceTabs = [
-  { name: '技能', type: 'skill' },
-  { name: '插件', type: 'plugin' }
-]
-
-const currentResourceTab = ref('skill')
-const latestResources = ref<Resource[]>([])
-const loadingResources = ref(false)
-
+const authStore = useAuthStore()
+const { getArticleList } = useArticle()
+const { getQuestionList } = useQuestion()
 const { getResourceList } = useResource()
 
-async function loadLatestResources() {
+const articleList = ref<Article[]>([])
+const questionList = ref<Question[]>([])
+const latestResources = ref<Resource[]>([])
+
+const loadingArticles = ref(false)
+const loadingQuestions = ref(false)
+const loadingResources = ref(false)
+
+const resourceTabs: Array<{ label: string; value: ResourceType }> = [
+  { label: 'Skill', value: 'skill' },
+  { label: 'Plugin', value: 'plugin' },
+  { label: 'Tutorial', value: 'tutorial' }
+]
+
+const currentResourceTab = ref<ResourceType>('skill')
+
+async function loadArticles() {
+  loadingArticles.value = true
+  try {
+    const res = await getArticleList({
+      sort: 'hot',
+      page: 1,
+      pageSize: 6
+    })
+    articleList.value = res.records || []
+  } finally {
+    loadingArticles.value = false
+  }
+}
+
+async function loadQuestions() {
+  loadingQuestions.value = true
+  try {
+    const res = await getQuestionList({
+      sort: 'latest',
+      page: 1,
+      pageSize: 6
+    })
+    questionList.value = res.records || []
+  } finally {
+    loadingQuestions.value = false
+  }
+}
+
+async function loadResources() {
   loadingResources.value = true
   try {
     const res = await getResourceList({
-      type: currentResourceTab.value as 'skill' | 'plugin',
+      type: currentResourceTab.value,
       sort: 'latest',
-      pageSize: 8
+      page: 1,
+      pageSize: 6
     })
     latestResources.value = res.records || []
-  }
-  catch (err) {
-    console.error('加载资源失败:', err)
-  }
-  finally {
+  } finally {
     loadingResources.value = false
   }
 }
 
-function switchResourceTab(type: string) {
+function switchResourceTab(type: ResourceType) {
   currentResourceTab.value = type
-  loadLatestResources()
+  loadResources()
 }
 
-function handleFeaturedClick(item: typeof featuredItems.value[0]) {
-  if (item.type === 'article') {
-    navigateTo(`/community/article/${item.id}`)
+function goAsk() {
+  if (!authStore.token) {
+    goLoginPage()
+    return
   }
-  else {
-    navigateTo(`/community/question/${item.id}`)
-  }
+  navigateTo('/community/ask')
 }
 
 onMounted(() => {
-  loadLatestResources()
+  loadArticles()
+  loadQuestions()
+  loadResources()
 })
 </script>
 
 <style scoped>
 .home-page {
-  @apply flex gap-6;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.main-area {
-  @apply flex-1 min-w-0;
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+  padding: 20px;
+  background: var(--portal-gradient-soft);
 }
 
-.section-header {
-  @apply flex items-center text-lg font-medium text-gray-800 mb-4;
+.hero-main h1 {
+  margin: 0 0 10px;
+  font-size: 30px;
+  line-height: 1.2;
+  color: #1f2937;
 }
 
-.tab-switch {
-  @apply flex gap-2;
+.hero-main p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.8;
 }
 
-.tab-item {
-  @apply px-3 py-1 text-sm rounded-full cursor-pointer transition-all;
-  @apply hover:bg-gray-100;
+.hero-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.tab-item.active {
-  @apply bg-primary text-white;
+.hero-side {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
-.featured-section {
-  @apply mb-8;
+.hero-metric {
+  border-radius: 10px;
+  border: 1px solid #e0e8f8;
+  background: #fff;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.featured-grid {
-  @apply grid grid-cols-3 gap-4;
+.hero-metric .value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--csdn-primary);
 }
 
-.featured-card {
-  @apply bg-white rounded-lg overflow-hidden cursor-pointer transition-all duration-300;
+.hero-metric .label {
+  color: var(--csdn-muted);
+  font-size: 13px;
 }
 
-.featured-cover {
-  @apply h-32 bg-gray-100 overflow-hidden;
-}
-
-.featured-cover img {
-  @apply w-full h-full object-cover;
-}
-
-.default-cover {
-  @apply w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-faint to-primary-light;
-}
-
-.featured-content {
-  @apply p-3;
-}
-
-.featured-title {
-  @apply text-sm font-medium text-gray-800 mt-2 mb-2;
-}
-
-.featured-meta {
-  @apply flex items-center justify-between text-xs text-gray-400;
-}
-
+.feed-section,
 .resource-section {
-  @apply mb-8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.article-list,
+.question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resource-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-btn {
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--csdn-line);
+  background: #fff;
+  color: var(--csdn-subtext);
+  padding: 0 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  border-color: #bfd5ff;
+  color: var(--csdn-primary);
+}
+
+.tab-btn.active {
+  background: var(--csdn-primary-soft);
+  border-color: #a4c2ff;
+  color: var(--csdn-primary);
+  font-weight: 600;
 }
 
 .resource-grid {
-  @apply grid grid-cols-4 gap-4;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-@media (max-width: 1200px) {
-  .resource-grid {
-    @apply grid-cols-3;
+@media (max-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 900px) {
-  .featured-grid {
-    @apply grid-cols-2;
+@media (max-width: 768px) {
+  .hero-main h1 {
+    font-size: 24px;
   }
 
   .resource-grid {
-    @apply grid-cols-2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

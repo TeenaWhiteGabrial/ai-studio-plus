@@ -1,74 +1,68 @@
 <template>
-  <div class="article-detail-page">
-    <!-- 主内容区 -->
-    <div class="main-area">
-      <div v-if="loading" class="text-center py-12">
-        加载中...
-      </div>
-      <div v-else-if="!article" class="text-center py-12">
-        文章不存在
-      </div>
-      <template v-else>
-        <!-- 文章头部 -->
-        <article class="article-container bg-white rounded-lg p-6">
-          <h1 class="article-title">{{ article.title }}</h1>
-          <div class="article-meta">
-            <div class="author-info">
-              <el-avatar v-if="article.authorAvatar" :src="article.authorAvatar" :size="32" />
-              <span class="author-name">{{ article.authorName }}</span>
-            </div>
-            <div class="meta-info">
-              <span>{{ formatTime(article.publishTime || article.createTime) }}</span>
-              <span class="split">|</span>
-              <span>{{ article.viewCount }} 阅读</span>
-              <span class="split">|</span>
-              <span>{{ article.likeCount }} 点赞</span>
-            </div>
-          </div>
-          <!-- 标签 -->
-          <div v-if="article.tags && article.tags.length" class="article-tags">
-            <el-tag v-for="tag in article.tags" :key="tag" size="small" class="mr-2">
-              {{ tag }}
-            </el-tag>
-          </div>
-          <!-- 封面图 -->
-          <div v-if="article.coverImage" class="article-cover">
-            <img :src="article.coverImage" :alt="article.title" />
-          </div>
-          <!-- 文章内容 -->
-          <div class="article-content" v-html="article.content"></div>
-          <!-- 操作栏 -->
-          <div class="article-actions">
-            <el-button :type="isLiked ? 'primary' : 'default'" @click="handleLike">
-              <Icon :name="isLiked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="mr-1" />
-              {{ article.likeCount }} 点赞
-            </el-button>
-            <el-button :type="isFavorited ? 'primary' : 'default'" @click="handleFavorite">
-              <Icon :name="isFavorited ? 'material-symbols:bookmark' : 'material-symbols:bookmark-outline'" class="mr-1" />
-              {{ isFavorited ? '已收藏' : '收藏' }}
-            </el-button>
-            <el-button @click="handleShare">
-              <Icon name="material-symbols:share" class="mr-1" />
-              分享
-            </el-button>
-          </div>
-        </article>
+  <div class="article-page">
+    <div v-if="loading" class="csdn-card csdn-empty">内容加载中...</div>
+    <div v-else-if="!article" class="csdn-card csdn-empty">文章不存在或已下线</div>
 
-        <!-- 评论区 -->
-        <div class="comment-section bg-white rounded-lg p-6 mt-6">
-          <CommentForm
-            target-type="article"
-            :target-id="article.id"
-            @success="handleCommentSuccess"
-          />
-          <CommentList
-            target-type="article"
-            :target-id="article.id"
-            @comment-change="handleCommentChange"
-          />
+    <template v-else>
+      <article class="csdn-card article-card">
+        <header class="article-header">
+          <h1 class="article-title">{{ article.title }}</h1>
+          <div class="meta-row">
+            <div class="author-meta">
+              <img v-if="article.authorAvatar" :src="article.authorAvatar" class="author-avatar" alt="avatar">
+              <span v-else class="author-avatar fallback">{{ authorInitial }}</span>
+              <span>{{ article.authorName || '匿名作者' }}</span>
+              <span class="dot">·</span>
+              <span>{{ formatTime(timeValue) }}</span>
+            </div>
+
+            <div class="stats-meta">
+              <span><Icon name="material-symbols:visibility-outline" size="16" /> {{ viewCount }}</span>
+              <span><Icon name="material-symbols:chat-bubble-outline" size="16" /> {{ commentCount }}</span>
+              <span><Icon name="material-symbols:thumb-up-outline" size="16" /> {{ likeCount }}</span>
+            </div>
+          </div>
+
+          <div v-if="tags.length" class="tag-row">
+            <span v-for="tag in tags" :key="tag" class="tag-item"># {{ tag }}</span>
+          </div>
+        </header>
+
+        <div v-if="article.coverImage" class="cover-wrap">
+          <img :src="article.coverImage" :alt="article.title">
         </div>
-      </template>
-    </div>
+
+        <div class="csdn-prose article-content" v-html="article.content" />
+
+        <div class="action-bar">
+          <el-button :type="isLiked ? 'primary' : 'default'" @click="handleLike">
+            <Icon :name="isLiked ? 'material-symbols:thumb-up' : 'material-symbols:thumb-up-outline'" size="17" />
+            <span>点赞 {{ likeCount }}</span>
+          </el-button>
+          <el-button :type="isFavorited ? 'primary' : 'default'" @click="handleFavorite">
+            <Icon :name="isFavorited ? 'material-symbols:bookmark' : 'material-symbols:bookmark-outline'" size="17" />
+            <span>{{ isFavorited ? '已收藏' : '收藏' }}</span>
+          </el-button>
+          <el-button @click="handleShare">
+            <Icon name="material-symbols:share" size="17" />
+            <span>分享</span>
+          </el-button>
+        </div>
+      </article>
+
+      <section class="csdn-card comment-card">
+        <CommentForm
+          target-type="article"
+          :target-id="String(article.id)"
+          @success="handleCommentSuccess"
+        />
+        <CommentList
+          target-type="article"
+          :target-id="String(article.id)"
+          @comment-change="handleCommentSuccess"
+        />
+      </section>
+    </template>
   </div>
 </template>
 
@@ -76,184 +70,236 @@
 import type { Article } from '~~/shared/types/article'
 
 const route = useRoute()
-const { getArticleDetail, likeArticle } = useArticle()
-const { createFavorite, deleteFavorite, checkFavorite } = useCommunity()
-const { createBrowseHistory } = useCommunity()
 const authStore = useAuthStore()
+const { getArticleDetail, likeArticle, isArticleLiked } = useArticle()
+const { createFavorite, deleteFavorite, checkFavorite, createBrowseHistory } = useCommunity()
 
 const article = ref<Article | null>(null)
 const loading = ref(true)
 const isLiked = ref(false)
 const isFavorited = ref(false)
 
+const tags = computed(() => {
+  const source = article.value?.tags || []
+  return Array.isArray(source) ? source : String(source).split(',').filter(Boolean)
+})
+
+const viewCount = computed(() => article.value?.viewCount ?? article.value?.viewsCount ?? 0)
+const commentCount = computed(() => article.value?.commentCount ?? article.value?.commentsCount ?? 0)
+const likeCount = computed(() => article.value?.likeCount ?? article.value?.likesCount ?? 0)
+const timeValue = computed(() => article.value?.publishTime || article.value?.publishedAt || article.value?.createTime || article.value?.createdAt || '')
+
+const authorInitial = computed(() => {
+  const name = article.value?.authorName || 'A'
+  return name.slice(0, 1).toUpperCase()
+})
+
 async function loadArticle() {
   loading.value = true
   const id = route.params.id as string
   try {
-    const res = await getArticleDetail(id)
-    article.value = res
-    // 创建浏览记录
+    const detail = await getArticleDetail(id)
+    article.value = detail
+
     if (authStore.token) {
       createBrowseHistory({ targetType: 'article', targetId: id })
+      isLiked.value = await isArticleLiked(id)
+      isFavorited.value = await checkFavorite('article', id)
     }
-  }
-  catch (err) {
-    console.error('加载文章失败:', err)
-  }
-  finally {
+  } finally {
     loading.value = false
-  }
-}
-
-async function checkIsFavorited() {
-  if (!authStore.token || !article.value)
-    return
-  try {
-    const res = await checkFavorite('article', article.value.id)
-    isFavorited.value = res.isFavorited
-  }
-  catch (err) {
-    console.error('检查收藏状态失败:', err)
   }
 }
 
 async function handleLike() {
   if (!authStore.token) {
-    ElMessage.warning('请先登录')
+    goLoginPage()
     return
   }
-  if (!article.value)
-    return
-  try {
-    await likeArticle(article.value.id)
-    isLiked.value = !isLiked.value
+  if (!article.value) return
+
+  await likeArticle(String(article.value.id))
+  isLiked.value = !isLiked.value
+  if (article.value.likeCount !== undefined) {
     article.value.likeCount += isLiked.value ? 1 : -1
-  }
-  catch (err) {
-    ElMessage.error('点赞失败')
+  } else if (article.value.likesCount !== undefined) {
+    article.value.likesCount += isLiked.value ? 1 : -1
   }
 }
 
 async function handleFavorite() {
   if (!authStore.token) {
-    ElMessage.warning('请先登录')
+    goLoginPage()
     return
   }
-  if (!article.value)
+  if (!article.value) return
+
+  const id = String(article.value.id)
+  if (isFavorited.value) {
+    await deleteFavorite('article', id)
+    isFavorited.value = false
+    ElMessage.success('已取消收藏')
     return
-  try {
-    if (isFavorited.value) {
-      await deleteFavorite('article', article.value.id)
-      isFavorited.value = false
-      ElMessage.success('已取消收藏')
-    }
-    else {
-      await createFavorite({ targetType: 'article', targetId: article.value.id })
-      isFavorited.value = true
-      ElMessage.success('收藏成功')
-    }
   }
-  catch (err) {
-    ElMessage.error('操作失败')
-  }
+
+  await createFavorite({ targetType: 'article', targetId: id })
+  isFavorited.value = true
+  ElMessage.success('收藏成功')
 }
 
-function handleShare() {
-  if (article.value) {
-    navigator.clipboard.writeText(window.location.href)
-    ElMessage.success('链接已复制到剪贴板')
-  }
+async function handleShare() {
+  await navigator.clipboard.writeText(window.location.href)
+  ElMessage.success('链接已复制')
 }
 
 function handleCommentSuccess() {
-  if (article.value) {
-    article.value.commentCount++
+  if (!article.value) return
+  if (article.value.commentCount !== undefined) {
+    article.value.commentCount += 1
+  } else if (article.value.commentsCount !== undefined) {
+    article.value.commentsCount += 1
   }
 }
 
-function handleCommentChange() {
-  if (article.value) {
-    article.value.commentCount++
-  }
+function formatTime(value: string) {
+  if (!value) return '刚刚'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '刚刚'
+  return date.toLocaleString('zh-CN')
 }
 
-function formatTime(time: string) {
-  return new Date(time).toLocaleDateString('zh-CN')
-}
-
-onMounted(() => {
-  loadArticle().then(() => {
-    checkIsFavorited()
-  })
-})
+onMounted(loadArticle)
 </script>
 
 <style scoped>
-.article-detail-page {
-  @apply flex gap-6;
+.article-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.main-area {
-  @apply flex-1 min-w-0;
+.article-card {
+  padding: 20px 24px;
 }
 
-.article-container {
-  @apply mb-6;
+.article-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--csdn-line);
 }
 
 .article-title {
-  @apply text-2xl font-bold text-gray-800 mb-4;
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.35;
+  color: var(--csdn-text);
 }
 
-.article-meta {
-  @apply flex items-center justify-between mb-4 pb-4 border-b border-gray-100;
+.meta-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.author-info {
-  @apply flex items-center gap-2;
+.author-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--csdn-muted);
+  font-size: 14px;
 }
 
-.author-name {
-  @apply font-medium text-gray-700;
+.author-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-.meta-info {
-  @apply flex items-center gap-2 text-sm text-gray-400;
+.author-avatar.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8f0ff;
+  color: #2457c5;
+  font-size: 12px;
 }
 
-.split {
-  @apply text-gray-300;
+.dot {
+  color: #c0c3cc;
 }
 
-.article-tags {
-  @apply mb-4;
+.stats-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--csdn-muted);
+  font-size: 13px;
 }
 
-.article-cover {
-  @apply mb-6 rounded-lg overflow-hidden;
+.stats-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
-.article-cover img {
-  @apply w-full;
+.tag-row {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-item {
+  border-radius: 6px;
+  background: #f2f7ff;
+  color: var(--csdn-primary);
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+.cover-wrap {
+  margin: 18px 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cover-wrap img {
+  width: 100%;
+  object-fit: cover;
 }
 
 .article-content {
-  @apply text-gray-700 leading-relaxed;
+  margin-top: 8px;
 }
 
-.article-content :deep(p) {
-  @apply mb-4;
+.action-bar {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--csdn-line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.article-content :deep(pre) {
-  @apply bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+.comment-card {
+  padding: 10px 24px 18px;
 }
 
-.article-content :deep(img) {
-  @apply max-w-full rounded-lg;
-}
+@media (max-width: 768px) {
+  .article-card {
+    padding: 16px;
+  }
 
-.article-actions {
-  @apply flex items-center gap-4 mt-6 pt-6 border-t border-gray-100;
+  .article-title {
+    font-size: 24px;
+  }
+
+  .comment-card {
+    padding: 8px 16px 14px;
+  }
 }
 </style>

@@ -186,7 +186,7 @@ async function handleDeleteComment(comment: Comment) {
 }
 
 function canDelete(comment: Comment) {
-  return authStore.token && (authStore.userId === comment.authorId || authStore.roles?.includes('admin'))
+  return !!authStore.token && (String(authStore.userId) === String(comment.authorId) || authStore.isAdmin())
 }
 
 function formatTime(time: string) {

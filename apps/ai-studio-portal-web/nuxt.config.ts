@@ -21,7 +21,7 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-09-11',
   devtools: { enabled: true },
-  css: ['~/assets/css/richText.css'],
+  css: ['~/assets/css/csdn-theme.css', '~/assets/css/richText.css'],
   icon: {
     collections: ['material-symbols'] // 明确指定集合
   },
@@ -32,15 +32,38 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: import.meta.env.NUXT_API_BASE_URL, 
+      apiBase: import.meta.env.NUXT_API_BASE_URL || '/',
       loginType: import.meta.env.NUXT_LOGIN_TYPE,
       loginUrl: import.meta.env.NUXT_LOGIN_URL,
       logoutUrl: import.meta.env.NUXT_LOGOUT_URL,
       registerUrl: import.meta.env.NUXT_REGISTER_URL,
       tokenType: import.meta.env.NUXT_TOKEN_TYPE,
       baseRouter: import.meta.env.NUXT_APP_BASE_URL,
-      supplierUrl: import.meta.env.NUXT_SUPPLIER_MICRO_URL
 
     }
+  },
+  nitro: {
+    devProxy: {
+      '/auth': {
+        target: 'http://localhost:8080/ai-studio/v1/auth',
+        changeOrigin: true,
+      },
+      '/portal': {
+        target: 'http://localhost:8080/ai-studio/v1/portal',
+        changeOrigin: true,
+      },
+      '/system': {
+        target: 'http://localhost:8080/ai-studio/v1/system',
+        changeOrigin: true,
+      },
+      '/cloudMarket': {
+        target: 'http://localhost:8080/ai-studio/v1/cloudMarket',
+        changeOrigin: true,
+      },
+      '/file': {
+        target: 'http://localhost:8080/ai-studio/v1/file',
+        changeOrigin: true,
+      },
+    },
   },
 })

@@ -1,224 +1,225 @@
-import type { Comment, CommentFormData, Favorite, FavoriteCreateData, Notification, NotificationListQuery, NotificationListResponse, BrowseHistory, Tag } from '~~/shared/types/community'
+import type {
+  BrowseHistory,
+  Comment,
+  CommentFormData,
+  Favorite,
+  FavoriteCreateData,
+  Notification,
+  NotificationListQuery,
+  NotificationListResponse,
+  Tag
+} from '~~/shared/types/community'
 
-/**
- * 社区相关 API（评论、收藏、通知、标签、浏览记录）
- */
+function normalizeComment(item: Record<string, any>): Comment {
+  return {
+    ...item,
+    id: String(item.id),
+    targetType: item.targetType || item.commentType,
+    targetId: String(item.targetId),
+    parentId: item.parentId ? String(item.parentId) : undefined,
+    authorId: String(item.authorId),
+    authorName: item.authorName || '',
+    authorAvatar: item.authorAvatar,
+    content: item.content || '',
+    likeCount: item.likeCount ?? item.likesCount ?? 0,
+    createTime: item.createTime || item.createdAt || '',
+    updateTime: item.updateTime || item.updatedAt || '',
+    replies: Array.isArray(item.replies) ? item.replies.map(normalizeComment) : []
+  }
+}
+
+function normalizeBrowseHistory(item: Record<string, any>): BrowseHistory {
+  return {
+    ...item,
+    id: String(item.id),
+    targetType: item.targetType,
+    targetId: String(item.targetId),
+    title: item.title || '',
+    coverImage: item.coverImage || '',
+    createTime: item.createTime || item.createdAt || ''
+  }
+}
+
+function normalizeNotification(item: Record<string, any>): Notification {
+  return {
+    ...item,
+    id: String(item.id),
+    type: item.type || 'system',
+    title: item.title || item.content || '系统通知',
+    content: item.content || '',
+    targetType: item.targetType || item.sourceType,
+    targetId: item.targetId ? String(item.targetId) : item.sourceId ? String(item.sourceId) : undefined,
+    isRead: Boolean(item.isRead === true || item.isRead === 1),
+    createTime: item.createTime || item.createdAt || ''
+  }
+}
+
 export function useCommunity() {
-  // ============ 评论相关 ============
+  const config = useRuntimeConfig()
 
-  /**
-   * 获取评论列表
-   */
   async function getCommentList(targetType: string, targetId: string): Promise<Comment[]> {
-    const res = await $fetch<Comment[]>('/portal/comment/list', {
+    const res = await $fetch<Record<string, any>[]>('/portal/comment/list', {
       method: 'GET',
       params: { targetType, targetId },
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return res || []
+    return (res || []).map(normalizeComment)
   }
 
-  /**
-   * 创建评论
-   */
-  async function createComment(data: CommentFormData): Promise<Comment> {
-    const res = await $fetch<Comment>('/portal/comment', {
+  async function createComment(data: CommentFormData): Promise<number | undefined> {
+    return await $fetch<number>('/portal/comment', {
       method: 'POST',
       body: data,
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return res
   }
 
-  /**
-   * 删除评论
-   */
   async function deleteComment(id: string): Promise<void> {
     await $fetch(`/portal/comment/${id}/delete`, {
       method: 'POST',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
   }
 
-  /**
-   * 点赞评论
-   */
   async function likeComment(id: string): Promise<void> {
     await $fetch(`/portal/comment/${id}/like`, {
       method: 'POST',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
   }
 
-  // ============ 收藏相关 ============
-
-  /**
-   * 获取收藏列表
-   */
-  async function getFavoriteList(page = 1, pageSize = 20): Promise<{ list: Favorite[]; total: number }> {
+  async function getFavoriteList(targetType?: string, page = 1, pageSize = 20): Promise<{ list: Favorite[]; total: number }> {
     const res = await $fetch<{ total: number; records: Favorite[] }>('/portal/favorite/list', {
       method: 'GET',
-      params: { page, size: pageSize },
-      baseURL: useRuntimeConfig().public.apiBase
+      params: { targetType, page, size: pageSize },
+      baseURL: config.public.apiBase
     })
-    return { list: res?.records || [], total: res?.total || 0 }
+    return {
+      list: res?.records || [],
+      total: res?.total || 0
+    }
   }
 
-  /**
-   * 创建收藏
-   */
-  async function createFavorite(data: FavoriteCreateData): Promise<Favorite> {
-    const res = await $fetch<Favorite>('/portal/favorite', {
+  async function createFavorite(data: FavoriteCreateData): Promise<void> {
+    await $fetch('/portal/favorite', {
       method: 'POST',
       body: data,
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return res
   }
 
-  /**
-   * 删除收藏
-   */
   async function deleteFavorite(targetType: string, targetId: string): Promise<void> {
     await $fetch('/portal/favorite/remove', {
       method: 'POST',
       body: { targetType, targetId },
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
   }
 
-  /**
-   * 检查是否已收藏
-   */
-  async function checkFavorite(targetType: string, targetId: string): Promise<{ isFavorited: boolean }> {
-    const res = await $fetch<{ isFavorited: boolean }>('/portal/favorite/check', {
+  async function checkFavorite(targetType: string, targetId: string): Promise<boolean> {
+    const res = await $fetch<boolean>('/portal/favorite/check', {
       method: 'GET',
       params: { targetType, targetId },
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return res
+    return !!res
   }
 
-  // ============ 通知相关 ============
-
-  /**
-   * 获取通知列表
-   */
-  async function getNotificationList(query: NotificationListQuery): Promise<NotificationListResponse> {
-    const res = await $fetch<{ total: number; records: Notification[]; unreadCount?: number }>('/portal/notification/list', {
+  async function getNotificationList(_query: NotificationListQuery = {}): Promise<NotificationListResponse> {
+    const res = await $fetch<Record<string, any>[]>('/portal/notification/list', {
       method: 'GET',
-      params: query,
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
+    const list = (res || []).map(normalizeNotification)
+    const unreadCount = list.filter(item => !item.isRead).length
     return {
-      list: res?.records || [],
-      total: res?.total || 0,
-      page: query.page || 1,
-      pageSize: query.pageSize || 20,
-      unreadCount: res?.unreadCount || 0
+      list,
+      total: list.length,
+      page: 1,
+      pageSize: list.length || 20,
+      unreadCount
     }
   }
 
-  /**
-   * 标记通知已读
-   */
   async function markNotificationRead(id: string): Promise<void> {
     await $fetch(`/portal/notification/${id}/read`, {
       method: 'POST',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
   }
 
-  /**
-   * 获取未读通知数量
-   */
+  async function markAllNotificationRead(): Promise<void> {
+    const list = await getNotificationList()
+    const unreadIds = list.list.filter(item => !item.isRead).map(item => item.id)
+    await Promise.all(unreadIds.map(id => markNotificationRead(id)))
+  }
+
   async function getUnreadNotificationCount(): Promise<{ count: number }> {
-    const res = await $fetch<{ count: number }>('/portal/notification/unread-count', {
+    return await $fetch<{ count: number }>('/portal/notification/unread-count', {
       method: 'GET',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return res
   }
 
-  // ============ 标签相关 ============
-
-  /**
-   * 获取标签列表
-   */
-  async function getTagList(): Promise<Tag[]> {
+  async function getTagList(type?: string): Promise<Tag[]> {
     const res = await $fetch<Tag[]>('/portal/tag/list', {
       method: 'GET',
-      baseURL: useRuntimeConfig().public.apiBase
+      params: { type },
+      baseURL: config.public.apiBase
     })
     return res || []
   }
 
-  /**
-   * 创建标签
-   */
-  async function createTag(name: string): Promise<Tag> {
-    const res = await $fetch<Tag>('/portal/tag', {
+  async function createTag(name: string, type = 'article'): Promise<void> {
+    await $fetch('/portal/tag', {
       method: 'POST',
-      body: { name },
-      baseURL: useRuntimeConfig().public.apiBase
+      body: { name, type },
+      baseURL: config.public.apiBase
     })
-    return res
   }
 
-  // ============ 浏览记录相关 ============
-
-  /**
-   * 获取浏览记录列表
-   */
-  async function getBrowseHistoryList(page = 1, pageSize = 20): Promise<{ list: BrowseHistory[]; total: number }> {
-    const res = await $fetch<{ total: number; records: BrowseHistory[] }>('/portal/browse-history/list', {
+  async function getBrowseHistoryList(): Promise<{ list: BrowseHistory[]; total: number }> {
+    const res = await $fetch<Record<string, any>[]>('/portal/browse-history/list', {
       method: 'GET',
-      params: { page, size: pageSize },
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return { list: res?.records || [], total: res?.total || 0 }
+    const list = (res || []).map(normalizeBrowseHistory)
+    return {
+      list,
+      total: list.length
+    }
   }
 
-  /**
-   * 创建浏览记录
-   */
   async function createBrowseHistory(data: { targetType: string; targetId: string }): Promise<void> {
     await $fetch('/portal/browse-history', {
       method: 'POST',
       body: data,
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
   }
 
-  /**
-   * 清空浏览记录
-   */
   async function clearBrowseHistory(): Promise<void> {
     await $fetch('/portal/browse-history/clear', {
       method: 'POST',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
   }
 
   return {
-    // 评论
     getCommentList,
     createComment,
     deleteComment,
     likeComment,
-    // 收藏
     getFavoriteList,
     createFavorite,
     deleteFavorite,
     checkFavorite,
-    // 通知
     getNotificationList,
     markNotificationRead,
+    markAllNotificationRead,
     getUnreadNotificationCount,
-    // 标签
     getTagList,
     createTag,
-    // 浏览记录
     getBrowseHistoryList,
     createBrowseHistory,
     clearBrowseHistory

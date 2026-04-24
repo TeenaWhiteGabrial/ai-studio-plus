@@ -1,82 +1,83 @@
 <template>
   <div class="community-page">
-    <!-- 主内容区 -->
-    <div class="main-area">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <h1 class="page-title">技术社区</h1>
-        <el-button v-if="authStore.token" type="primary" @click="goToWrite">
-          <Icon name="material-symbols:add" class="mr-1" />
-          发布内容
+    <section class="csdn-card filter-bar">
+      <div class="channel-tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab.type"
+          class="tab-btn"
+          :class="{ active: currentTab === tab.type }"
+          @click="switchTab(tab.type)"
+        >
+          <Icon :name="tab.icon" size="17" />
+          <span>{{ tab.name }}</span>
+        </button>
+      </div>
+
+      <div class="search-sort">
+        <el-input
+          v-model="keyword"
+          placeholder="搜索文章/问题"
+          class="keyword-input"
+          clearable
+          @keyup.enter="handleSearch"
+        >
+          <template #append>
+            <el-button @click="handleSearch">
+              <Icon name="material-symbols:search" size="18" />
+            </el-button>
+          </template>
+        </el-input>
+
+        <el-select v-model="currentSort" class="sort-select" @change="handleSortChange">
+          <el-option
+            v-for="option in sortOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
+
+        <el-button type="primary" @click="goAsk">
+          <Icon name="material-symbols:edit-square-outline" size="18" />
+          发布问题
         </el-button>
       </div>
+    </section>
 
-      <!-- Tab 切换 -->
-      <div class="tab-container">
-        <div class="tab-list">
-          <span
-            v-for="tab in tabs"
-            :key="tab.type"
-            class="tab-item"
-            :class="{ active: currentTab === tab.type }"
-            @click="switchTab(tab.type)"
-          >
-            <Icon :name="tab.icon" class="mr-1" />
-            {{ tab.name }}
-          </span>
-        </div>
-        <!-- 排序 -->
-        <div class="sort-select">
-          <el-select v-model="currentSort" @change="handleSortChange">
-            <el-option label="最新发布" value="latest" />
-            <el-option label="最热门的" value="hot" />
-            <el-option label="推荐阅读" value="recommend" />
-          </el-select>
-        </div>
-      </div>
+    <section class="result-section">
+      <div v-if="loading" class="csdn-empty">加载中...</div>
 
-      <!-- 内容列表 -->
-      <div v-if="loading" class="text-center py-12 text-gray-400">
-        加载中...
-      </div>
-      <div v-else-if="currentTab === 'article'">
-        <div v-if="articleList.length > 0" class="article-list">
+      <template v-else>
+        <div v-if="currentTab === 'article'" class="list-wrap">
           <ArticleCard
             v-for="article in articleList"
             :key="article.id"
             :article="article"
           />
         </div>
-        <div v-else class="empty-state">
-          <Icon name="material-symbols:article-outline" class="text-6xl text-gray-300 mb-4" />
-          <p>暂无文章</p>
-        </div>
-      </div>
-      <div v-else>
-        <div v-if="questionList.length > 0" class="question-list">
+
+        <div v-else class="list-wrap">
           <QuestionCard
             v-for="question in questionList"
             :key="question.id"
             :question="question"
           />
         </div>
-        <div v-else class="empty-state">
-          <Icon name="material-symbols:help-outline" class="text-6xl text-gray-300 mb-4" />
-          <p>暂无问答</p>
-        </div>
-      </div>
 
-      <!-- 分页 -->
-      <div v-if="totalCount > pageSize" class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          :page-size="pageSize"
-          :total="totalCount"
-          layout="prev, pager, next"
-          @current-change="handlePageChange"
-        />
-      </div>
-    </div>
+        <div v-if="showEmpty" class="csdn-card csdn-empty empty-card">暂无内容，换个条件试试。</div>
+
+        <div v-if="totalCount > pageSize" class="pagination-wrap">
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="pageSize"
+            :total="totalCount"
+            layout="prev, pager, next"
+            @current-change="handlePageChange"
+          />
+        </div>
+      </template>
+    </section>
   </div>
 </template>
 
@@ -92,175 +93,210 @@ const { getArticleList } = useArticle()
 const { getQuestionList } = useQuestion()
 
 const tabs = [
-  { name: '文章', type: 'article', icon: 'material-symbols:article' },
+  { name: '文章', type: 'article', icon: 'material-symbols:article-outline' },
   { name: '问答', type: 'question', icon: 'material-symbols:help-outline' }
 ]
 
 const currentTab = ref((route.query.type as string) || 'article')
 const currentSort = ref((route.query.sort as string) || 'latest')
-const currentPage = ref(1)
+const keyword = ref((route.query.keyword as string) || '')
+const currentPage = ref(Number(route.query.page || 1))
 const pageSize = 10
-const totalCount = ref(0)
+
 const loading = ref(false)
+const totalCount = ref(0)
 const articleList = ref<Article[]>([])
 const questionList = ref<Question[]>([])
 
-async function loadArticleList() {
-  loading.value = true
-  try {
-    const res = await getArticleList({
-      page: currentPage.value,
-      pageSize,
-      sort: currentSort.value as 'latest' | 'hot' | 'recommend',
-      tagId: route.query.tagId as string
-    })
-    articleList.value = res.records || []
-    totalCount.value = res.total || 0
+const sortOptions = computed(() => {
+  if (currentTab.value === 'question') {
+    return [
+      { label: '最新发布', value: 'latest' },
+      { label: '热门问答', value: 'hot' },
+      { label: '待回答', value: 'unanswered' }
+    ]
   }
-  catch (err) {
-    console.error('加载文章列表失败:', err)
-  }
-  finally {
-    loading.value = false
-  }
-}
+  return [
+    { label: '最新发布', value: 'latest' },
+    { label: '热门文章', value: 'hot' }
+  ]
+})
 
-async function loadQuestionList() {
+const showEmpty = computed(() => {
+  return currentTab.value === 'article' ? articleList.value.length === 0 : questionList.value.length === 0
+})
+
+async function loadData() {
   loading.value = true
   try {
+    if (currentTab.value === 'article') {
+      const res = await getArticleList({
+        page: currentPage.value,
+        pageSize,
+        keyword: keyword.value || undefined,
+        sort: currentSort.value as 'latest' | 'hot',
+        tagId: route.query.tagId as string
+      })
+      articleList.value = res.records || []
+      totalCount.value = res.total || 0
+      return
+    }
+
     const res = await getQuestionList({
       page: currentPage.value,
       pageSize,
+      keyword: keyword.value || undefined,
       sort: currentSort.value as 'latest' | 'hot' | 'unanswered',
       tagId: route.query.tagId as string
     })
     questionList.value = res.records || []
     totalCount.value = res.total || 0
-  }
-  catch (err) {
-    console.error('加载问答列表失败:', err)
-  }
-  finally {
+  } finally {
     loading.value = false
-  }
-}
-
-function switchTab(type: string) {
-  currentTab.value = type
-  currentPage.value = 1
-  updateQuery()
-  if (type === 'article') {
-    loadArticleList()
-  }
-  else {
-    loadQuestionList()
-  }
-}
-
-function handleSortChange() {
-  currentPage.value = 1
-  updateQuery()
-  if (currentTab.value === 'article') {
-    loadArticleList()
-  }
-  else {
-    loadQuestionList()
-  }
-}
-
-function handlePageChange(page: number) {
-  currentPage.value = page
-  if (currentTab.value === 'article') {
-    loadArticleList()
-  }
-  else {
-    loadQuestionList()
   }
 }
 
 function updateQuery() {
   router.replace({
+    path: '/community',
     query: {
       ...route.query,
       type: currentTab.value,
-      sort: currentSort.value
+      sort: currentSort.value,
+      keyword: keyword.value || undefined,
+      page: currentPage.value
     }
   })
 }
 
-function goToWrite() {
-  if (currentTab.value === 'article') {
-    navigateTo('/community/write')
-  }
-  else {
-    navigateTo('/community/ask')
-  }
+function switchTab(type: string) {
+  currentTab.value = type
+  currentSort.value = 'latest'
+  currentPage.value = 1
+  updateQuery()
+  loadData()
 }
 
-onMounted(() => {
-  if (currentTab.value === 'article') {
-    loadArticleList()
+function handleSortChange() {
+  currentPage.value = 1
+  updateQuery()
+  loadData()
+}
+
+function handleSearch() {
+  currentPage.value = 1
+  updateQuery()
+  loadData()
+}
+
+function handlePageChange(page: number) {
+  currentPage.value = page
+  updateQuery()
+  loadData()
+}
+
+function goAsk() {
+  if (!authStore.token) {
+    goLoginPage()
+    return
   }
-  else {
-    loadQuestionList()
-  }
-})
+  navigateTo('/community/ask')
+}
+
+onMounted(loadData)
 </script>
 
 <style scoped>
 .community-page {
-  @apply flex gap-6;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.main-area {
-  @apply flex-1 min-w-0;
+.filter-bar {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.page-header {
-  @apply flex items-center justify-between mb-6;
+.channel-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.page-title {
-  @apply text-2xl font-bold text-gray-800;
+.tab-btn {
+  height: 36px;
+  border: 1px solid var(--csdn-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--csdn-subtext);
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
 }
 
-.tab-container {
-  @apply flex items-center justify-between mb-6 bg-white p-2 rounded-lg;
+.tab-btn:hover {
+  color: var(--csdn-primary);
+  border-color: #bdd2ff;
 }
 
-.tab-list {
-  @apply flex gap-2;
+.tab-btn.active {
+  color: var(--csdn-primary);
+  background: var(--csdn-primary-soft);
+  border-color: #a9c5ff;
+  font-weight: 600;
 }
 
-.tab-item {
-  @apply flex items-center px-4 py-2 rounded-lg cursor-pointer transition-all text-gray-600;
+.search-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.tab-item:hover {
-  @apply bg-gray-100;
-}
-
-.tab-item.active {
-  @apply bg-primary text-white;
+.keyword-input {
+  width: 280px;
 }
 
 .sort-select {
-  @apply w-32;
+  width: 130px;
 }
 
-.article-list {
-  @apply grid grid-cols-2 gap-4;
+.result-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.question-list {
-  @apply space-y-4;
+.list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.empty-state {
-  @apply flex flex-col items-center justify-center py-16 text-gray-400;
+.empty-card {
+  padding: 24px;
 }
 
-.pagination-container {
-  @apply flex justify-center mt-8;
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 2px;
+}
+
+@media (max-width: 900px) {
+  .search-sort {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .keyword-input {
+    width: 100%;
+  }
 }
 </style>

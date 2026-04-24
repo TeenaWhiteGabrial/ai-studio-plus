@@ -8,24 +8,24 @@
         </div>
       </template>
 
-      <el-tabs v-model="activeTab">
+      <el-tabs v-model="activeTab" @change="handleTabChange">
         <el-tab-pane label="Skill" name="skill">
-          <audit-list type="skill" />
+          <AuditList type="skill" @update-pending="updatePendingCount" />
         </el-tab-pane>
         <el-tab-pane label="MCP" name="mcp">
-          <audit-list type="mcp" />
+          <AuditList type="mcp" @update-pending="updatePendingCount" />
         </el-tab-pane>
         <el-tab-pane label="Plugin" name="plugin">
-          <audit-list type="plugin" />
+          <AuditList type="plugin" @update-pending="updatePendingCount" />
         </el-tab-pane>
         <el-tab-pane label="教程" name="tutorial">
-          <audit-list type="tutorial" />
+          <AuditList type="tutorial" @update-pending="updatePendingCount" />
         </el-tab-pane>
         <el-tab-pane label="安装包" name="installer">
-          <audit-list type="installer" />
+          <AuditList type="installer" @update-pending="updatePendingCount" />
         </el-tab-pane>
         <el-tab-pane label="视频" name="video">
-          <audit-list type="video" />
+          <AuditList type="video" @update-pending="updatePendingCount" />
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -33,20 +33,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide } from 'vue'
+import { ref } from 'vue'
+import AuditList from './components/AuditList.vue'
 
 const activeTab = ref('skill')
 const pendingCount = ref(0)
 
-// Provide audit type mapping
-provide('auditTypes', {
-  skill: 'Skill',
-  mcp: 'MCP',
-  plugin: 'Plugin',
-  tutorial: '教程',
-  installer: '安装包',
-  video: '视频',
-})
+const updatePendingCount = (count: number) => {
+  pendingCount.value = count
+}
+
+const handleTabChange = () => {
+  // Tab 切换时的处理
+}
 </script>
 
 <style scoped>

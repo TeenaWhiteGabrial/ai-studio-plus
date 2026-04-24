@@ -1,59 +1,88 @@
-import type { Article, ArticleListQuery, ArticleListResponse, ArticleFormData } from '~~/shared/types/article'
-import type { ApiResponse } from '~~/shared/types/response'
+import type { Article, ArticleFormData, ArticleListQuery, ArticleListResponse } from '~~/shared/types/article'
 
-/**
- * 文章相关 API
- */
+interface ConsoleArticlePayload extends ArticleFormData {
+  publishType?: 0 | 1 | 2
+  scheduledPublishTime?: string
+}
+
 export function useArticle() {
-  /**
-   * 获取文章列表
-   * 后端直接返回 PageResult{ total, records }
-   */
+  const config = useRuntimeConfig()
+
+  const isUnauthorized = (error: unknown) => {
+    const err = error as { status?: number; statusCode?: number; response?: { status?: number } }
+    return err?.status === 401 || err?.statusCode === 401 || err?.response?.status === 401
+  }
+
   async function getArticleList(query: ArticleListQuery): Promise<ArticleListResponse> {
-    const res = await $fetch<ArticleListResponse>('/portal/article/list', {
-      method: 'GET',
-      params: query,
-      baseURL: useRuntimeConfig().public.apiBase
-    })
-    return res
+    try {
+      const res = await $fetch<ArticleListResponse>('/portal/article/list', {
+        method: 'GET',
+        params: {
+          page: query.page || 1,
+          size: query.pageSize || 10,
+          keyword: query.keyword,
+          tagId: query.tagId,
+          sort: query.sort || 'latest'
+        },
+        baseURL: config.public.apiBase
+      })
+      return {
+        total: res?.total || 0,
+        records: res?.records || []
+      }
+    } catch (error) {
+      if (isUnauthorized(error)) {
+        return { total: 0, records: [] }
+      }
+      throw error
+    }
   }
 
-  /**
-   * 获取文章详情
-   */
   async function getArticleDetail(id: string): Promise<Article> {
-    const res = await $fetch<Article>(`/portal/article/${id}`, {
+    return await $fetch<Article>(`/portal/article/${id}`, {
       method: 'GET',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return res
   }
 
-  /**
-   * 点赞/取消点赞文章
-   */
   async function likeArticle(id: string): Promise<void> {
     await $fetch(`/portal/article/${id}/like`, {
       method: 'POST',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
   }
 
-  /**
-   * 检查是否已点赞
-   */
   async function isArticleLiked(id: string): Promise<boolean> {
-    const res = await $fetch<{ isLiked: boolean }>(`/portal/article/${id}/is-liked`, {
+    const res = await $fetch<boolean>(`/portal/article/${id}/is-liked`, {
       method: 'GET',
-      baseURL: useRuntimeConfig().public.apiBase
+      baseURL: config.public.apiBase
     })
-    return res?.isLiked || false
+    return !!res
+  }
+
+  async function createArticle(data: ConsoleArticlePayload): Promise<number | undefined> {
+    const res = await $fetch<number>('/console/article', {
+      method: 'POST',
+      body: data,
+      baseURL: config.public.apiBase
+    })
+    return res
+  }
+
+  async function updateArticle(id: string, data: ConsoleArticlePayload): Promise<void> {
+    await $fetch(`/console/article/${id}`, {
+      method: 'POST',
+      body: data,
+      baseURL: config.public.apiBase
+    })
   }
 
   return {
     getArticleList,
     getArticleDetail,
     likeArticle,
-    isArticleLiked
+    isArticleLiked,
+    createArticle,
+    updateArticle
   }
 }

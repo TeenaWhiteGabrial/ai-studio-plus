@@ -46,7 +46,8 @@ request.interceptors.response.use(
       ElMessage.error(data.message || '请求失败')
       return Promise.reject(new Error(data.message || '请求失败'))
     }
-    return data
+    // 直接返回整个响应对象，保持 code、data、message 结构
+    return response.data
   },
   (error) => {
     const isLoginRequest = error.config?.url?.includes('/auth/login')

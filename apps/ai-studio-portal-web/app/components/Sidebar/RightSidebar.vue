@@ -1,139 +1,196 @@
 <template>
-  <div class="right-sidebar-content">
-    <!-- 热门文章 -->
-    <div class="sidebar-card">
-      <div class="sidebar-title">
-        <Icon name="material-symbols:article" class="mr-2" />
-        热门文章
+  <div class="right-wrap">
+    <section class="csdn-card panel">
+      <div class="panel-head">
+        <h3 class="panel-title">文章热榜</h3>
+        <NuxtLink to="/community?type=article&sort=hot" class="csdn-link">更多</NuxtLink>
       </div>
-      <div class="hot-list">
-        <div
-          v-for="(article, index) in hotArticles"
-          :key="article.id"
-          class="hot-item"
-          @click="handleArticleClick(article)"
+      <div v-if="loadingArticles" class="csdn-empty">加载中...</div>
+      <ol v-else class="rank-list">
+        <li
+          v-for="(item, index) in hotArticles"
+          :key="item.id"
+          class="rank-item"
+          @click="navigateTo(`/community/article/${item.id}`)"
         >
-          <span class="rank" :class="{ top: index < 3 }">{{ index + 1 }}</span>
-          <span class="title text-overflow-2">{{ article.title }}</span>
-        </div>
-        <div v-if="loadingArticles" class="text-center text-gray-400 py-4">
-          加载中...
-        </div>
-        <div v-else-if="hotArticles.length === 0" class="text-center text-gray-400 py-4">
-          暂无数据
-        </div>
-      </div>
-    </div>
+          <span class="rank-index" :class="{ top: index < 3 }">{{ index + 1 }}</span>
+          <span class="rank-title text-overflow-2">{{ item.title }}</span>
+        </li>
+      </ol>
+    </section>
 
-    <!-- 热门技能 -->
-    <div class="sidebar-card mt-4">
-      <div class="sidebar-title">
-        <Icon name="material-symbols:smart-toy" class="mr-2" />
-        热门技能
+    <section class="csdn-card panel">
+      <div class="panel-head">
+        <h3 class="panel-title">问答热榜</h3>
+        <NuxtLink to="/community?type=question&sort=hot" class="csdn-link">更多</NuxtLink>
       </div>
-      <div class="hot-list">
-        <div
-          v-for="(resource, index) in hotSkills"
-          :key="resource.id"
-          class="hot-item"
-          @click="handleResourceClick(resource, 'skill')"
+      <div v-if="loadingQuestions" class="csdn-empty">加载中...</div>
+      <ol v-else class="rank-list">
+        <li
+          v-for="(item, index) in hotQuestions"
+          :key="item.id"
+          class="rank-item"
+          @click="navigateTo(`/community/question/${item.id}`)"
         >
-          <span class="rank" :class="{ top: index < 3 }">{{ index + 1 }}</span>
-          <span class="title text-overflow-2">{{ resource.name }}</span>
-        </div>
-        <div v-if="loadingSkills" class="text-center text-gray-400 py-4">
-          加载中...
-        </div>
-        <div v-else-if="hotSkills.length === 0" class="text-center text-gray-400 py-4">
-          暂无数据
-        </div>
+          <span class="rank-index" :class="{ top: index < 3 }">{{ index + 1 }}</span>
+          <span class="rank-title text-overflow-2">{{ item.title }}</span>
+        </li>
+      </ol>
+    </section>
+
+    <section class="csdn-card panel">
+      <div class="panel-head">
+        <h3 class="panel-title">站点公告</h3>
       </div>
-    </div>
+      <div v-if="loadingAnnouncements" class="csdn-empty">加载中...</div>
+      <ul v-else-if="announcements.length" class="notice-list">
+        <li v-for="(item, index) in announcements" :key="index" class="notice-item text-overflow-2">
+          {{ item.title || item.content || item }}
+        </li>
+      </ul>
+      <div v-else class="csdn-empty">暂无公告</div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Article } from '~~/shared/types/article'
-import type { Resource } from '~~/shared/types/resource'
+import type { Question } from '~~/shared/types/question'
 
 const { getArticleList } = useArticle()
-const { getHotResources } = useResource()
+const { getQuestionList } = useQuestion()
 
 const hotArticles = ref<Article[]>([])
-const hotSkills = ref<Resource[]>([])
-const loadingArticles = ref(false)
-const loadingSkills = ref(false)
+const hotQuestions = ref<Question[]>([])
+const announcements = ref<any[]>([])
 
-// 加载热门文章
+const loadingArticles = ref(false)
+const loadingQuestions = ref(false)
+const loadingAnnouncements = ref(false)
+
 async function loadHotArticles() {
   loadingArticles.value = true
   try {
-    const res = await getArticleList({ sort: 'hot', pageSize: 10 })
+    const res = await getArticleList({ sort: 'hot', page: 1, pageSize: 10 })
     hotArticles.value = res.records || []
-  }
-  catch (err) {
-    console.error('加载热门文章失败:', err)
   }
   finally {
     loadingArticles.value = false
   }
 }
 
-// 加载热门技能
-async function loadHotSkills() {
-  loadingSkills.value = true
+async function loadHotQuestions() {
+  loadingQuestions.value = true
   try {
-    const res = await getHotResources('skill', 10)
-    hotSkills.value = res || []
-  }
-  catch (err) {
-    console.error('加载热门技能失败:', err)
+    const res = await getQuestionList({ sort: 'hot', page: 1, pageSize: 10 })
+    hotQuestions.value = res.records || []
   }
   finally {
-    loadingSkills.value = false
+    loadingQuestions.value = false
   }
 }
 
-function handleArticleClick(article: Article) {
-  navigateTo(`/community/article/${article.id}`)
-}
-
-function handleResourceClick(resource: Resource, type: string) {
-  navigateTo(`/resources/${type}/${resource.id}`)
+async function loadAnnouncements() {
+  loadingAnnouncements.value = true
+  try {
+    const res = await useSimpleFetch<any>('/portal/open/public/announcement', { noToken: true })
+    const data = (res && (res as any).data) || []
+    announcements.value = Array.isArray(data) ? data : []
+  }
+  finally {
+    loadingAnnouncements.value = false
+  }
 }
 
 onMounted(() => {
   loadHotArticles()
-  loadHotSkills()
+  loadHotQuestions()
+  loadAnnouncements()
 })
 </script>
 
 <style scoped>
-.sidebar-card {
-  @apply bg-white rounded-lg p-4 shadow-sm;
+.right-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.sidebar-title {
-  @apply text-base font-medium text-gray-800 mb-4 flex items-center;
+.panel {
+  padding: 14px;
 }
 
-.hot-list {
-  @apply space-y-3;
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-.hot-item {
-  @apply flex items-start gap-3 cursor-pointer group;
+.panel-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
 }
 
-.hot-item .rank {
-  @apply flex-shrink-0 w-5 h-5 rounded flex items-center justify-center text-xs font-medium bg-gray-100 text-gray-500;
+.rank-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.hot-item .rank.top {
-  @apply bg-red-50 text-red-500;
+.rank-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
 }
 
-.hot-item .title {
-  @apply flex-1 text-sm text-gray-600 group-hover:text-primary transition-colors;
+.rank-item + .rank-item {
+  border-top: 1px dashed var(--csdn-line);
+}
+
+.rank-index {
+  flex: 0 0 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: #7a7c88;
+  background: #f0f1f5;
+}
+
+.rank-index.top {
+  color: #fff;
+  background: linear-gradient(135deg, #ff6a3d, #ff8f2b);
+}
+
+.rank-title {
+  color: var(--csdn-subtext);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.rank-item:hover .rank-title {
+  color: var(--csdn-primary);
+}
+
+.notice-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notice-item {
+  font-size: 13px;
+  color: var(--csdn-subtext);
+  line-height: 1.7;
+  padding: 6px 0;
+}
+
+.notice-item + .notice-item {
+  border-top: 1px dashed var(--csdn-line);
 }
 </style>
