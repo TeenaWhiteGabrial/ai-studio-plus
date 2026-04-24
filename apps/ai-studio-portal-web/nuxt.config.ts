@@ -3,6 +3,19 @@ export default defineNuxtConfig({
   app: {
     baseURL: '/ai-studio-portal-web/',
   },
+  vite: {
+    optimizeDeps: {
+      include: [],
+      exclude: ['jsencrypt'],
+    },
+  },
+  nitro: {
+    experimental: {
+      rollupConfig: {
+        external: ['jsencrypt'],
+      },
+    },
+  },
   modules: [
     './modules/theme',
     '@unocss/nuxt',
