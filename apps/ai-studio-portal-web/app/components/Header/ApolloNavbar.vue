@@ -1,90 +1,42 @@
 <template>
   <header class="portal-header">
-    <div class="csdn-container header-inner">
-      <div class="header-left">
-        <button class="brand-btn" @click="navigateTo('/')">
-          <img v-if="siteConfig.logo" :src="siteConfig.logo" alt="logo" class="brand-logo">
-          <span class="brand-text">{{ siteConfig.name || 'AI Studio' }}</span>
+    <div class="header-row">
+      <button class="brand-btn" @click="navigateTo('/')">
+        <img v-if="siteConfig.logo" :src="siteConfig.logo" alt="logo" class="brand-logo">
+        <span v-else class="brand-mark">AI</span>
+        <span class="brand-name">{{ siteConfig.name || 'AI Studio' }}</span>
+      </button>
+
+      <form class="search-box" @submit.prevent="handleSearch">
+        <input
+          v-model="keyword"
+          class="search-input"
+          type="text"
+          placeholder="搜索文章、Skill、Plugin"
+        >
+        <button class="search-button" type="submit">
+          <Icon name="material-symbols:search" size="18" />
         </button>
+      </form>
 
-        <nav class="channel-nav">
-          <NuxtLink
-            v-for="item in navItems"
-            :key="item.to"
-            :to="item.to"
-            class="channel-item"
-            :class="{ active: isActive(item.to) }"
-          >
-            {{ item.label }}
-          </NuxtLink>
-        </nav>
-      </div>
-
-      <div class="header-right">
-        <form class="header-search" @submit.prevent="handleSearch">
-          <Icon name="material-symbols:search" size="18" class="search-icon" />
-          <input
-            v-model="keyword"
-            type="text"
-            placeholder="搜技术、问题、资源"
-            class="search-input"
-          >
-        </form>
-
-        <el-button type="primary" class="write-btn" @click="goCreate">
-          <Icon name="material-symbols:edit-square-outline" size="18" />
-          <span>发布问题</span>
-        </el-button>
-
-        <template v-if="isLoggedIn">
-          <el-dropdown trigger="click">
-            <button class="user-entry">
-              <img v-if="authStore.avatar" :src="authStore.avatar" alt="avatar" class="user-avatar">
-              <span v-else class="user-avatar avatar-fallback">{{ avatarFallback }}</span>
-              <span class="user-name text-overflow-1">{{ displayName }}</span>
-              <Icon name="material-symbols:keyboard-arrow-down" size="18" />
-            </button>
-
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="navigateTo('/profile')">个人中心</el-dropdown-item>
-                <el-dropdown-item @click="navigateTo('/profile/settings')">账号设置</el-dropdown-item>
-                <el-dropdown-item divided @click="goLogout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </template>
-
-        <template v-else>
-          <el-button plain @click="goLoginPage()">登录</el-button>
-        </template>
-      </div>
+      <a class="publish-link" :href="publishArticleUrl" target="_blank" rel="noopener">
+        <Icon name="material-symbols:edit-square-outline" size="18" />
+        <span>发布文章</span>
+      </a>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
 const route = useRoute()
-const authStore = useAuthStore()
+const config = useRuntimeConfig()
 const { siteConfig } = useSite()
 
 const keyword = ref('')
 
-const navItems = [
-  { label: '首页', to: '/' },
-  { label: '社区', to: '/community' },
-  { label: '资源中心', to: '/resources' }
-]
-
-const isLoggedIn = computed(() => !!authStore.token)
-
-const displayName = computed(() => {
-  return authStore.real_name || authStore.userName || authStore.username || '开发者'
-})
-
-const avatarFallback = computed(() => {
-  const base = displayName.value || 'AI'
-  return base.slice(0, 1).toUpperCase()
+const publishArticleUrl = computed(() => {
+  const base = String(config.public.consoleBase || '').replace(/\/$/, '')
+  return `${base}/console/article/new/edit`
 })
 
 watch(
@@ -95,45 +47,19 @@ watch(
   { immediate: true }
 )
 
-function isActive(path: string) {
-  if (path === '/') {
-    return route.path === '/'
-  }
-  return route.path.startsWith(path)
-}
-
 function handleSearch() {
   const value = keyword.value.trim()
-  if (!value) {
-    return
-  }
+  if (!value) return
 
-  if (route.path.startsWith('/resources')) {
-    navigateTo({
-      path: '/resources',
-      query: {
-        ...route.query,
-        keyword: value
-      }
-    })
-    return
-  }
-
+  const path = route.path.startsWith('/resources') ? '/resources' : '/community'
   navigateTo({
-    path: '/community',
+    path,
     query: {
       ...route.query,
-      keyword: value
+      keyword: value,
+      page: undefined
     }
   })
-}
-
-function goCreate() {
-  if (!authStore.token) {
-    goLoginPage()
-    return
-  }
-  navigateTo('/community/ask')
 }
 </script>
 
@@ -142,194 +68,144 @@ function goCreate() {
   position: sticky;
   top: 0;
   z-index: 120;
+  height: 56px;
   border-bottom: 1px solid var(--csdn-line);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: saturate(180%) blur(12px);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(34, 34, 38, 0.04);
 }
 
-.header-inner {
-  height: 64px;
-  display: flex;
+.header-row {
+  height: 56px;
+  display: grid;
+  grid-template-columns: 220px minmax(320px, 560px) auto;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  gap: 20px;
+  gap: 18px;
+  padding: 0 18px;
 }
 
 .brand-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   border: 0;
   padding: 0;
   background: transparent;
   cursor: pointer;
 }
 
-.brand-logo {
-  width: 28px;
-  height: 28px;
+.brand-logo,
+.brand-mark {
+  width: 30px;
+  height: 30px;
   border-radius: 6px;
+  flex: 0 0 auto;
 }
 
-.brand-text {
-  font-size: 20px;
-  font-weight: 700;
+.brand-logo {
+  object-fit: cover;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
   background: var(--portal-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
-.channel-nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.brand-name {
+  min-width: 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.channel-item {
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: var(--csdn-subtext);
-  transition: all 0.2s ease;
-}
-
-.channel-item:hover {
-  background: var(--csdn-hover);
-  color: var(--csdn-primary);
-}
-
-.channel-item.active {
-  background: var(--csdn-primary-soft);
-  color: var(--csdn-primary);
-  font-weight: 600;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-search {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 320px;
-  height: 40px;
-  border: 1px solid var(--csdn-line);
-  border-radius: 999px;
+.search-box {
+  height: 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  overflow: hidden;
   background: #fff;
-  padding: 0 12px;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.header-search:focus-within {
-  border-color: var(--csdn-primary);
-}
-
-.search-icon {
-  color: var(--csdn-muted);
+.search-box:focus-within {
+  border-color: var(--portal-secondary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .search-input {
   width: 100%;
+  min-width: 0;
   height: 100%;
   border: 0;
   outline: none;
-  background: transparent;
+  padding: 0 12px;
   color: var(--csdn-text);
   font-size: 14px;
 }
 
-.write-btn {
-  --el-button-bg-color: transparent;
-  --el-button-hover-bg-color: transparent;
-  --el-button-active-bg-color: transparent;
-  --el-button-border-color: transparent;
-  --el-button-hover-border-color: transparent;
-  --el-button-active-border-color: transparent;
-  height: 40px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.search-button {
+  height: 100%;
   border: 0;
-  background: var(--portal-gradient);
+  border-left: 1px solid #e5e7eb;
   color: #fff;
-}
-
-.write-btn:hover {
-  opacity: 0.92;
-}
-
-.user-entry {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  max-width: 180px;
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.avatar-fallback {
+  background: var(--portal-gradient);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #dbeafe;
-  color: #1d4ed8;
+  cursor: pointer;
+}
+
+.publish-link {
+  height: 36px;
+  border-radius: 4px;
+  padding: 0 14px;
+  color: #fff;
+  background: var(--portal-gradient);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.user-name {
-  max-width: 96px;
-  font-size: 14px;
-  color: var(--csdn-subtext);
+.publish-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.26);
 }
 
-@media (max-width: 1200px) {
-  .channel-nav {
+@media (max-width: 900px) {
+  .header-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    justify-content: stretch;
+    padding: 0 10px;
+    gap: 10px;
+  }
+
+  .brand-name {
     display: none;
   }
 }
 
-@media (max-width: 1024px) {
-  .header-search {
-    width: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .header-inner {
-    height: 56px;
-  }
-
-  .header-search {
+@media (max-width: 640px) {
+  .publish-link span {
     display: none;
   }
 
-  .write-btn {
-    display: none;
-  }
-
-  .brand-text {
-    font-size: 18px;
+  .publish-link {
+    width: 36px;
+    padding: 0;
   }
 }
 </style>

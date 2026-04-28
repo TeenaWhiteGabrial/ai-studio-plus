@@ -1,0 +1,136 @@
+:root {
+  --portal-primary: #2563eb;
+  --portal-secondary: #7c3aed;
+  --portal-primary-hover: #1d4ed8;
+  --portal-primary-active: #5b21b6;
+  --portal-gradient: linear-gradient(135deg, var(--portal-primary) 0%, var(--portal-secondary) 100%);
+  --portal-gradient-hover: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
+  --portal-gradient-soft: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+
+  --el-color-primary: var(--portal-primary);
+  --el-color-primary-light-3: #5b8def;
+  --el-color-primary-light-5: #8aaef5;
+  --el-color-primary-light-7: #bfd1fb;
+  --el-color-primary-light-8: #d6e2fd;
+  --el-color-primary-light-9: #eef4ff;
+  --el-color-primary-dark-2: var(--portal-primary-hover);
+  --el-border-radius-base: 4px;
+  --el-border-radius-small: 4px;
+}
+
+.el-button {
+  font-weight: 600;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.el-button--primary {
+  --el-button-bg-color: transparent;
+  --el-button-border-color: transparent;
+  --el-button-hover-bg-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-bg-color: transparent;
+  --el-button-active-border-color: transparent;
+  border: 0;
+  background: var(--portal-gradient);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.2);
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background: var(--portal-gradient-hover);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.26);
+  transform: translateY(-1px);
+}
+
+.el-button--primary:active {
+  background: linear-gradient(135deg, var(--portal-primary-hover) 0%, var(--portal-primary-active) 100%);
+  transform: translateY(0);
+}
+
+.el-button.is-plain:not(.el-button--primary):hover,
+.el-button.is-text:hover,
+.el-button.is-link:hover {
+  color: var(--portal-secondary);
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--csdn-line) inset;
+  transition: box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover,
+.el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px #bdccff inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--portal-secondary) inset, 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.el-input-group__append,
+.el-input-group__prepend {
+  border-radius: 0 4px 4px 0;
+  background: #f7f9ff;
+  color: var(--csdn-subtext);
+  box-shadow: 0 0 0 1px var(--csdn-line) inset;
+}
+
+.el-select-dropdown__item.is-selected {
+  color: var(--portal-secondary);
+  font-weight: 700;
+}
+
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover {
+  background: var(--portal-gradient-soft);
+}
+
+.el-pagination button:hover,
+.el-pagination .el-pager li:hover {
+  color: var(--portal-secondary);
+}
+
+.el-pagination .el-pager li.is-active {
+  color: #fff;
+  border-radius: 8px;
+  background: var(--portal-gradient);
+}
+
+.el-tabs__active-bar {
+  background: var(--portal-gradient);
+}
+
+.el-tabs__item.is-active,
+.el-tabs__item:hover {
+  color: var(--portal-secondary);
+}
+
+.el-tag--primary,
+.el-tag.el-tag--primary {
+  --el-tag-bg-color: #eef4ff;
+  --el-tag-border-color: #cad8ff;
+  --el-tag-text-color: var(--portal-secondary);
+}
+
+.el-dropdown-menu__item:not(.is-disabled):focus,
+.el-dropdown-menu__item:not(.is-disabled):hover {
+  color: var(--portal-secondary);
+  background: var(--portal-gradient-soft);
+}
+
+.el-checkbox__input.is-checked .el-checkbox__inner,
+.el-radio__input.is-checked .el-radio__inner {
+  border-color: var(--portal-secondary);
+  background: var(--portal-gradient);
+}
+
+.el-checkbox__input.is-checked + .el-checkbox__label,
+.el-radio__input.is-checked + .el-radio__label {
+  color: var(--portal-secondary);
+}

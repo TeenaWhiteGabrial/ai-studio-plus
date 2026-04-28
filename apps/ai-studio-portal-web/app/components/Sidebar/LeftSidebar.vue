@@ -1,204 +1,187 @@
 <template>
-  <div class="left-wrap">
-    <section class="csdn-card panel quick-nav">
-      <h3 class="panel-title">频道导航</h3>
+  <div class="left-rail">
+    <nav class="rail-nav" aria-label="频道">
       <button
         v-for="item in channelItems"
         :key="item.key"
-        class="nav-item"
+        class="rail-item"
         :class="{ active: item.active }"
+        :title="item.label"
         @click="navigateTo(item.to)"
       >
-        <Icon :name="item.icon" size="18" />
+        <Icon :name="item.icon" size="22" />
         <span>{{ item.label }}</span>
       </button>
-    </section>
+    </nav>
 
-    <section class="csdn-card panel resource-nav">
-      <h3 class="panel-title">资源分类</h3>
-      <button
-        v-for="item in resourceItems"
-        :key="item.type"
-        class="nav-item"
-        :class="{ active: currentType === item.type }"
-        @click="navigateTo(`/resources?type=${item.type}`)"
-      >
-        <Icon :name="item.icon" size="18" />
-        <span>{{ item.label }}</span>
-      </button>
-    </section>
-
-    <section class="csdn-card panel">
-      <h3 class="panel-title">热门标签</h3>
-      <div class="tag-list">
-        <button
-          v-for="tag in displayTags"
-          :key="tag.id"
-          class="tag-btn"
-          @click="navigateTo(`/community?tagId=${tag.id}`)"
-        >
-          # {{ tag.name }}
+    <div class="rail-user">
+      <template v-if="isLoggedIn">
+        <button class="avatar-btn" title="个人中心" @click="navigateTo('/profile')">
+          <img v-if="authStore.avatar" :src="authStore.avatar" alt="avatar" class="user-avatar">
+          <span v-else class="user-avatar avatar-fallback">{{ avatarFallback }}</span>
         </button>
-      </div>
-      <div v-if="loadingTags" class="csdn-empty">标签加载中...</div>
-    </section>
+        <button class="rail-mini-btn" title="个人设置" @click="navigateTo('/profile/settings')">
+          <Icon name="material-symbols:settings-outline" size="21" />
+        </button>
+        <button class="rail-mini-btn" title="退出登录" @click="goLogout">
+          <Icon name="material-symbols:logout" size="21" />
+        </button>
+      </template>
 
-    <section class="csdn-card panel creator">
-      <h3 class="panel-title">创作中心</h3>
-      <p class="creator-desc">发布问题、参与讨论，积累你的技术影响力。</p>
-      <el-button type="primary" class="w-full" @click="goAsk">发布问题</el-button>
-    </section>
+      <template v-else>
+        <button class="login-entry" title="登录" @click="goLoginPage()">
+          <Icon name="material-symbols:person-outline" size="22" />
+          <span>登录</span>
+        </button>
+      </template>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Tag } from '~~/shared/types/community'
-
 const route = useRoute()
 const authStore = useAuthStore()
-const { getTagList } = useCommunity()
 
-const loadingTags = ref(false)
-const displayTags = ref<Tag[]>([])
+const isLoggedIn = computed(() => !!authStore.token)
+
+const displayName = computed(() => {
+  return authStore.real_name || authStore.userName || authStore.username || '开发者'
+})
+
+const avatarFallback = computed(() => {
+  const base = displayName.value || 'AI'
+  return base.slice(0, 1).toUpperCase()
+})
 
 const channelItems = computed(() => [
   {
     key: 'home',
-    label: '推荐首页',
+    label: '推荐',
     icon: 'material-symbols:home-outline',
     to: '/',
     active: route.path === '/'
   },
   {
-    key: 'community',
-    label: '技术社区',
-    icon: 'material-symbols:forum-outline',
-    to: '/community',
-    active: route.path.startsWith('/community')
+    key: 'latest',
+    label: '最新',
+    icon: 'material-symbols:newspaper-outline',
+    to: '/community?sort=latest',
+    active: route.path.startsWith('/community') && route.query.sort === 'latest'
   },
   {
-    key: 'resources',
-    label: '资源中心',
-    icon: 'material-symbols:folder-managed-outline',
-    to: '/resources',
-    active: route.path.startsWith('/resources')
+    key: 'hot',
+    label: '热门',
+    icon: 'material-symbols:local-fire-department-outline',
+    to: '/community?sort=hot',
+    active: route.path.startsWith('/community') && route.query.sort === 'hot'
   },
   {
-    key: 'profile',
-    label: '我的主页',
-    icon: 'material-symbols:person-outline',
-    to: '/profile',
-    active: route.path.startsWith('/profile')
+    key: 'skill',
+    label: 'Skill',
+    icon: 'material-symbols:psychology-alt-outline',
+    to: '/resources?type=skill',
+    active: route.path.startsWith('/resources') && route.query.type !== 'plugin'
+  },
+  {
+    key: 'plugin',
+    label: 'Plugin',
+    icon: 'material-symbols:extension-outline',
+    to: '/resources?type=plugin',
+    active: route.path.startsWith('/resources') && route.query.type === 'plugin'
   }
 ])
-
-const resourceItems = [
-  { type: 'skill', label: 'Skills', icon: 'material-symbols:psychology-alt-outline' },
-  { type: 'plugin', label: 'Plugins', icon: 'material-symbols:extension-outline' },
-  { type: 'tutorial', label: 'Tutorials', icon: 'material-symbols:play-lesson-outline' }
-]
-
-const currentType = computed(() => {
-  if (!route.path.startsWith('/resources')) {
-    return ''
-  }
-  return String(route.query.type || 'skill')
-})
-
-async function loadTags() {
-  loadingTags.value = true
-  try {
-    const tags = await getTagList()
-    displayTags.value = (tags || []).slice(0, 18)
-  }
-  finally {
-    loadingTags.value = false
-  }
-}
-
-function goAsk() {
-  if (!authStore.token) {
-    goLoginPage()
-    return
-  }
-  navigateTo('/community/ask')
-}
-
-onMounted(loadTags)
 </script>
 
 <style scoped>
-.left-wrap {
+.left-rail {
+  height: calc(100vh - 56px);
+  width: 72px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.panel {
-  padding: 14px;
-}
-
-.panel-title {
-  margin: 0 0 10px;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--csdn-text);
-}
-
-.nav-item {
-  width: 100%;
-  height: 38px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--csdn-subtext);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.nav-item:hover {
-  background: var(--csdn-hover);
-  color: var(--csdn-primary);
-}
-
-.nav-item.active {
-  background: var(--csdn-primary-soft);
-  color: var(--csdn-primary);
-  font-weight: 600;
-}
-
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag-btn {
-  border: 1px solid var(--csdn-line);
-  border-radius: 999px;
+  justify-content: space-between;
+  border-right: 1px solid var(--csdn-line);
   background: #fff;
-  color: var(--csdn-subtext);
-  font-size: 12px;
-  padding: 4px 10px;
+}
+
+.rail-nav,
+.rail-user {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 10px 6px;
+}
+
+.rail-user {
+  border-top: 1px solid #f0f1f3;
+}
+
+.rail-item,
+.rail-mini-btn,
+.login-entry,
+.avatar-btn {
+  border: 0;
+  background: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.tag-btn:hover {
-  border-color: #bdd2ff;
-  color: var(--csdn-primary);
-  background: #f7fbff;
+.rail-item,
+.login-entry {
+  min-height: 54px;
+  border-radius: 6px;
+  color: var(--csdn-subtext);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 12px;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.creator-desc {
-  margin: 0 0 10px;
-  color: var(--csdn-muted);
-  line-height: 1.6;
-  font-size: 13px;
+.rail-item:hover,
+.rail-item.active,
+.login-entry:hover {
+  color: var(--portal-secondary);
+  background: var(--portal-gradient-soft);
+}
+
+.rail-item.active {
+  font-weight: 700;
+}
+
+.avatar-btn,
+.rail-mini-btn {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto;
+  border-radius: 8px;
+  color: var(--csdn-subtext);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-btn:hover,
+.rail-mini-btn:hover {
+  color: var(--portal-secondary);
+  background: var(--portal-gradient-soft);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--portal-secondary);
+  background: #eef4ff;
+  font-size: 14px;
+  font-weight: 800;
 }
 </style>

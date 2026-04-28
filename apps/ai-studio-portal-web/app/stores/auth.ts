@@ -1,3 +1,5 @@
+import { RSAEncrypt } from '~/utils/jsencrypt'
+
 interface LoginResponse {
   code: number
   message: string
@@ -211,12 +213,8 @@ export const useAuthStore = defineStore('authStore', {
         throw new Error('获取公钥失败')
       }
 
-      const jsencryptModule = await import('jsencrypt/bin/jsencrypt.min')
-      const JSEncrypt = (jsencryptModule as { default: new () => any }).default
-      const encryptor = new JSEncrypt()
-      encryptor.setPublicKey(keyRes.data)
-      const encryptedPassword = encryptor.encrypt(password)
-      if (!encryptedPassword) {
+      const encryptedResult = await RSAEncrypt(keyRes.data, password)
+      if (!encryptedResult.success || !encryptedResult.encryptedPassword) {
         throw new Error('密码加密失败')
       }
 
@@ -225,7 +223,7 @@ export const useAuthStore = defineStore('authStore', {
         baseURL: config.public.apiBase,
         body: {
           username,
-          password: encryptedPassword,
+          password: encryptedResult.encryptedPassword,
         },
       })
 

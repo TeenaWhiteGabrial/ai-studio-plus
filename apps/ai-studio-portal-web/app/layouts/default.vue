@@ -37,7 +37,7 @@ const config = useRuntimeConfig()
 const normalizedPath = computed(() => route.path.replace(/^\//, ''))
 
 const isFocusPage = computed(() => {
-  return /^(community\/write|community\/ask|profile(?:\/|$))/.test(normalizedPath.value)
+  return /^(profile(?:\/|$))/.test(normalizedPath.value)
 })
 
 const isDetailPage = computed(() => {
@@ -122,9 +122,12 @@ onMounted(async () => {
 
 .portal-main {
   display: grid;
-  grid-template-columns: 236px minmax(0, 1fr) 300px;
-  gap: 16px;
-  padding: 14px 0 18px;
+  width: 100%;
+  max-width: none;
+  grid-template-columns: 72px minmax(0, 1fr) 300px;
+  gap: 12px;
+  padding: 0 12px 18px 0;
+  margin: 0;
 }
 
 .portal-main.mode-content-right {
@@ -139,11 +142,20 @@ onMounted(async () => {
 .portal-left,
 .portal-right {
   position: sticky;
-  top: 78px;
+  top: 56px;
   align-self: start;
-  max-height: calc(100vh - 92px);
+  max-height: calc(100vh - 56px);
   overflow-y: auto;
   scrollbar-width: thin;
+}
+
+.portal-left {
+  overflow: visible;
+}
+
+.portal-content,
+.portal-right {
+  margin-top: 12px;
 }
 
 .portal-content {
@@ -158,7 +170,7 @@ onMounted(async () => {
 
 @media (max-width: 1400px) {
   .portal-main {
-    grid-template-columns: 220px minmax(0, 1fr) 280px;
+    grid-template-columns: 72px minmax(0, 1fr) 280px;
   }
 
   .portal-main.mode-content-right {
@@ -168,11 +180,11 @@ onMounted(async () => {
 
 @media (max-width: 1200px) {
   .portal-main.mode-three {
-    grid-template-columns: minmax(0, 1fr) 280px;
+    grid-template-columns: 72px minmax(0, 1fr) 280px;
   }
 
   .portal-main.mode-three .portal-left {
-    display: none;
+    display: block;
   }
 }
 

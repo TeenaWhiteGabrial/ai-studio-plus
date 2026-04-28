@@ -1,19 +1,4 @@
-import type { Article, ArticleFormData, ArticleListQuery, ArticleListResponse } from '~~/shared/types/article'
-
-interface PortalArticlePayload extends ArticleFormData {
-  publishType?: 0 | 1 | 2
-  scheduledPublishTime?: string
-}
-
-interface PortalArticleRequestBody {
-  title: string
-  content: string
-  summary?: string
-  cover_image?: string
-  tag_ids?: number[]
-  publish_type?: 0 | 1 | 2
-  scheduled_publish_time?: string
-}
+import type { Article, ArticleListQuery, ArticleListResponse } from '~~/shared/types/article'
 
 export function useArticle() {
   const config = useRuntimeConfig()
@@ -30,22 +15,6 @@ export function useArticle() {
   const isUnauthorized = (error: unknown) => {
     const err = error as { status?: number; statusCode?: number; response?: { status?: number } }
     return err?.status === 401 || err?.statusCode === 401 || err?.response?.status === 401
-  }
-
-  function toPortalArticleRequest(data: PortalArticlePayload): PortalArticleRequestBody {
-    const tagIds = (data.tags || [])
-      .map(tag => Number(tag))
-      .filter(tagId => Number.isFinite(tagId))
-
-    return {
-      title: data.title,
-      content: data.content,
-      summary: data.summary,
-      cover_image: data.coverImage,
-      tag_ids: tagIds.length ? tagIds : undefined,
-      publish_type: data.publishType,
-      scheduled_publish_time: data.scheduledPublishTime
-    }
   }
 
   async function getArticleList(query: ArticleListQuery): Promise<ArticleListResponse> {
@@ -99,31 +68,10 @@ export function useArticle() {
     return !!res
   }
 
-  async function createArticle(data: PortalArticlePayload): Promise<number | undefined> {
-    const res = await $fetch<number>('/portal/article', {
-      method: 'POST',
-      body: toPortalArticleRequest(data),
-      baseURL: config.public.apiBase,
-      headers: getAuthHeaders()
-    })
-    return res
-  }
-
-  async function updateArticle(id: string, data: PortalArticlePayload): Promise<void> {
-    await $fetch(`/portal/article/${id}`, {
-      method: 'POST',
-      body: toPortalArticleRequest(data),
-      baseURL: config.public.apiBase,
-      headers: getAuthHeaders()
-    })
-  }
-
   return {
     getArticleList,
     getArticleDetail,
     likeArticle,
-    isArticleLiked,
-    createArticle,
-    updateArticle
+    isArticleLiked
   }
 }

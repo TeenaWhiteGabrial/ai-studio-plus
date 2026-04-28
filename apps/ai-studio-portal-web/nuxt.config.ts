@@ -30,7 +30,7 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-09-11',
   devtools: { enabled: true },
-  css: ['~/assets/css/csdn-theme.css', '~/assets/css/richText.css'],
+  css: ['~/assets/css/csdn-theme.css', '~/assets/css/element-plus-theme.css', '~/assets/css/richText.css'],
   icon: {
     collections: ['material-symbols'] // 明确指定集合
   },
@@ -48,6 +48,7 @@ export default defineNuxtConfig({
       registerUrl: import.meta.env.NUXT_REGISTER_URL,
       tokenType: import.meta.env.NUXT_TOKEN_TYPE,
       baseRouter: import.meta.env.NUXT_APP_BASE_URL,
+      consoleBase: import.meta.env.NUXT_CONSOLE_BASE_URL || 'http://localhost:5174/ai-studio-plus-console-web',
 
     }
   },

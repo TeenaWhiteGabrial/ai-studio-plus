@@ -1,70 +1,59 @@
 <template>
   <div class="home-page">
-    <section class="hero csdn-card">
-      <div class="hero-main">
-        <h1>AI Studio 技术社区</h1>
-        <p>分享实战、沉淀经验、发现高质量 AI 技术资源。</p>
-        <div class="hero-actions">
-          <el-button type="primary" @click="goAsk">发布问题</el-button>
-          <el-button @click="navigateTo('/community')">浏览社区</el-button>
-          <el-button @click="navigateTo('/resources')">进入资源中心</el-button>
-        </div>
+    <section class="top-news csdn-card">
+      <div class="top-news-main">
+        <span class="top-news-kicker">今日推荐</span>
+        <h1 class="top-news-title">AI Studio 技术文章与资源精选</h1>
+        <p class="top-news-desc">沉淀实践经验，发现可复用的 Skill 与 Plugin，像逛技术社区一样快速找到有价值的内容。</p>
       </div>
-      <div class="hero-side">
-        <div class="hero-metric">
-          <span class="value">{{ articleList.length }}</span>
-          <span class="label">推荐文章</span>
-        </div>
-        <div class="hero-metric">
-          <span class="value">{{ questionList.length }}</span>
-          <span class="label">活跃问答</span>
-        </div>
-        <div class="hero-metric">
-          <span class="value">{{ latestResources.length }}</span>
-          <span class="label">最新资源</span>
-        </div>
+      <div class="top-news-actions">
+        <button class="channel-pill active" @click="switchArticleSort('hot')">热门</button>
+        <button class="channel-pill" @click="switchArticleSort('latest')">最新</button>
+        <button class="channel-pill" @click="switchArticleSort('likes')">点赞</button>
+        <button class="channel-pill" @click="switchArticleSort('favorites')">收藏</button>
       </div>
     </section>
 
-    <section class="feed-section">
-      <div class="section-head">
-        <h2 class="csdn-section-title">推荐文章</h2>
-        <NuxtLink to="/community?type=article" class="csdn-link">更多文章</NuxtLink>
+    <section class="feed-card csdn-card">
+      <div class="feed-head">
+        <div>
+          <h2 class="feed-title">推荐文章</h2>
+          <p class="feed-subtitle">按热度、点赞、收藏综合推荐</p>
+        </div>
+        <NuxtLink :to="`/community?sort=${articleSort}`" class="csdn-link">查看更多</NuxtLink>
       </div>
+
       <div v-if="loadingArticles" class="csdn-empty">加载中...</div>
-      <div v-else class="article-list">
+      <div v-else-if="articleList.length === 0" class="csdn-empty">暂无文章</div>
+      <div v-else class="article-stream">
         <ArticleCard v-for="article in articleList" :key="article.id" :article="article" />
       </div>
     </section>
 
-    <section class="feed-section">
-      <div class="section-head">
-        <h2 class="csdn-section-title">精选问答</h2>
-        <NuxtLink to="/community?type=question" class="csdn-link">更多问答</NuxtLink>
-      </div>
-      <div v-if="loadingQuestions" class="csdn-empty">加载中...</div>
-      <div v-else class="question-list">
-        <QuestionCard v-for="question in questionList" :key="question.id" :question="question" />
-      </div>
-    </section>
-
-    <section class="resource-section">
-      <div class="section-head">
-        <h2 class="csdn-section-title">最新资源</h2>
-        <div class="resource-tabs">
-          <button
-            v-for="tab in resourceTabs"
-            :key="tab.value"
-            class="tab-btn"
-            :class="{ active: currentResourceTab === tab.value }"
-            @click="switchResourceTab(tab.value)"
-          >
-            {{ tab.label }}
-          </button>
+    <section class="resource-card csdn-card">
+      <div class="feed-head">
+        <div>
+          <h2 class="feed-title">资源管理</h2>
+          <p class="feed-subtitle">Skill 与 Plugin 资源浏览</p>
         </div>
+        <NuxtLink to="/resources" class="csdn-link">全部资源</NuxtLink>
+      </div>
+
+      <div class="resource-switch">
+        <button
+          v-for="tab in resourceTabs"
+          :key="tab.value"
+          class="resource-tab"
+          :class="{ active: currentResourceTab === tab.value }"
+          @click="switchResourceTab(tab.value)"
+        >
+          <Icon :name="tab.icon" size="18" />
+          <span>{{ tab.label }}</span>
+        </button>
       </div>
 
       <div v-if="loadingResources" class="csdn-empty">加载中...</div>
+      <div v-else-if="latestResources.length === 0" class="csdn-empty">暂无资源</div>
       <div v-else class="resource-grid">
         <ResourceCard
           v-for="resource in latestResources"
@@ -79,56 +68,37 @@
 
 <script setup lang="ts">
 import type { Article } from '~~/shared/types/article'
-import type { Question } from '~~/shared/types/question'
 import type { Resource } from '~~/shared/types/resource'
 import type { ResourceType } from '~/composables/useResource'
 
-const authStore = useAuthStore()
 const { getArticleList } = useArticle()
-const { getQuestionList } = useQuestion()
 const { getResourceList } = useResource()
 
 const articleList = ref<Article[]>([])
-const questionList = ref<Question[]>([])
 const latestResources = ref<Resource[]>([])
 
 const loadingArticles = ref(false)
-const loadingQuestions = ref(false)
 const loadingResources = ref(false)
-
-const resourceTabs: Array<{ label: string; value: ResourceType }> = [
-  { label: 'Skill', value: 'skill' },
-  { label: 'Plugin', value: 'plugin' },
-  { label: 'Tutorial', value: 'tutorial' }
-]
-
+type ArticleSort = 'latest' | 'hot' | 'likes' | 'favorites'
+const articleSort = ref<ArticleSort>('hot')
 const currentResourceTab = ref<ResourceType>('skill')
+
+const resourceTabs: Array<{ label: string; value: ResourceType; icon: string }> = [
+  { label: 'Skill', value: 'skill', icon: 'material-symbols:psychology-alt-outline' },
+  { label: 'Plugin', value: 'plugin', icon: 'material-symbols:extension-outline' }
+]
 
 async function loadArticles() {
   loadingArticles.value = true
   try {
     const res = await getArticleList({
-      sort: 'hot',
+      sort: articleSort.value,
       page: 1,
-      pageSize: 6
+      pageSize: 10
     })
     articleList.value = res.records || []
   } finally {
     loadingArticles.value = false
-  }
-}
-
-async function loadQuestions() {
-  loadingQuestions.value = true
-  try {
-    const res = await getQuestionList({
-      sort: 'latest',
-      page: 1,
-      pageSize: 6
-    })
-    questionList.value = res.records || []
-  } finally {
-    loadingQuestions.value = false
   }
 }
 
@@ -147,22 +117,18 @@ async function loadResources() {
   }
 }
 
+function switchArticleSort(sort: ArticleSort) {
+  articleSort.value = sort
+  loadArticles()
+}
+
 function switchResourceTab(type: ResourceType) {
   currentResourceTab.value = type
   loadResources()
 }
 
-function goAsk() {
-  if (!authStore.token) {
-    goLoginPage()
-    return
-  }
-  navigateTo('/community/ask')
-}
-
 onMounted(() => {
   loadArticles()
-  loadQuestions()
   loadResources()
 })
 </script>
@@ -171,112 +137,127 @@ onMounted(() => {
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.hero {
+.top-news {
+  padding: 16px 18px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 20px;
-  padding: 20px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.top-news-kicker {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  padding: 2px 8px;
+  background: var(--portal-gradient-soft);
+  color: var(--portal-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.top-news-title {
+  margin: 0;
+  color: #191b22;
+  font-size: 24px;
+  line-height: 1.32;
+}
+
+.top-news-desc {
+  margin: 8px 0 0;
+  color: var(--csdn-subtext);
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.top-news-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.channel-pill {
+  height: 32px;
+  border: 1px solid var(--csdn-line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--csdn-subtext);
+  padding: 0 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.channel-pill:hover,
+.channel-pill.active {
+  color: var(--portal-secondary);
+  border-color: #c7d2fe;
   background: var(--portal-gradient-soft);
 }
 
-.hero-main h1 {
-  margin: 0 0 10px;
-  font-size: 30px;
-  line-height: 1.2;
-  color: #1f2937;
+.feed-card,
+.resource-card {
+  padding: 16px;
 }
 
-.hero-main p {
+.feed-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--csdn-line);
+}
+
+.feed-title {
   margin: 0;
-  color: #4b5563;
-  line-height: 1.8;
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--csdn-text);
 }
 
-.hero-actions {
-  margin-top: 16px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.hero-side {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-.hero-metric {
-  border-radius: 10px;
-  border: 1px solid #e0e8f8;
-  background: #fff;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.hero-metric .value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--csdn-primary);
-}
-
-.hero-metric .label {
+.feed-subtitle {
+  margin: 4px 0 0;
   color: var(--csdn-muted);
   font-size: 13px;
 }
 
-.feed-section,
-.resource-section {
+.article-stream {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.section-head {
+.resource-switch {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.article-list,
-.question-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.resource-tabs {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.tab-btn {
-  height: 30px;
-  border-radius: 999px;
+.resource-tab {
+  height: 34px;
   border: 1px solid var(--csdn-line);
+  border-radius: 4px;
   background: #fff;
   color: var(--csdn-subtext);
   padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.tab-btn:hover {
-  border-color: #bfd5ff;
-  color: var(--csdn-primary);
-}
-
-.tab-btn.active {
-  background: var(--csdn-primary-soft);
-  border-color: #a4c2ff;
-  color: var(--csdn-primary);
-  font-weight: 600;
+.resource-tab:hover,
+.resource-tab.active {
+  color: var(--portal-secondary);
+  border-color: #c7d2fe;
+  background: var(--portal-gradient-soft);
 }
 
 .resource-grid {
@@ -285,15 +266,13 @@ onMounted(() => {
   gap: 10px;
 }
 
-@media (max-width: 1024px) {
-  .hero {
+@media (max-width: 900px) {
+  .top-news {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 768px) {
-  .hero-main h1 {
-    font-size: 24px;
+  .top-news-actions {
+    justify-content: flex-start;
   }
 
   .resource-grid {

@@ -1,23 +1,25 @@
 <template>
   <div class="community-page">
     <section class="csdn-card filter-bar">
-      <div class="channel-tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab.type"
-          class="tab-btn"
-          :class="{ active: currentTab === tab.type }"
-          @click="switchTab(tab.type)"
-        >
-          <Icon :name="tab.icon" size="17" />
-          <span>{{ tab.name }}</span>
-        </button>
+      <div class="filter-left">
+        <h1 class="page-title">文章</h1>
+        <div class="sort-tabs">
+          <button
+            v-for="option in sortOptions"
+            :key="option.value"
+            class="sort-tab"
+            :class="{ active: currentSort === option.value }"
+            @click="switchSort(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        </div>
       </div>
 
       <div class="search-sort">
         <el-input
           v-model="keyword"
-          placeholder="搜索文章/问题"
+          placeholder="搜索文章"
           class="keyword-input"
           clearable
           @keyup.enter="handleSearch"
@@ -28,28 +30,14 @@
             </el-button>
           </template>
         </el-input>
-
-        <el-select v-model="currentSort" class="sort-select" @change="handleSortChange">
-          <el-option
-            v-for="option in sortOptions"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-          />
-        </el-select>
-
-        <el-button type="primary" @click="goAsk">
-          <Icon name="material-symbols:edit-square-outline" size="18" />
-          发布问题
-        </el-button>
       </div>
     </section>
 
-    <section class="result-section">
+    <section class="result-section csdn-card">
       <div v-if="loading" class="csdn-empty">加载中...</div>
 
       <template v-else>
-        <div v-if="currentTab === 'article'" class="list-wrap">
+        <div v-if="articleList.length > 0" class="list-wrap">
           <ArticleCard
             v-for="article in articleList"
             :key="article.id"
@@ -57,15 +45,7 @@
           />
         </div>
 
-        <div v-else class="list-wrap">
-          <QuestionCard
-            v-for="question in questionList"
-            :key="question.id"
-            :question="question"
-          />
-        </div>
-
-        <div v-if="showEmpty" class="csdn-card csdn-empty empty-card">暂无内容，换个条件试试。</div>
+        <div v-else class="csdn-empty empty-card">暂无内容，换个条件试试。</div>
 
         <div v-if="totalCount > pageSize" class="pagination-wrap">
           <el-pagination
@@ -83,22 +63,14 @@
 
 <script setup lang="ts">
 import type { Article } from '~~/shared/types/article'
-import type { Question } from '~~/shared/types/question'
+
+type ArticleSort = 'latest' | 'hot' | 'likes' | 'favorites'
 
 const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
-
 const { getArticleList } = useArticle()
-const { getQuestionList } = useQuestion()
 
-const tabs = [
-  { name: '文章', type: 'article', icon: 'material-symbols:article-outline' },
-  { name: '问答', type: 'question', icon: 'material-symbols:help-outline' }
-]
-
-const currentTab = ref((route.query.type as string) || 'article')
-const currentSort = ref((route.query.sort as string) || 'latest')
+const currentSort = ref<ArticleSort>((route.query.sort as ArticleSort) || 'latest')
 const keyword = ref((route.query.keyword as string) || '')
 const currentPage = ref(Number(route.query.page || 1))
 const pageSize = 10
@@ -106,52 +78,25 @@ const pageSize = 10
 const loading = ref(false)
 const totalCount = ref(0)
 const articleList = ref<Article[]>([])
-const questionList = ref<Question[]>([])
 
-const sortOptions = computed(() => {
-  if (currentTab.value === 'question') {
-    return [
-      { label: '最新发布', value: 'latest' },
-      { label: '热门问答', value: 'hot' },
-      { label: '待回答', value: 'unanswered' }
-    ]
-  }
-  return [
-    { label: '最新文章', value: 'latest' },
-    { label: '最火文章', value: 'hot' },
-    { label: '点赞最多', value: 'likes' },
-    { label: '收藏最多', value: 'favorites' }
-  ]
-})
-
-const showEmpty = computed(() => {
-  return currentTab.value === 'article' ? articleList.value.length === 0 : questionList.value.length === 0
-})
+const sortOptions: Array<{ label: string; value: ArticleSort }> = [
+  { label: '最新', value: 'latest' },
+  { label: '热门', value: 'hot' },
+  { label: '点赞', value: 'likes' },
+  { label: '收藏', value: 'favorites' }
+]
 
 async function loadData() {
   loading.value = true
   try {
-    if (currentTab.value === 'article') {
-      const res = await getArticleList({
-        page: currentPage.value,
-        pageSize,
-        keyword: keyword.value || undefined,
-        sort: currentSort.value as 'latest' | 'hot' | 'likes' | 'favorites',
-        tagId: route.query.tagId as string
-      })
-      articleList.value = res.records || []
-      totalCount.value = res.total || 0
-      return
-    }
-
-    const res = await getQuestionList({
+    const res = await getArticleList({
       page: currentPage.value,
       pageSize,
       keyword: keyword.value || undefined,
-      sort: currentSort.value as 'latest' | 'hot' | 'unanswered',
+      sort: currentSort.value,
       tagId: route.query.tagId as string
     })
-    questionList.value = res.records || []
+    articleList.value = res.records || []
     totalCount.value = res.total || 0
   } finally {
     loading.value = false
@@ -163,7 +108,6 @@ function updateQuery() {
     path: '/community',
     query: {
       ...route.query,
-      type: currentTab.value,
       sort: currentSort.value,
       keyword: keyword.value || undefined,
       page: currentPage.value
@@ -171,15 +115,8 @@ function updateQuery() {
   })
 }
 
-function switchTab(type: string) {
-  currentTab.value = type
-  currentSort.value = 'latest'
-  currentPage.value = 1
-  updateQuery()
-  loadData()
-}
-
-function handleSortChange() {
+function switchSort(sort: ArticleSort) {
+  currentSort.value = sort
   currentPage.value = 1
   updateQuery()
   loadData()
@@ -197,14 +134,6 @@ function handlePageChange(page: number) {
   loadData()
 }
 
-function goAsk() {
-  if (!authStore.token) {
-    goLoginPage()
-    return
-  }
-  navigateTo('/community/ask')
-}
-
 onMounted(loadData)
 </script>
 
@@ -212,11 +141,11 @@ onMounted(loadData)
 .community-page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .filter-bar {
-  padding: 12px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -224,35 +153,41 @@ onMounted(loadData)
   flex-wrap: wrap;
 }
 
-.channel-tabs {
+.filter-left {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
 }
 
-.tab-btn {
-  height: 36px;
-  border: 1px solid var(--csdn-line);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--csdn-subtext);
-  padding: 0 12px;
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+  color: #111827;
+}
+
+.sort-tabs {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.sort-tab {
+  height: 30px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--csdn-subtext);
+  padding: 0 10px;
+  font-size: 14px;
   cursor: pointer;
 }
 
-.tab-btn:hover {
-  color: var(--csdn-primary);
-  border-color: #bdd2ff;
-}
-
-.tab-btn.active {
-  color: var(--csdn-primary);
-  background: var(--csdn-primary-soft);
-  border-color: #a9c5ff;
-  font-weight: 600;
+.sort-tab:hover,
+.sort-tab.active {
+  color: var(--portal-secondary);
+  background: var(--portal-gradient-soft);
+  font-weight: 700;
 }
 
 .search-sort {
@@ -262,17 +197,11 @@ onMounted(loadData)
 }
 
 .keyword-input {
-  width: 280px;
-}
-
-.sort-select {
-  width: 130px;
+  width: 300px;
 }
 
 .result-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  padding: 10px 12px 14px;
 }
 
 .list-wrap {
@@ -282,19 +211,25 @@ onMounted(loadData)
 }
 
 .empty-card {
-  padding: 24px;
+  padding: 32px 0;
 }
 
 .pagination-wrap {
   display: flex;
   justify-content: center;
-  padding: 12px 0 2px;
+  padding: 14px 0 2px;
 }
 
 @media (max-width: 900px) {
+  .filter-left,
   .search-sort {
     width: 100%;
-    flex-wrap: wrap;
+  }
+
+  .filter-left {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .keyword-input {
