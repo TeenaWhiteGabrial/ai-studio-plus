@@ -19,12 +19,15 @@
         <button class="avatar-btn" title="个人中心" @click="navigateTo('/profile')">
           <img v-if="authStore.avatar" :src="authStore.avatar" alt="avatar" class="user-avatar">
           <span v-else class="user-avatar avatar-fallback">{{ avatarFallback }}</span>
+          <span class="user-name">{{ displayName }}</span>
         </button>
         <button class="rail-mini-btn" title="个人设置" @click="navigateTo('/profile/settings')">
           <Icon name="material-symbols:settings-outline" size="21" />
+          <span>设置</span>
         </button>
         <button class="rail-mini-btn" title="退出登录" @click="goLogout">
           <Icon name="material-symbols:logout" size="21" />
+          <span>退出</span>
         </button>
       </template>
 
@@ -64,7 +67,7 @@ const channelItems = computed(() => [
   {
     key: 'latest',
     label: '最新',
-    icon: 'material-symbols:newspaper-outline',
+    icon: 'material-symbols:article-outline',
     to: '/community?sort=latest',
     active: route.path.startsWith('/community') && route.query.sort === 'latest'
   },
@@ -95,7 +98,7 @@ const channelItems = computed(() => [
 <style scoped>
 .left-rail {
   height: calc(100vh - 56px);
-  width: 72px;
+  width: 200px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -127,15 +130,16 @@ const channelItems = computed(() => [
 
 .rail-item,
 .login-entry {
-  min-height: 54px;
+  min-height: 44px;
   border-radius: 6px;
   color: var(--csdn-subtext);
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  font-size: 12px;
+  justify-content: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  padding: 0 14px;
   transition: background 0.18s ease, color 0.18s ease;
 }
 
@@ -152,20 +156,28 @@ const channelItems = computed(() => [
 
 .avatar-btn,
 .rail-mini-btn {
-  width: 42px;
+  width: auto;
   height: 42px;
-  margin: 0 auto;
+  margin: 0;
   border-radius: 8px;
   color: var(--csdn-subtext);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 14px;
+  font-size: 14px;
 }
 
 .avatar-btn:hover,
 .rail-mini-btn:hover {
   color: var(--portal-secondary);
   background: var(--portal-gradient-soft);
+}
+
+.rail-mini-btn {
+  width: auto;
+  justify-content: flex-start;
 }
 
 .user-avatar {

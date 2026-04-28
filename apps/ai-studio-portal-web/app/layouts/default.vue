@@ -124,7 +124,7 @@ onMounted(async () => {
   display: grid;
   width: 100%;
   max-width: none;
-  grid-template-columns: 72px minmax(0, 1fr) 300px;
+  grid-template-columns: 200px minmax(0, 1fr) 300px;
   gap: 12px;
   padding: 0 12px 18px 0;
   margin: 0;
@@ -170,7 +170,7 @@ onMounted(async () => {
 
 @media (max-width: 1400px) {
   .portal-main {
-    grid-template-columns: 72px minmax(0, 1fr) 280px;
+    grid-template-columns: 200px minmax(0, 1fr) 280px;
   }
 
   .portal-main.mode-content-right {
@@ -180,7 +180,7 @@ onMounted(async () => {
 
 @media (max-width: 1200px) {
   .portal-main.mode-three {
-    grid-template-columns: 72px minmax(0, 1fr) 280px;
+    grid-template-columns: 200px minmax(0, 1fr) 280px;
   }
 
   .portal-main.mode-three .portal-left {

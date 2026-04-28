@@ -180,6 +180,7 @@ onMounted(loadArticle)
 
 .article-card {
   padding: 20px 24px;
+  margin-left: 120px;
 }
 
 .article-header {
@@ -287,6 +288,7 @@ onMounted(loadArticle)
 
 .comment-card {
   padding: 10px 24px 18px;
+  margin-left: 120px;
 }
 
 @media (max-width: 768px) {
