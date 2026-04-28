@@ -57,6 +57,8 @@ class AdminProjectControllerTest {
                                   "project_name": "AI Studio",
                                   "description": "Admin migration",
                                   "owner_id": 7,
+                                  "team_id": 1,
+                                  "dept_id": 1,
                                   "status": "ACTIVE"
                                 }
                                 """))
