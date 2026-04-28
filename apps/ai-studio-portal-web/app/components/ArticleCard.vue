@@ -21,6 +21,7 @@
           <span><Icon name="material-symbols:visibility-outline" size="16" /> {{ viewCount }}</span>
           <span><Icon name="material-symbols:chat-bubble-outline" size="16" /> {{ commentCount }}</span>
           <span><Icon name="material-symbols:thumb-up-outline" size="16" /> {{ likeCount }}</span>
+          <span><Icon name="material-symbols:bookmark-outline" size="16" /> {{ favoriteCount }}</span>
         </div>
       </footer>
     </div>
@@ -50,6 +51,7 @@ const firstTag = computed(() => {
 const viewCount = computed(() => props.article.viewCount ?? props.article.viewsCount ?? 0)
 const commentCount = computed(() => props.article.commentCount ?? props.article.commentsCount ?? 0)
 const likeCount = computed(() => props.article.likeCount ?? props.article.likesCount ?? 0)
+const favoriteCount = computed(() => props.article.favoriteCount ?? 0)
 
 const articleSummary = computed(() => {
   return props.article.summary || stripHtml(props.article.content || '')

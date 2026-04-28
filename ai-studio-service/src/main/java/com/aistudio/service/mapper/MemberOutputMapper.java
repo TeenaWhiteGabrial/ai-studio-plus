@@ -19,8 +19,9 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "WHERE mo.stat_date = #{date}")
     List<Map<String, Object>> selectAllByDate(@Param("date") LocalDate date);
 
-    @Select("SELECT mo.*, u.real_name AS realName, u.department AS department FROM member_output mo " +
+    @Select("SELECT mo.*, u.username AS userName, u.real_name AS realName, d.dept_name AS department FROM member_output mo " +
             "LEFT JOIN sys_user u ON mo.user_id = u.id " +
+            "LEFT JOIN sys_department d ON u.dept_id = d.id " +
             "WHERE mo.user_id = #{userId} AND mo.stat_date BETWEEN #{startDate} AND #{endDate} " +
             "ORDER BY mo.stat_date DESC")
     List<MemberOutput> selectHistoryWithUserInfo(@Param("userId") Long userId,

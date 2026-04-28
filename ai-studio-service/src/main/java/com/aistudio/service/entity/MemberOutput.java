@@ -16,6 +16,7 @@ public class MemberOutput {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
+    @TableField(exist = false)
     private String userName;
     @TableField(exist = false)
     private String realName;  // 姓名（关联查询）

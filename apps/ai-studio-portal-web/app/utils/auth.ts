@@ -7,17 +7,42 @@ export async function goLoginPage(url?: string) {
   const appBase = router.options.history.base || '/'
   const normalizeBase = (base: string) => base.endsWith('/') ? base : `${base}/`
   const normalizedBase = normalizeBase(appBase)
+  const baseWithoutTrailingSlash = normalizedBase === '/' ? '/' : normalizedBase.replace(/\/$/, '')
+  const stripBasePrefix = (target: string) => {
+    if (normalizedBase !== '/' && target.startsWith(normalizedBase)) {
+      return `/${target.slice(normalizedBase.length)}`.replace(/^\/+/, '/')
+    }
+    if (baseWithoutTrailingSlash !== '/' && target === baseWithoutTrailingSlash) {
+      return '/'
+    }
+    if (baseWithoutTrailingSlash !== '/' && target.startsWith(`${baseWithoutTrailingSlash}/`)) {
+      return `/${target.slice(baseWithoutTrailingSlash.length + 1)}`.replace(/^\/+/, '/')
+    }
+    return target
+  }
   const normalizeRedirect = (redirect: string) => {
     if (!redirect) {
       return '/'
     }
-    let target = decodeURIComponent(redirect)
+    let target = redirect
+    try {
+      target = decodeURIComponent(target)
+      target = decodeURIComponent(target)
+    } catch {
+      // ignore malformed redirect encoding
+    }
+    if (/^https?:\/\//i.test(target)) {
+      try {
+        const parsed = new URL(target)
+        target = `${parsed.pathname}${parsed.search}`
+      } catch {
+        // keep original target when URL parsing fails
+      }
+    }
     if (!target.startsWith('/')) {
       target = `/${target}`
     }
-    if (normalizedBase !== '/' && target.startsWith(normalizedBase)) {
-      target = `/${target.slice(normalizedBase.length)}`.replace(/^\/+/, '/')
-    }
+    target = stripBasePrefix(target)
     return target || '/'
   }
 

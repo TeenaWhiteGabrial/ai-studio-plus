@@ -2,6 +2,7 @@ package com.aistudio.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.aistudio.service.entity.Tag;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -24,4 +25,10 @@ public interface ArticleTagMapper extends BaseMapper<Tag> {
             "INNER JOIN article_tag at ON at.tag_id = t.id " +
             "WHERE at.article_id = #{articleId}")
     List<Tag> selectByArticleId(@Param("articleId") Long articleId);
+
+    @Select("SELECT tag_id FROM article_tag WHERE article_id = #{articleId}")
+    List<Long> selectTagIdsByArticleId(@Param("articleId") Long articleId);
+
+    @Delete("DELETE FROM article_tag WHERE article_id = #{articleId}")
+    void deleteByArticleId(@Param("articleId") Long articleId);
 }

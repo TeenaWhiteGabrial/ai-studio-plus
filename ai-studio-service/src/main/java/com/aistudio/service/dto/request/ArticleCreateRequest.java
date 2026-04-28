@@ -21,6 +21,8 @@ public class ArticleCreateRequest {
 
     private String coverImage;
 
+    private Long folderId;
+
     private List<Long> tagIds;
 
     /**

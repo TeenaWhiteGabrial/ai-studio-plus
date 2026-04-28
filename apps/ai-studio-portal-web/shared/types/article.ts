@@ -39,7 +39,7 @@ export interface ArticleListQuery {
   keyword?: string
   tagId?: string
   categoryId?: string
-  sort?: 'latest' | 'hot' | 'recommend'
+  sort?: 'latest' | 'hot' | 'likes' | 'favorites' | 'recommend'
   userId?: string
 }
 

@@ -278,13 +278,38 @@
             const rawRedirect = (route.query.redirect as string) || '/'
             const appBase = router.options.history.base || '/'
             const normalizedBase = appBase.endsWith('/') ? appBase : `${appBase}/`
-            let redirect = decodeURIComponent(rawRedirect)
+            const baseWithoutTrailingSlash = normalizedBase === '/' ? '/' : normalizedBase.replace(/\/$/, '')
+            const stripBasePrefix = (target: string) => {
+                if (normalizedBase !== '/' && target.startsWith(normalizedBase)) {
+                    return `/${target.slice(normalizedBase.length)}`.replace(/^\/+/, '/')
+                }
+                if (baseWithoutTrailingSlash !== '/' && target === baseWithoutTrailingSlash) {
+                    return '/'
+                }
+                if (baseWithoutTrailingSlash !== '/' && target.startsWith(`${baseWithoutTrailingSlash}/`)) {
+                    return `/${target.slice(baseWithoutTrailingSlash.length + 1)}`.replace(/^\/+/, '/')
+                }
+                return target
+            }
+            let redirect = rawRedirect
+            try {
+                redirect = decodeURIComponent(redirect)
+                redirect = decodeURIComponent(redirect)
+            } catch {
+                // ignore malformed redirect encoding
+            }
+            if (/^https?:\/\//i.test(redirect)) {
+                try {
+                    const parsed = new URL(redirect)
+                    redirect = `${parsed.pathname}${parsed.search}`
+                } catch {
+                    // keep original redirect when URL parsing fails
+                }
+            }
             if (!redirect.startsWith('/')) {
                 redirect = `/${redirect}`
             }
-            if (normalizedBase !== '/' && redirect.startsWith(normalizedBase)) {
-                redirect = `/${redirect.slice(normalizedBase.length)}`.replace(/^\/+/, '/')
-            }
+            redirect = stripBasePrefix(redirect)
             await navigateTo(redirect || '/')
         } catch (error: any) {
             loginError.value = error?.message || '登录失败'

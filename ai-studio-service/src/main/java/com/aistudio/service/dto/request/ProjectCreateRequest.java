@@ -1,0 +1,37 @@
+package com.aistudio.service.dto.request;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+public class ProjectCreateRequest {
+
+    @NotBlank
+    @JsonAlias({"projectName", "project_name"})
+    private String projectName;
+
+    @JsonAlias("description")
+    private String description;
+
+    @NotNull
+    @JsonAlias({"ownerId", "owner_id"})
+    private Long ownerId;
+
+    @NotNull
+    @JsonAlias({"deptId", "dept_id"})
+    private Long deptId;
+
+    @NotNull
+    @JsonAlias({"teamId", "team_id"})
+    private Long teamId;
+
+    @JsonAlias("status")
+    private String status;
+
+    @JsonAlias({"startedAt", "started_at"})
+    private LocalDateTime startedAt;
+}

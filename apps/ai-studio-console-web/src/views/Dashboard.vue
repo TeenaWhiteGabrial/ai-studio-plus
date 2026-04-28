@@ -1,22 +1,20 @@
 <template>
-  <div class="dashboard">
-    <!-- 欢迎区域 -->
+  <div class="dashboard" v-loading="loading">
     <div class="welcome-section">
       <div class="welcome-content">
         <h1 class="welcome-title">
-          <span class="greeting">{{ greeting }}</span>，开发者
+          <span class="greeting">{{ greeting }}</span>，{{ displayName }}
         </h1>
-        <p class="welcome-subtitle">今天是 {{ todayDate }}，开始你的一天吧</p>
+        <p class="welcome-subtitle">今天是 {{ todayDate }}，开始你的工作吧</p>
       </div>
       <div class="welcome-actions">
-        <el-button type="primary" size="large" class="create-btn" @click="$router.push('/console/project')">
+        <el-button type="primary" size="large" class="create-btn" @click="$router.push('/console/task')">
           <el-icon><Plus /></el-icon>
-          <span>新建项目</span>
+          <span>录入任务</span>
         </el-button>
       </div>
     </div>
 
-    <!-- 统计卡片 -->
     <div class="stats-grid">
       <el-card class="stat-card skill-card">
         <div class="stat-content">
@@ -26,11 +24,9 @@
           <div class="stat-info">
             <div class="stat-value">{{ stats.skillCount }}</div>
             <div class="stat-label">我的 Skills</div>
-            <div class="stat-trend" v-if="stats.skillTrend">
+            <div class="stat-trend">
               <el-icon><TrendCharts /></el-icon>
-              <span :class="{ positive: stats.skillTrend > 0, negative: stats.skillTrend < 0 }">
-                {{ stats.skillTrend > 0 ? '+' : '' }}{{ stats.skillTrend }}%
-              </span>
+              <span>本月新增 {{ stats.skillMonthCount }}</span>
             </div>
           </div>
         </div>
@@ -46,7 +42,7 @@
             <div class="stat-label">今日任务</div>
             <div class="stat-trend">
               <el-icon><Clock /></el-icon>
-              <span>{{ taskTime }}</span>
+              <span>{{ stats.todayTaskHours }}h</span>
             </div>
           </div>
         </div>
@@ -62,32 +58,30 @@
             <div class="stat-label">进行中项目</div>
             <div class="stat-trend">
               <el-icon><Document /></el-icon>
-              <span>活跃</span>
+              <span>来自项目管理</span>
             </div>
           </div>
         </div>
       </el-card>
 
-      <el-card class="stat-card api-card">
+      <el-card class="stat-card hours-card">
         <div class="stat-content">
-          <div class="stat-icon api-icon">
-            <el-icon :size="28"><Key /></el-icon>
+          <div class="stat-icon hours-icon">
+            <el-icon :size="28"><DataLine /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ stats.apiKeyCount }}</div>
-            <div class="stat-label">API Keys</div>
+            <div class="stat-value">{{ stats.monthTaskHours }}h</div>
+            <div class="stat-label">本月任务工时</div>
             <div class="stat-trend">
               <el-icon><CircleCheck /></el-icon>
-              <span>已配置</span>
+              <span>任务管理汇总</span>
             </div>
           </div>
         </div>
       </el-card>
     </div>
 
-    <!-- 主内容区域 -->
     <div class="content-grid">
-      <!-- 最近任务 -->
       <el-card class="tasks-card">
         <template #header>
           <div class="card-header">
@@ -102,15 +96,22 @@
           </div>
         </template>
         <div class="tasks-table-wrapper">
-          <el-table :data="recentTasks" style="width: 100%" :show-header="false" class="tasks-table">
-            <el-table-column width="60">
-              <template #default="{ row, $index }">
-                <div class="task-icon-wrap">
+          <el-table v-if="recentTasks.length > 0" :data="recentTasks" style="width: 100%" :show-header="false" class="tasks-table">
+            <el-table-column width="56">
+              <template #default="{ row }">
+                <div class="task-icon-wrap" :class="{ completed: row.status === 'COMPLETED' }">
                   <el-icon><Check v-if="row.status === 'COMPLETED'" /><Loading v-else /></el-icon>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="content" />
+            <el-table-column min-width="220">
+              <template #default="{ row }">
+                <div class="task-main">
+                  <span class="task-title">{{ row.content }}</span>
+                  <span class="task-sub">{{ row.taskDate }} · {{ row.projectName || '未关联项目' }}</span>
+                </div>
+              </template>
+            </el-table-column>
             <el-table-column width="80" align="right">
               <template #default="{ row }">
                 <span class="task-hours">{{ row.hours }}h</span>
@@ -118,17 +119,16 @@
             </el-table-column>
             <el-table-column width="90" align="right">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'COMPLETED' ? 'success' : 'warning'" size="small">
-                  {{ row.status === 'COMPLETED' ? '已完成' : '进行中' }}
+                <el-tag :type="getStatusType(row.status)" size="small">
+                  {{ getStatusText(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
           </el-table>
-          <el-empty v-if="recentTasks.length === 0" description="暂无任务" :image-size="80" />
+          <el-empty v-else description="暂无任务" :image-size="80" />
         </div>
       </el-card>
 
-      <!-- 快捷入口 -->
       <el-card class="quick-access-card">
         <template #header>
           <div class="card-header">
@@ -145,11 +145,11 @@
             </div>
             <span>录入任务</span>
           </div>
-          <div class="action-item" @click="$router.push('/console/apikey')">
-            <div class="action-icon apikey-action-icon">
-              <el-icon><Key /></el-icon>
+          <div class="action-item" @click="$router.push('/console/stats')">
+            <div class="action-icon stats-action-icon">
+              <el-icon><DataLine /></el-icon>
             </div>
-            <span>管理 API Key</span>
+            <span>产出统计</span>
           </div>
           <div class="action-item" @click="$router.push('/console/resource')">
             <div class="action-icon resource-action-icon">
@@ -157,11 +157,11 @@
             </div>
             <span>上传资源</span>
           </div>
-          <div class="action-item" @click="$router.push('/console/project')">
+          <div class="action-item" @click="$router.push('/console/task')">
             <div class="action-icon project-action-icon">
               <el-icon><Folder /></el-icon>
             </div>
-            <span>我的项目</span>
+            <span>任务清单</span>
           </div>
         </div>
       </el-card>
@@ -170,22 +170,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Box, Calendar, Folder, Key, Plus, TrendCharts, Clock, Document, CircleCheck, List, ArrowRight, Check, Loading, Compass, Edit, Upload } from '@element-plus/icons-vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import {
+  ArrowRight,
+  Box,
+  Calendar,
+  Check,
+  CircleCheck,
+  Clock,
+  Compass,
+  DataLine,
+  Document,
+  Edit,
+  Folder,
+  List,
+  Loading,
+  Plus,
+  TrendCharts,
+  Upload,
+} from '@element-plus/icons-vue'
+import { dashboardApi } from '@/api'
 
-const stats = ref({
-  skillCount: 12,
-  skillTrend: 8,
-  taskCount: 3,
-  projectCount: 5,
-  apiKeyCount: 2,
+interface DashboardTask {
+  id: number
+  projectId?: number
+  projectName?: string
+  taskDate: string
+  content: string
+  hours: number
+  status: string
+}
+
+const loading = ref(false)
+const recentTasks = ref<DashboardTask[]>([])
+
+const stats = reactive({
+  skillCount: 0,
+  skillMonthCount: 0,
+  taskCount: 0,
+  todayTaskHours: 0,
+  projectCount: 0,
+  monthTaskHours: 0,
 })
 
-const recentTasks = ref([
-  { date: '2026-04-13', content: '完成用户模块开发', hours: 8, status: 'COMPLETED' },
-  { date: '2026-04-12', content: '修复登录问题', hours: 3, status: 'COMPLETED' },
-  { date: '2026-04-12', content: 'API对接', hours: 5, status: 'COMPLETED' },
-])
+const displayName = computed(() => {
+  try {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    return userInfo.realName || userInfo.real_name || userInfo.username || '开发者'
+  } catch {
+    return '开发者'
+  }
+})
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -200,9 +236,46 @@ const todayDate = computed(() => {
   return now.toLocaleDateString('zh-CN', options)
 })
 
-const taskTime = computed(() => {
-  const total = recentTasks.value.reduce((sum, task) => sum + task.hours, 0)
-  return `${total}h`
+const loadDashboard = async () => {
+  loading.value = true
+  try {
+    const res: any = await dashboardApi.overview()
+    const data = res?.data || {}
+    stats.skillCount = Number(data.skillCount || 0)
+    stats.skillMonthCount = Number(data.skillMonthCount || 0)
+    stats.taskCount = Number(data.taskCount || 0)
+    stats.todayTaskHours = Number(data.todayTaskHours || 0)
+    stats.projectCount = Number(data.projectCount || 0)
+    stats.monthTaskHours = Number(data.monthTaskHours || 0)
+    recentTasks.value = data.recentTasks || []
+  } catch (error) {
+    console.error('加载 Dashboard 数据失败:', error)
+    ElMessage.error('加载 Dashboard 数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const getStatusText = (status: string) => {
+  const map: Record<string, string> = {
+    PENDING: '待处理',
+    COMPLETED: '已完成',
+    CANCELLED: '已取消',
+  }
+  return map[status] || '未知'
+}
+
+const getStatusType = (status: string) => {
+  const map: Record<string, 'warning' | 'success' | 'info'> = {
+    PENDING: 'warning',
+    COMPLETED: 'success',
+    CANCELLED: 'info',
+  }
+  return map[status] || 'info'
+}
+
+onMounted(() => {
+  loadDashboard()
 })
 </script>
 
@@ -211,9 +284,6 @@ const taskTime = computed(() => {
   padding: 0;
 }
 
-/* ============================================
-   Welcome Section
-   ============================================ */
 .welcome-section {
   display: flex;
   justify-content: space-between;
@@ -257,18 +327,9 @@ const taskTime = computed(() => {
   height: 44px;
   padding: 0 var(--ai-space-6);
   font-weight: 500;
-  border-radius: medi(12px);
-  transition: all var(--ai-transition-base);
+  border-radius: 8px;
 }
 
-.create-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--ai-glow-sm);
-}
-
-/* ============================================
-   Stats Grid
-   ============================================ */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -276,16 +337,12 @@ const taskTime = computed(() => {
   margin-bottom: var(--ai-space-6);
 }
 
-.stat-card {
-  border-radius: 12px;
+.stat-card,
+.tasks-card,
+.quick-access-card {
+  border-radius: 8px;
   border: 1px solid hsl(var(--border));
-  transition: all var(--ai-transition-base);
   overflow: hidden;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--ai-glow-md);
 }
 
 .stat-content {
@@ -298,31 +355,12 @@ const taskTime = computed(() => {
 .stat-icon {
   width: 56px;
   height: 56px;
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  position: relative;
   flex-shrink: 0;
-  transition: transform var(--ai-transition-base);
-}
-
-.stat-card:hover .stat-icon {
-  transform: scale(1.05);
-}
-
-.stat-icon::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: inherit;
-  border-radius: inherit;
-  opacity: 0.15;
-  filter: blur(8px);
 }
 
 .skill-icon {
@@ -337,7 +375,7 @@ const taskTime = computed(() => {
   background: linear-gradient(135deg, hsl(190 80% 55%), hsl(200 80% 45%));
 }
 
-.api-icon {
+.hours-icon {
   background: linear-gradient(135deg, hsl(142 76% 46%), hsl(142 76% 38%));
 }
 
@@ -347,11 +385,10 @@ const taskTime = computed(() => {
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 700;
   color: hsl(var(--foreground));
   line-height: 1.2;
-  letter-spacing: -0.02em;
 }
 
 .stat-label {
@@ -370,37 +407,10 @@ const taskTime = computed(() => {
   color: hsl(var(--muted-foreground));
 }
 
-.stat-trend .el-icon {
-  font-size: 14px;
-}
-
-.stat-trend span.positive {
-  color: hsl(142 76% 46%);
-  font-weight: 600;
-}
-
-.stat-trend span.negative {
-  color: hsl(0 72% 51%);
-  font-weight: 600;
-}
-
-/* ============================================
-   Content Grid
-   ============================================ */
 .content-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: var(--ai-space-4);
-}
-
-/* ============================================
-   Card Styling
-   ============================================ */
-.tasks-card,
-.quick-access-card {
-  border-radius: 12px;
-  border: 1px solid hsl(var(--border));
-  overflow: hidden;
 }
 
 .card-header {
@@ -425,15 +435,8 @@ const taskTime = computed(() => {
   font-size: 18px;
 }
 
-/* ============================================
-   Tasks Table
-   ============================================ */
 .tasks-table-wrapper {
-  min-height: 200px;
-}
-
-.tasks-table :deep(.el-table__row) {
-  transition: background-color var(--ai-transition-fast);
+  min-height: 220px;
 }
 
 .tasks-table :deep(.el-table__row:hover) {
@@ -441,32 +444,44 @@ const taskTime = computed(() => {
 }
 
 .task-icon-wrap {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-}
-
-.tasks-table :deep(.el-icon.is-loading) {
   color: hsl(38 92% 50%);
+  background: hsl(38 92% 50% / 0.1);
 }
 
-.tasks-table :deep(.el-icon:not(.is-loading)) {
-  color: hsl(142 76% 46%);
+.task-icon-wrap.completed {
+  color: hsl(142 76% 36%);
+  background: hsl(142 76% 36% / 0.1);
 }
 
+.task-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.task-title {
+  color: hsl(var(--foreground));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-sub,
 .task-hours {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
   color: hsl(var(--muted-foreground));
 }
 
-/* ============================================
-   Quick Actions
-   ============================================ */
+.task-hours {
+  font-weight: 600;
+}
+
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -480,9 +495,9 @@ const taskTime = computed(() => {
   align-items: center;
   gap: var(--ai-space-2);
   padding: var(--ai-space-4) var(--ai-space-2);
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all var(--ai(transition-base));
+  transition: all var(--ai-transition-base);
   background: hsl(var(--muted));
   border: 1px solid transparent;
 }
@@ -495,24 +510,19 @@ const taskTime = computed(() => {
 .action-icon {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 20px;
-  transition: transform var(--ai-transition-base);
-}
-
-.action-item:hover .action-icon {
-  transform: scale(1.1);
 }
 
 .task-action-icon {
   background: linear-gradient(135deg, hsl(220 70% 55%), hsl(220 70% 45%));
 }
 
-.apikey-action-icon {
+.stats-action-icon {
   background: linear-gradient(135deg, hsl(142 76% 46%), hsl(142 76% 38%));
 }
 
@@ -530,9 +540,6 @@ const taskTime = computed(() => {
   color: hsl(var(--foreground));
 }
 
-/* ============================================
-   Card Overrides
-   ============================================ */
 :deep(.el-card__header) {
   padding: 0;
   border: none;
@@ -542,39 +549,10 @@ const taskTime = computed(() => {
   padding: 0;
 }
 
-/* ============================================
-   Tag Styling
-   ============================================ */
-:deep(.el-tag--success) {
-  --el-tag-bg-color: hsla(142 76% 36% 0.1);
-  --el-tag-border-color: hsla(142 76% 36% 0.2);
-  --el-tag-text-color: hsl(142 76% 36%);
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-:deep(.el-tag--warning) {
-  --el-tag-bg-color: hsla(38 92% 50% 0.1);
-  --el-tag-border-color: hsla(38 92% 50% 0.2);
-  --el-tag-text-color: hsl(38 92% 50%);
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-/* ============================================
-   Empty State
-   ============================================ */
 :deep(.el-empty) {
   padding: var(--ai-space-8) 0;
 }
 
-:deep(.el-empty__description) {
-  color: hsl(var(--muted-foreground));
-}
-
-/* ============================================
-   Responsive
-   ============================================ */
 @media (max-width: 1200px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -592,18 +570,12 @@ const taskTime = computed(() => {
     gap: var(--ai-space-4);
   }
 
-  .welcome-actions {
-    width: 100%;
-  }
-
+  .welcome-actions,
   .create-btn {
     width: 100%;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
+  .stats-grid,
   .quick-actions {
     grid-template-columns: 1fr;
   }

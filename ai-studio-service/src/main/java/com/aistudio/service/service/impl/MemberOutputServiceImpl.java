@@ -108,9 +108,9 @@ public class MemberOutputServiceImpl implements MemberOutputService {
             request.setProjectRootName(null);
         }
 
-        // 5. 按 (username, stat_date, project_root_name) 查询记录
+        // 5. 按 (user_id, stat_date, project_root_name) 查询记录
         LambdaQueryWrapper<MemberOutput> wrapper = new LambdaQueryWrapper<MemberOutput>()
-                .eq(MemberOutput::getUserName, request.getUsername().trim())
+                .eq(MemberOutput::getUserId, user.getId())
                 .eq(MemberOutput::getStatDate, request.getStatDate());
 
         // project_root_name 为 null 时按 null 查询，不为 null 时按值查询

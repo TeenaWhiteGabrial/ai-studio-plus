@@ -19,13 +19,13 @@
           <el-icon><Key /></el-icon>
           <span>API Key</span>
         </el-menu-item>
-        <el-menu-item index="/console/project">
-          <el-icon><Folder /></el-icon>
-          <span>项目管理</span>
-        </el-menu-item>
         <el-menu-item index="/console/task">
           <el-icon><Calendar /></el-icon>
           <span>每日任务</span>
+        </el-menu-item>
+        <el-menu-item index="/console/article">
+          <el-icon><Document /></el-icon>
+          <span>文章管理</span>
         </el-menu-item>
         <el-menu-item index="/console/resource">
           <el-icon><Box /></el-icon>
@@ -97,8 +97,8 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 import {
   HomeFilled,
   Key,
-  Folder,
   Calendar,
+  Document,
   Box,
   DataLine,
   Setting,

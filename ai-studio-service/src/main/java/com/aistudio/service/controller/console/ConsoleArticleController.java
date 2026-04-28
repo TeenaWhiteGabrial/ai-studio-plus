@@ -3,10 +3,12 @@ package com.aistudio.service.controller.console;
 import com.aistudio.service.common.Result;
 import com.aistudio.service.common.SecurityUtils;
 import com.aistudio.service.dto.request.ArticleCreateRequest;
+import com.aistudio.service.dto.request.ArticleFolderRequest;
 import com.aistudio.service.dto.request.ArticleListRequest;
 import com.aistudio.service.dto.request.ArticleUpdateRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.Article;
+import com.aistudio.service.entity.ArticleFolder;
 import com.aistudio.service.service.ArticleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Console - 文章管理
@@ -30,6 +33,36 @@ public class ConsoleArticleController {
 
     private final ArticleService articleService;
     private final SecurityUtils securityUtils;
+
+    @Operation(summary = "我的文章文件夹")
+    @GetMapping("/folder/list")
+    public Result<List<ArticleFolder>> folders() {
+        Long userId = securityUtils.getCurrentUserId();
+        return Result.success(articleService.listMyFolders(userId));
+    }
+
+    @Operation(summary = "创建文章文件夹")
+    @PostMapping("/folder")
+    public Result<Long> createFolder(@Valid @RequestBody ArticleFolderRequest request) {
+        Long userId = securityUtils.getCurrentUserId();
+        return Result.success(articleService.createFolder(request, userId));
+    }
+
+    @Operation(summary = "更新文章文件夹")
+    @PostMapping("/folder/{id}")
+    public Result<Void> updateFolder(@PathVariable Long id, @Valid @RequestBody ArticleFolderRequest request) {
+        Long userId = securityUtils.getCurrentUserId();
+        articleService.updateFolder(id, request, userId);
+        return Result.success();
+    }
+
+    @Operation(summary = "删除文章文件夹")
+    @PostMapping("/folder/{id}/delete")
+    public Result<Void> deleteFolder(@PathVariable Long id) {
+        Long userId = securityUtils.getCurrentUserId();
+        articleService.deleteFolder(id, userId);
+        return Result.success();
+    }
 
     @Operation(summary = "我的文章列表")
     @GetMapping("/list")

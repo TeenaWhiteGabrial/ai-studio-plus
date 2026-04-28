@@ -26,12 +26,6 @@ const consoleRoutes = [
     meta: { title: 'API Key 管理' },
   },
   {
-    path: '/console/project',
-    name: 'Project',
-    component: () => import('@/views/Project.vue'),
-    meta: { title: '项目管理' },
-  },
-  {
     path: '/console/task',
     name: 'DailyTask',
     component: () => import('@/views/DailyTask.vue'),
@@ -48,6 +42,12 @@ const consoleRoutes = [
     name: 'ArticleEdit',
     component: () => import('@/views/ArticleEdit.vue'),
     meta: { title: '编辑文章' },
+  },
+  {
+    path: '/console/article/:id',
+    name: 'ArticleView',
+    component: () => import('@/views/ArticleView.vue'),
+    meta: { title: '查看文章' },
   },
   {
     path: '/console/resource',

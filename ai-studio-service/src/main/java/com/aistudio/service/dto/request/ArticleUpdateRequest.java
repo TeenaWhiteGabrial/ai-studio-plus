@@ -12,6 +12,7 @@ public class ArticleUpdateRequest {
     private String content;
     private String summary;
     private String coverImage;
+    private Long folderId;
     private List<Long> tagIds;
 
     /**

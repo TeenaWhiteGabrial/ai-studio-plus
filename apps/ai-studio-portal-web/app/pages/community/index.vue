@@ -38,10 +38,6 @@
           />
         </el-select>
 
-        <el-button @click="goWriteArticle">
-          <Icon name="material-symbols:article-outline" size="18" />
-          发布文章
-        </el-button>
         <el-button type="primary" @click="goAsk">
           <Icon name="material-symbols:edit-square-outline" size="18" />
           发布问题
@@ -121,8 +117,10 @@ const sortOptions = computed(() => {
     ]
   }
   return [
-    { label: '最新发布', value: 'latest' },
-    { label: '热门文章', value: 'hot' }
+    { label: '最新文章', value: 'latest' },
+    { label: '最火文章', value: 'hot' },
+    { label: '点赞最多', value: 'likes' },
+    { label: '收藏最多', value: 'favorites' }
   ]
 })
 
@@ -138,7 +136,7 @@ async function loadData() {
         page: currentPage.value,
         pageSize,
         keyword: keyword.value || undefined,
-        sort: currentSort.value as 'latest' | 'hot',
+        sort: currentSort.value as 'latest' | 'hot' | 'likes' | 'favorites',
         tagId: route.query.tagId as string
       })
       articleList.value = res.records || []
@@ -205,14 +203,6 @@ function goAsk() {
     return
   }
   navigateTo('/community/ask')
-}
-
-function goWriteArticle() {
-  if (!authStore.token) {
-    goLoginPage()
-    return
-  }
-  navigateTo('/community/write')
 }
 
 onMounted(loadData)

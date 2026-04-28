@@ -68,6 +68,12 @@ const adminRoutes = [
     meta: { title: '全员产出' },
   },
   {
+    path: '/admin/project',
+    name: 'ProjectManage',
+    component: () => import('@/views/project/index.vue'),
+    meta: { title: '项目管理' },
+  },
+  {
     path: '/admin/stats/department',
     name: 'DepartmentStats',
     component: () => import('@/views/stats/DepartmentStats.vue'),

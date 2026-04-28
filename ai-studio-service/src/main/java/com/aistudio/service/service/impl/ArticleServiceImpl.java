@@ -2,13 +2,19 @@ package com.aistudio.service.service.impl;
 
 import com.aistudio.service.common.exception.BusinessException;
 import com.aistudio.service.dto.request.ArticleCreateRequest;
+import com.aistudio.service.dto.request.ArticleFolderRequest;
 import com.aistudio.service.dto.request.ArticleListRequest;
 import com.aistudio.service.dto.request.ArticleUpdateRequest;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.Article;
+import com.aistudio.service.entity.ArticleFolder;
 import com.aistudio.service.entity.ArticleLike;
 import com.aistudio.service.entity.SysUser;
-import com.aistudio.service.mapper.*;
+import com.aistudio.service.mapper.ArticleFolderMapper;
+import com.aistudio.service.mapper.ArticleLikeMapper;
+import com.aistudio.service.mapper.ArticleMapper;
+import com.aistudio.service.mapper.ArticleTagMapper;
+import com.aistudio.service.mapper.SysUserMapper;
 import com.aistudio.service.service.ArticleService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -28,6 +34,7 @@ import java.util.List;
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
+    private final ArticleFolderMapper articleFolderMapper;
     private final ArticleLikeMapper articleLikeMapper;
     private final ArticleTagMapper articleTagMapper;
     private final SysUserMapper userMapper;
@@ -40,16 +47,10 @@ public class ArticleServiceImpl implements ArticleService {
         if (StringUtils.hasText(keyword)) {
             q.and(w -> w.like(Article::getTitle, keyword).or().like(Article::getSummary, keyword));
         }
+        applyArticleSort(q, sort, true);
 
-        if ("hot".equals(sort)) {
-            q.orderByDesc(Article::getViewsCount, Article::getLikesCount);
-        } else {
-            q.orderByDesc(Article::getCreatedAt);
-        }
-
-        Page<Article> p = new Page<>(page, size);
-        Page<Article> result = articleMapper.selectPage(p, q);
-
+        Page<Article> result = articleMapper.selectPage(new Page<>(page, size), q);
+        result.getRecords().forEach(this::fillTagIds);
         return PageResult.of(result.getTotal(), result.getRecords());
     }
 
@@ -57,14 +58,102 @@ public class ArticleServiceImpl implements ArticleService {
     @Transactional
     public Article getArticle(Long id) {
         Article article = articleMapper.selectById(id);
-        if (article == null || article.getIsDeleted() == 1) {
+        if (article == null || article.getIsDeleted() == 1 || article.getStatus() != 1) {
             throw new BusinessException(404, "文章不存在");
         }
-        // 阅读数 +1
         articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                 .eq(Article::getId, id)
                 .setSql("views_count = views_count + 1"));
-        article.setViewsCount(article.getViewsCount() + 1);
+        article.setViewsCount(article.getViewsCount() == null ? 1 : article.getViewsCount() + 1);
+        fillTagIds(article);
+        return article;
+    }
+
+    @Override
+    public PageResult listMyArticles(ArticleListRequest request, Long userId) {
+        LambdaQueryWrapper<Article> q = new LambdaQueryWrapper<>();
+        q.eq(Article::getAuthorId, userId).eq(Article::getIsDeleted, 0);
+
+        if (StringUtils.hasText(request.getKeyword())) {
+            q.and(w -> w.like(Article::getTitle, request.getKeyword()).or().like(Article::getSummary, request.getKeyword()));
+        }
+        if (request.getFolderId() != null) {
+            q.eq(Article::getFolderId, request.getFolderId());
+        }
+        if (request.getStatus() != null) {
+            q.eq(Article::getStatus, request.getStatus());
+        } else if (request.getStatusList() != null && !request.getStatusList().isEmpty()) {
+            q.in(Article::getStatus, request.getStatusList());
+        }
+        applyArticleSort(q, request.getSort(), false);
+
+        Page<Article> result = articleMapper.selectPage(new Page<>(request.getPage(), request.getSize()), q);
+        result.getRecords().forEach(this::fillTagIds);
+        return PageResult.of(result.getTotal(), result.getRecords());
+    }
+
+    @Override
+    public List<ArticleFolder> listMyFolders(Long userId) {
+        return articleFolderMapper.selectList(new LambdaQueryWrapper<ArticleFolder>()
+                .eq(ArticleFolder::getUserId, userId)
+                .eq(ArticleFolder::getIsDeleted, 0)
+                .orderByAsc(ArticleFolder::getSortOrder)
+                .orderByAsc(ArticleFolder::getCreatedAt));
+    }
+
+    @Override
+    @Transactional
+    public Long createFolder(ArticleFolderRequest request, Long userId) {
+        ArticleFolder folder = new ArticleFolder();
+        folder.setUserId(userId);
+        folder.setParentId(resolveParentFolderId(request.getParentId(), userId));
+        folder.setFolderName(request.getFolderName().trim());
+        folder.setSortOrder(0);
+        folder.setIsDeleted(0);
+        folder.setCreatedAt(LocalDateTime.now());
+        folder.setUpdatedAt(LocalDateTime.now());
+        articleFolderMapper.insert(folder);
+        return folder.getId();
+    }
+
+    @Override
+    @Transactional
+    public void updateFolder(Long id, ArticleFolderRequest request, Long userId) {
+        ArticleFolder folder = requireOwnedFolder(id, userId);
+        Long nextParentId = resolveParentFolderId(request.getParentId(), userId);
+        if (id.equals(nextParentId) || isDescendantFolder(nextParentId, id, userId)) {
+            throw new BusinessException(400, "不能将文件夹移动到自身或子文件夹下");
+        }
+        folder.setFolderName(request.getFolderName().trim());
+        folder.setParentId(nextParentId);
+        folder.setUpdatedAt(LocalDateTime.now());
+        articleFolderMapper.updateById(folder);
+    }
+
+    @Override
+    @Transactional
+    public void deleteFolder(Long id, Long userId) {
+        requireOwnedFolder(id, userId);
+        articleFolderMapper.update(null, new LambdaUpdateWrapper<ArticleFolder>()
+                .eq(ArticleFolder::getId, id)
+                .eq(ArticleFolder::getUserId, userId)
+                .set(ArticleFolder::getIsDeleted, 1));
+        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                .eq(Article::getAuthorId, userId)
+                .eq(Article::getFolderId, id)
+                .set(Article::getFolderId, null));
+    }
+
+    @Override
+    public Article getArticleForEdit(Long id, Long userId) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || article.getIsDeleted() == 1) {
+            throw new BusinessException(404, "文章不存在");
+        }
+        if (!article.getAuthorId().equals(userId)) {
+            throw new BusinessException(403, "无权限查看他人的文章");
+        }
+        fillTagIds(article);
         return article;
     }
 
@@ -82,41 +171,18 @@ public class ArticleServiceImpl implements ArticleService {
         article.setSummary(request.getSummary());
         article.setCoverImage(request.getCoverImage());
         article.setAuthorId(authorId);
-        article.setAuthorName(user.getRealName() != null ? user.getRealName() : user.getUsername());
+        article.setAuthorName(StringUtils.hasText(user.getRealName()) ? user.getRealName() : user.getUsername());
+        article.setFolderId(resolveFolderId(request.getFolderId(), authorId));
         article.setViewsCount(0);
         article.setLikesCount(0);
         article.setCommentsCount(0);
         article.setFavoriteCount(0);
         article.setFollowersCount(0);
         article.setIsDeleted(0);
-
-        // 处理发布类型
-        Integer publishType = request.getPublishType() == null ? 0 : request.getPublishType();
-        if (publishType == 1) {
-            // 立即发布
-            article.setStatus(1);
-            article.setPublishedAt(LocalDateTime.now());
-        } else if (publishType == 2) {
-            // 定时发布
-            if (request.getScheduledPublishTime() == null) {
-                throw new BusinessException(400, "定时发布时间不能为空");
-            }
-            if (request.getScheduledPublishTime().isBefore(LocalDateTime.now())) {
-                throw new BusinessException(400, "定时发布时间不能早于当前时间");
-            }
-            article.setStatus(0); // 草稿状态
-            article.setPublishedAt(request.getScheduledPublishTime());
-        } else {
-            // 默认草稿
-            article.setStatus(0);
-        }
+        applyPublishType(article, request.getPublishType(), request.getScheduledPublishTime());
 
         articleMapper.insert(article);
-
-        if (request.getTagIds() != null && !request.getTagIds().isEmpty()) {
-            articleTagMapper.insertBatch(article.getId(), request.getTagIds());
-        }
-
+        replaceTags(article.getId(), request.getTagIds());
         log.info("创建文章成功: {}, id={}, authorId={}, status={}", article.getTitle(), article.getId(), authorId, article.getStatus());
         return article.getId();
     }
@@ -124,13 +190,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public void updateArticle(Long id, ArticleUpdateRequest request, Long userId) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getIsDeleted() == 1) {
-            throw new BusinessException(404, "文章不存在");
-        }
-        if (!article.getAuthorId().equals(userId)) {
-            throw new BusinessException(403, "无权限修改他人的文章");
-        }
+        Article article = getOwnedArticle(id, userId);
 
         if (StringUtils.hasText(request.getTitle())) {
             article.setTitle(request.getTitle());
@@ -144,46 +204,22 @@ public class ArticleServiceImpl implements ArticleService {
         if (request.getCoverImage() != null) {
             article.setCoverImage(request.getCoverImage());
         }
-
-        // 处理发布类型更新
-        Integer publishType = request.getPublishType();
-        if (publishType != null) {
-            if (publishType == 1) {
-                // 立即发布
-                article.setStatus(1);
-                article.setPublishedAt(LocalDateTime.now());
-            } else if (publishType == 2) {
-                // 定时发布
-                if (request.getScheduledPublishTime() == null) {
-                    throw new BusinessException(400, "定时发布时间不能为空");
-                }
-                if (request.getScheduledPublishTime().isBefore(LocalDateTime.now())) {
-                    throw new BusinessException(400, "定时发布时间不能早于当前时间");
-                }
-                article.setStatus(0); // 草稿状态
-                article.setPublishedAt(request.getScheduledPublishTime());
-            } else if (publishType == 0) {
-                // 保存为草稿
-                article.setStatus(0);
-                article.setPublishedAt(null);
-            }
+        article.setFolderId(resolveFolderId(request.getFolderId(), userId));
+        if (request.getPublishType() != null) {
+            applyPublishType(article, request.getPublishType(), request.getScheduledPublishTime());
         }
 
         articleMapper.updateById(article);
+        if (request.getTagIds() != null) {
+            replaceTags(id, request.getTagIds());
+        }
         log.info("更新文章: id={}", id);
     }
 
     @Override
     @Transactional
     public void deleteArticle(Long id, Long userId) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getIsDeleted() == 1) {
-            throw new BusinessException(404, "文章不存在");
-        }
-        if (!article.getAuthorId().equals(userId)) {
-            throw new BusinessException(403, "无权限删除他人的文章");
-        }
-
+        getOwnedArticle(id, userId);
         articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                 .eq(Article::getId, id)
                 .set(Article::getIsDeleted, 1));
@@ -192,20 +228,59 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
+    public void publishArticle(Long id, Long userId) {
+        Article article = getOwnedArticle(id, userId);
+        if (article.getStatus() == 2) {
+            throw new BusinessException(400, "已下架的文章不能发布");
+        }
+        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                .eq(Article::getId, id)
+                .set(Article::getStatus, 1)
+                .set(Article::getPublishedAt, LocalDateTime.now()));
+        log.info("文章发布: id={}", id);
+    }
+
+    @Override
+    @Transactional
+    public void schedulePublish(Long id, Long userId, LocalDateTime publishTime) {
+        Article article = getOwnedArticle(id, userId);
+        if (article.getStatus() == 2) {
+            throw new BusinessException(400, "已下架的文章不能定时发布");
+        }
+        if (publishTime.isBefore(LocalDateTime.now())) {
+            throw new BusinessException(400, "定时发布时间不能早于当前时间");
+        }
+        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                .eq(Article::getId, id)
+                .set(Article::getStatus, 0)
+                .set(Article::getPublishedAt, publishTime));
+        log.info("文章定时发布: id={}, publishTime={}", id, publishTime);
+    }
+
+    @Override
+    @Transactional
+    public void cancelSchedule(Long id, Long userId) {
+        getOwnedArticle(id, userId);
+        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                .eq(Article::getId, id)
+                .set(Article::getStatus, 0)
+                .set(Article::getPublishedAt, (LocalDateTime) null));
+        log.info("取消文章定时发布: id={}", id);
+    }
+
+    @Override
+    @Transactional
     public void likeArticle(Long id, Long userId) {
-        // 检查是否已点赞
         LambdaQueryWrapper<ArticleLike> q = new LambdaQueryWrapper<>();
         q.eq(ArticleLike::getUserId, userId).eq(ArticleLike::getArticleId, id);
         ArticleLike existing = articleLikeMapper.selectOne(q);
 
         if (existing != null) {
-            // 取消点赞
             articleLikeMapper.delete(q);
             articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                     .eq(Article::getId, id)
                     .setSql("likes_count = GREATEST(likes_count - 1, 0)"));
         } else {
-            // 点赞
             ArticleLike like = new ArticleLike();
             like.setUserId(userId);
             like.setArticleId(id);
@@ -232,99 +307,7 @@ public class ArticleServiceImpl implements ArticleService {
         log.info("文章下架: id={}", id);
     }
 
-    @Override
-    public PageResult listMyArticles(ArticleListRequest request, Long userId) {
-        LambdaQueryWrapper<Article> q = new LambdaQueryWrapper<>();
-        q.eq(Article::getAuthorId, userId)
-                .eq(Article::getIsDeleted, 0);
-
-        if (StringUtils.hasText(request.getKeyword())) {
-            q.and(w -> w.like(Article::getTitle, request.getKeyword())
-                    .or().like(Article::getSummary, request.getKeyword()));
-        }
-
-        if (request.getTagId() != null) {
-            // 这里需要关联查询 article_tag 表
-            // 暂时简化处理，后续可以优化
-        }
-
-        if (request.getStatusList() != null && !request.getStatusList().isEmpty()) {
-            q.in(Article::getStatus, request.getStatusList());
-        }
-
-        if ("hot".equals(request.getSort())) {
-            q.orderByDesc(Article::getViewsCount, Article::getLikesCount);
-        } else {
-            q.orderByDesc(Article::getCreatedAt);
-        }
-
-        Page<Article> p = new Page<>(request.getPage(), request.getSize());
-        Page<Article> result = articleMapper.selectPage(p, q);
-
-        return PageResult.of(result.getTotal(), result.getRecords());
-    }
-
-    @Override
-    public Article getArticleForEdit(Long id, Long userId) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getIsDeleted() == 1) {
-            throw new BusinessException(404, "文章不存在");
-        }
-        if (!article.getAuthorId().equals(userId)) {
-            throw new BusinessException(403, "无权限查看他人的文章");
-        }
-        // 编辑时不增加阅读数
-        return article;
-    }
-
-    @Override
-    @Transactional
-    public void publishArticle(Long id, Long userId) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getIsDeleted() == 1) {
-            throw new BusinessException(404, "文章不存在");
-        }
-        if (!article.getAuthorId().equals(userId)) {
-            throw new BusinessException(403, "无权限发布他人的文章");
-        }
-        if (article.getStatus() == 2) {
-            throw new BusinessException(400, "已下架的文章不能发布");
-        }
-
-        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
-                .eq(Article::getId, id)
-                .set(Article::getStatus, 1)
-                .set(Article::getPublishedAt, LocalDateTime.now()));
-        log.info("文章发布: id={}", id);
-    }
-
-    @Override
-    @Transactional
-    public void schedulePublish(Long id, Long userId, LocalDateTime publishTime) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getIsDeleted() == 1) {
-            throw new BusinessException(404, "文章不存在");
-        }
-        if (!article.getAuthorId().equals(userId)) {
-            throw new BusinessException(403, "无权限发布他人的文章");
-        }
-        if (article.getStatus() == 2) {
-            throw new BusinessException(400, "已下架的文章不能定时发布");
-        }
-        if (publishTime.isBefore(LocalDateTime.now())) {
-            throw new BusinessException(400, "定时发布时间不能早于当前时间");
-        }
-
-        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
-                .eq(Article::getId, id)
-                .set(Article::getStatus, 0) // 草稿状态
-                .set(Article::getPublishedAt, publishTime));
-        log.info("文章定时发布: id={}, publishTime={}", id, publishTime);
-    }
-
-    @Override
-    @Transactional
-    public void cancelSchedule(Long id, Long userId) {
+    private Article getOwnedArticle(Long id, Long userId) {
         Article article = articleMapper.selectById(id);
         if (article == null || article.getIsDeleted() == 1) {
             throw new BusinessException(404, "文章不存在");
@@ -332,11 +315,98 @@ public class ArticleServiceImpl implements ArticleService {
         if (!article.getAuthorId().equals(userId)) {
             throw new BusinessException(403, "无权限操作他人的文章");
         }
+        return article;
+    }
 
-        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
-                .eq(Article::getId, id)
-                .set(Article::getStatus, 0) // 草稿状态
-                .set(Article::getPublishedAt, (LocalDateTime) null));
-        log.info("取消文章区定时发布: id={}", id);
+    private void applyPublishType(Article article, Integer publishType, LocalDateTime scheduledPublishTime) {
+        int type = publishType == null ? 0 : publishType;
+        if (type == 1) {
+            article.setStatus(1);
+            article.setPublishedAt(LocalDateTime.now());
+            return;
+        }
+        if (type == 2) {
+            if (scheduledPublishTime == null) {
+                throw new BusinessException(400, "定时发布时间不能为空");
+            }
+            if (scheduledPublishTime.isBefore(LocalDateTime.now())) {
+                throw new BusinessException(400, "定时发布时间不能早于当前时间");
+            }
+            article.setStatus(0);
+            article.setPublishedAt(scheduledPublishTime);
+            return;
+        }
+        article.setStatus(0);
+        article.setPublishedAt(null);
+    }
+
+    private void applyArticleSort(LambdaQueryWrapper<Article> q, String sort, boolean portal) {
+        if ("likes".equals(sort)) {
+            q.orderByDesc(Article::getLikesCount, Article::getViewsCount);
+            return;
+        }
+        if ("favorites".equals(sort)) {
+            q.orderByDesc(Article::getFavoriteCount, Article::getLikesCount);
+            return;
+        }
+        if ("hot".equals(sort)) {
+            q.orderByDesc(Article::getFavoriteCount, Article::getLikesCount, Article::getCommentsCount, Article::getViewsCount);
+            return;
+        }
+        if (portal) {
+            q.orderByDesc(Article::getPublishedAt, Article::getCreatedAt);
+        } else {
+            q.orderByDesc(Article::getCreatedAt);
+        }
+    }
+
+    private Long resolveFolderId(Long folderId, Long userId) {
+        if (folderId == null || folderId <= 0) {
+            return null;
+        }
+        return requireOwnedFolder(folderId, userId).getId();
+    }
+
+    private Long resolveParentFolderId(Long parentId, Long userId) {
+        if (parentId == null || parentId <= 0) {
+            return null;
+        }
+        return requireOwnedFolder(parentId, userId).getId();
+    }
+
+    private ArticleFolder requireOwnedFolder(Long folderId, Long userId) {
+        ArticleFolder folder = articleFolderMapper.selectById(folderId);
+        if (folder == null || folder.getIsDeleted() == 1 || !userId.equals(folder.getUserId())) {
+            throw new BusinessException(404, "文件夹不存在或无权限访问");
+        }
+        return folder;
+    }
+
+    private boolean isDescendantFolder(Long candidateParentId, Long folderId, Long userId) {
+        Long currentId = candidateParentId;
+        while (currentId != null) {
+            ArticleFolder current = articleFolderMapper.selectById(currentId);
+            if (current == null || current.getIsDeleted() == 1 || !userId.equals(current.getUserId())) {
+                return false;
+            }
+            if (folderId.equals(current.getParentId())) {
+                return true;
+            }
+            currentId = current.getParentId();
+        }
+        return false;
+    }
+
+    private void replaceTags(Long articleId, List<Long> tagIds) {
+        articleTagMapper.deleteByArticleId(articleId);
+        if (tagIds != null && !tagIds.isEmpty()) {
+            articleTagMapper.insertBatch(articleId, tagIds);
+        }
+    }
+
+    private void fillTagIds(Article article) {
+        if (article != null && article.getId() != null) {
+            article.setTagIds(articleTagMapper.selectTagIdsByArticleId(article.getId()));
+        }
     }
 }
