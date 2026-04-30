@@ -16,8 +16,20 @@ const adminRoutes = [
   {
     path: '/admin/dashboard',
     name: 'Dashboard',
-    component: () => import('@/views/dashboard/index.vue'),
+    redirect: '/admin/dashboard/output',
     meta: { title: '数据看板' },
+  },
+  {
+    path: '/admin/dashboard/output',
+    name: 'OutputDashboard',
+    component: () => import('@/views/dashboard/output.vue'),
+    meta: { title: '产出数据看板' },
+  },
+  {
+    path: '/admin/dashboard/portal',
+    name: 'PortalDashboard',
+    component: () => import('@/views/dashboard/portal.vue'),
+    meta: { title: '网站数据看板' },
   },
   {
     path: '/admin/resource/skill',
@@ -154,7 +166,7 @@ router.addRoute(loginRoute)
 const layoutRoute = {
   path: '/admin',
   component: Layout,
-  redirect: '/admin/dashboard',
+  redirect: '/admin/dashboard/output',
   children: adminRoutes,
 }
 

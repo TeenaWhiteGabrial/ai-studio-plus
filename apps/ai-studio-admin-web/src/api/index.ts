@@ -185,6 +185,9 @@ export const dashboardApi = {
   trend: (params: any) => request.get('/dashboard/trend', { params }),
   ranking: (params: any) => request.get('/dashboard/ranking', { params }),
   detail: (params: any) => request.get('/dashboard/detail', { params }),
+  portalOverview: () => request.get('/dashboard/portal-overview'),
+  portalTrend: (params: any) => request.get('/dashboard/portal-trend', { params }),
+  portalRanking: (params: any) => request.get('/dashboard/portal-ranking', { params }),
 }
 
 export const roleApi = {
