@@ -15,9 +15,11 @@
       </el-form-item>
       <el-form-item label="分类">
         <el-select v-model="form.category" placeholder="请选择分类">
-          <el-option label="UI 组件" value="UI 组件" />
-          <el-option label="工具函数" value="工具函数" />
-          <el-option label="集成" value="集成" />
+          <el-option label="效能统计" value="效能统计" />
+          <el-option label="数据分析" value="数据分析" />
+          <el-option label="代码开发" value="代码开发" />
+          <el-option label="办公工具" value="办公工具" />
+          <el-option label="文件操作" value="文件操作" />
           <el-option label="其他" value="其他" />
         </el-select>
       </el-form-item>
