@@ -51,8 +51,9 @@ public class DashboardServiceImpl implements DashboardService {
             default -> "stat_date";
         };
         String sql = "SELECT " + groupExpr + " as period, " +
-                "SUM(prd_count) as prd_count, SUM(api_count) as api_count, " +
-                "SUM(java_lines) as java_lines, SUM(frontend_lines) as frontend_lines " +
+                "SUM(prd_doc_count) as prd_doc_count, SUM(api_count) as api_count, " +
+                "SUM(java_code_lines) as java_code_lines, SUM(frontend_code_lines) as frontend_code_lines, " +
+                "SUM(total_code_lines) as total_code_lines " +
                 "FROM member_output WHERE stat_date BETWEEN ? AND ? " +
                 "GROUP BY " + groupExpr + " ORDER BY period";
         return jdbcTemplate.queryForList(sql, startDate, endDate);
@@ -64,9 +65,10 @@ public class DashboardServiceImpl implements DashboardService {
                 ? LocalDate.now().with(TemporalAdjusters.firstDayOfMonth())
                 : LocalDate.now().with(java.time.DayOfWeek.MONDAY);
         String sql = "SELECT u.id as user_id, u.username, u.real_name, u.department, " +
-                "SUM(mo.prd_count) as prd_count, SUM(mo.api_count) as api_count, " +
-                "SUM(mo.java_lines) as java_lines, SUM(mo.frontend_lines) as frontend_lines, " +
-                "(SUM(mo.prd_count)*100 + SUM(mo.api_count)*10 + SUM(mo.java_lines) + SUM(mo.frontend_lines)) as total_score " +
+                "SUM(mo.prd_doc_count) as prd_doc_count, SUM(mo.api_count) as api_count, " +
+                "SUM(mo.java_code_lines) as java_code_lines, SUM(mo.frontend_code_lines) as frontend_code_lines, " +
+                "SUM(mo.total_code_lines) as total_code_lines, " +
+                "(SUM(mo.prd_doc_count)*100 + SUM(mo.api_count)*10 + SUM(mo.total_code_lines)) as total_score " +
                 "FROM member_output mo LEFT JOIN sys_user u ON mo.user_id = u.id " +
                 "WHERE mo.stat_date >= ? " +
                 "GROUP BY u.id, u.username, u.real_name, u.department " +
@@ -78,19 +80,21 @@ public class DashboardServiceImpl implements DashboardService {
     public List<Map<String, Object>> getDetail(String groupBy, LocalDate startDate, LocalDate endDate) {
         if ("department".equals(groupBy)) {
             String sql = "SELECT u.department, " +
-                    "SUM(mo.prd_count) as prd_count, SUM(mo.api_count) as api_count, " +
-                    "SUM(mo.java_lines) as java_lines, SUM(mo.frontend_lines) as frontend_lines " +
+                    "SUM(mo.prd_doc_count) as prd_doc_count, SUM(mo.api_count) as api_count, " +
+                    "SUM(mo.java_code_lines) as java_code_lines, SUM(mo.frontend_code_lines) as frontend_code_lines, " +
+                    "SUM(mo.total_code_lines) as total_code_lines " +
                     "FROM member_output mo LEFT JOIN sys_user u ON mo.user_id = u.id " +
                     "WHERE mo.stat_date BETWEEN ? AND ? " +
-                    "GROUP BY u.department ORDER BY prd_count DESC";
+                    "GROUP BY u.department ORDER BY prd_doc_count DESC";
             return jdbcTemplate.queryForList(sql, startDate, endDate);
         } else {
             String sql = "SELECT u.id as user_id, u.username, u.real_name, u.department, " +
-                    "SUM(mo.prd_count) as prd_count, SUM(mo.api_count) as api_count, " +
-                    "SUM(mo.java_lines) as java_lines, SUM(mo.frontend_lines) as frontend_lines " +
+                    "SUM(mo.prd_doc_count) as prd_doc_count, SUM(mo.api_count) as api_count, " +
+                    "SUM(mo.java_code_lines) as java_code_lines, SUM(mo.frontend_code_lines) as frontend_code_lines, " +
+                    "SUM(mo.total_code_lines) as total_code_lines " +
                     "FROM member_output mo LEFT JOIN sys_user u ON mo.user_id = u.id " +
                     "WHERE mo.stat_date BETWEEN ? AND ? " +
-                    "GROUP BY u.id, u.username, u.real_name, u.department ORDER BY prd_count DESC";
+                    "GROUP BY u.id, u.username, u.real_name, u.department ORDER BY prd_doc_count DESC";
             return jdbcTemplate.queryForList(sql, startDate, endDate);
         }
     }

@@ -6,7 +6,7 @@ export type Theme = 'light' | 'dark'
 export const useThemeStore = defineStore('theme', () => {
   // 从 localStorage 读取保存的主题
   const savedTheme = localStorage.getItem('theme') as Theme
-  const theme = ref<Theme>(savedTheme || 'dark')
+  const theme = ref<Theme>(savedTheme || 'light')
 
   function setTheme(newTheme: Theme) {
     theme.value = newTheme

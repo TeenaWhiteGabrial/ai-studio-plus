@@ -14,9 +14,31 @@ const normalizeOutput = (output: any) => {
   if (!output) return output
   return {
     ...output,
+    userName: output.userName ?? output.user_name,
+    gitName: output.gitName ?? output.git_name,
+    projectId: output.projectId ?? output.project_id,
     statDate: output.statDate ?? output.stat_date,
     projectRootName: output.projectRootName ?? output.project_root_name,
+    outputType: output.outputType ?? output.output_type,
+    resourceId: output.resourceId ?? output.resource_id,
+    prdDocCount: output.prdDocCount ?? output.prd_doc_count,
+    dataModelDocCount: output.dataModelDocCount ?? output.data_model_doc_count,
+    apiDocCount: output.apiDocCount ?? output.api_doc_count,
+    javaFileCount: output.javaFileCount ?? output.java_file_count,
+    javaCodeLines: output.javaCodeLines ?? output.java_code_lines,
+    apiCount: output.apiCount ?? output.api_count,
+    coreBizServiceCount: output.coreBizServiceCount ?? output.core_biz_service_count,
+    entityCount: output.entityCount ?? output.entity_count,
+    frontendComponentCount: output.frontendComponentCount ?? output.frontend_component_count,
+    frontendPageCount: output.frontendPageCount ?? output.frontend_page_count,
+    frontendCommonComponentCount: output.frontendCommonComponentCount ?? output.frontend_common_component_count,
+    tsCodeLines: output.tsCodeLines ?? output.ts_code_lines,
+    frontendCodeLines: output.frontendCodeLines ?? output.frontend_code_lines,
+    sqlScriptCount: output.sqlScriptCount ?? output.sql_script_count,
+    testFileCount: output.testFileCount ?? output.test_file_count,
     totalCodeLines: output.totalCodeLines ?? output.total_code_lines,
+    createdAt: output.createdAt ?? output.created_at,
+    updatedAt: output.updatedAt ?? output.updated_at,
   }
 }
 

@@ -13,13 +13,13 @@ import java.util.Map;
 @Mapper
 public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
 
-    @Select("SELECT mo.*, u.username, u.real_name, d.dept_name as department FROM member_output mo " +
+    @Select("SELECT mo.*, u.username AS user_name, u.username, u.real_name, d.dept_name as department FROM member_output mo " +
             "LEFT JOIN sys_user u ON mo.user_id = u.id " +
             "LEFT JOIN sys_department d ON u.dept_id = d.id " +
             "WHERE mo.stat_date = #{date}")
     List<Map<String, Object>> selectAllByDate(@Param("date") LocalDate date);
 
-    @Select("SELECT mo.*, u.username AS userName, u.real_name AS realName, d.dept_name AS department FROM member_output mo " +
+    @Select("SELECT mo.*, u.username AS username, u.real_name AS realName, d.dept_name AS department FROM member_output mo " +
             "LEFT JOIN sys_user u ON mo.user_id = u.id " +
             "LEFT JOIN sys_department d ON u.dept_id = d.id " +
             "WHERE mo.user_id = #{userId} AND mo.stat_date BETWEEN #{startDate} AND #{endDate} " +
@@ -82,7 +82,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
                                                       @Param("startDate") LocalDate startDate,
                                                       @Param("endDate") LocalDate endDate);
 
-    @Select("SELECT u.id as userId, u.username, u.real_name as realName, " +
+    @Select("SELECT u.id as userId, u.username, u.git_name as gitName, u.real_name as realName, " +
             "SUM(mo.prd_doc_count) as prdDocCount, SUM(mo.data_model_doc_count) as dataModelDocCount, " +
             "SUM(mo.api_doc_count) as apiDocCount, SUM(mo.java_file_count) as javaFileCount, " +
             "SUM(mo.java_code_lines) as javaCodeLines, SUM(mo.api_count) as apiCount, " +
@@ -94,7 +94,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "FROM sys_user u " +
             "LEFT JOIN member_output mo ON u.id = mo.user_id AND mo.stat_date BETWEEN #{startDate} AND #{endDate} " +
             "WHERE u.dept_id = #{deptId} AND u.status = 1 " +
-            "GROUP BY u.id, u.username, u.real_name " +
+            "GROUP BY u.id, u.username, u.git_name, u.real_name " +
             "ORDER BY SUM(mo.total_code_lines) DESC")
     List<Map<String, Object>> selectDepartmentMembers(@Param("deptId") Long deptId,
                                                       @Param("startDate") LocalDate startDate,
@@ -126,7 +126,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
                                                    @Param("startDate") LocalDate startDate,
                                                    @Param("endDate") LocalDate endDate);
 
-    @Select("SELECT u.id as userId, u.username, u.real_name as realName, " +
+    @Select("SELECT u.id as userId, u.username, u.git_name as gitName, u.real_name as realName, " +
             "SUM(mo.prd_doc_count) as prdDocCount, SUM(mo.data_model_doc_count) as dataModelDocCount, " +
             "SUM(mo.api_doc_count) as apiDocCount, SUM(mo.java_file_count) as javaFileCount, " +
             "SUM(mo.java_code_lines) as javaCodeLines, SUM(mo.api_count) as apiCount, " +
@@ -139,7 +139,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "JOIN sys_user u ON mo.user_id = u.id " +
             "WHERE mo.project_root_name = #{projectName} " +
             "AND mo.stat_date BETWEEN #{startDate} AND #{endDate} " +
-            "GROUP BY u.id, u.username, u.real_name " +
+            "GROUP BY u.id, u.username, u.git_name, u.real_name " +
             "ORDER BY SUM(mo.total_code_lines) DESC")
     List<Map<String, Object>> selectProjectMembers(@Param("projectName") String projectName,
                                                    @Param("startDate") LocalDate startDate,
@@ -167,7 +167,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
     // ==================== 带筛选条件的扩展方法 ====================
 
     @Select("<script>" +
-            "SELECT mo.*, u.username, u.real_name, d.dept_name as department FROM member_output mo " +
+            "SELECT mo.*, u.username AS user_name, u.username, u.real_name, d.dept_name as department FROM member_output mo " +
             "LEFT JOIN sys_user u ON mo.user_id = u.id " +
             "LEFT JOIN sys_department d ON u.dept_id = d.id " +
             "WHERE mo.stat_date = #{date} " +
@@ -215,10 +215,44 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
                                                   @Param("deptIds") List<Long> deptIds,
                                                   @Param("projectNames") List<String> projectNames);
 
+    @Select("<script>" +
+            "SELECT mo.id, mo.user_id, mo.git_name, mo.stat_date, mo.output_type, mo.project_root_name, " +
+            "mo.prd_doc_count, mo.data_model_doc_count, mo.api_doc_count, mo.java_file_count, " +
+            "mo.java_code_lines, mo.api_count, mo.core_biz_service_count, mo.entity_count, " +
+            "mo.frontend_component_count, mo.frontend_page_count, mo.frontend_common_component_count, " +
+            "mo.ts_code_lines, mo.frontend_code_lines, mo.sql_script_count, mo.test_file_count, " +
+            "mo.total_code_lines, mo.remark, u.username AS user_name, u.username, u.real_name, " +
+            "u.dept_id, d.dept_name AS department, u.team_id, t.team_name " +
+            "FROM member_output mo " +
+            "LEFT JOIN sys_user u ON mo.user_id = u.id " +
+            "LEFT JOIN sys_department d ON u.dept_id = d.id " +
+            "LEFT JOIN sys_team t ON u.team_id = t.id " +
+            "WHERE mo.stat_date BETWEEN #{startDate} AND #{endDate} " +
+            "<if test='userIds != null and userIds.size() > 0'>" +
+            "AND mo.user_id IN <foreach collection='userIds' item='id' open='(' separator=',' close=')'>#{id}</foreach> " +
+            "</if>" +
+            "<if test='deptIds != null and deptIds.size() > 0'>" +
+            "AND u.dept_id IN <foreach collection='deptIds' item='id' open='(' separator=',' close=')'>#{id}</foreach> " +
+            "</if>" +
+            "<if test='teamIds != null and teamIds.size() > 0'>" +
+            "AND u.team_id IN <foreach collection='teamIds' item='id' open='(' separator=',' close=')'>#{id}</foreach> " +
+            "</if>" +
+            "<if test='projectNames != null and projectNames.size() > 0'>" +
+            "AND mo.project_root_name IN <foreach collection='projectNames' item='name' open='(' separator=',' close=')'>#{name}</foreach> " +
+            "</if>" +
+            "ORDER BY mo.stat_date DESC, mo.total_code_lines DESC" +
+            "</script>")
+    List<Map<String, Object>> selectDashboardDetails(@Param("startDate") LocalDate startDate,
+                                                     @Param("endDate") LocalDate endDate,
+                                                     @Param("userIds") List<Long> userIds,
+                                                     @Param("deptIds") List<Long> deptIds,
+                                                     @Param("teamIds") List<Long> teamIds,
+                                                     @Param("projectNames") List<String> projectNames);
+
     // ==================== 按人员查询产出 ====================
 
     @Select("<script>" +
-            "SELECT u.id as userId, u.username, u.real_name as realName, d.dept_name as department, " +
+            "SELECT u.id as userId, u.username, u.git_name as gitName, u.real_name as realName, d.dept_name as department, " +
             "SUM(mo.prd_doc_count) as prdDocCount, SUM(mo.data_model_doc_count) as dataModelDocCount, " +
             "SUM(mo.api_doc_count) as apiDocCount, SUM(mo.java_file_count) as javaFileCount, " +
             "SUM(mo.java_code_lines) as javaCodeLines, SUM(mo.api_count) as apiCount, " +
@@ -237,7 +271,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
             "<if test='projectNames != null and projectNames.size() > 0'>" +
             "AND mo.project_root_name IN <foreach collection='projectNames' item='name' open='(' separator=',' close=')'>#{name}</foreach>" +
             "</if>" +
-            "GROUP BY u.id, u.username, u.real_name, d.dept_name " +
+            "GROUP BY u.id, u.username, u.git_name, u.real_name, d.dept_name " +
             "ORDER BY SUM(mo.total_code_lines) DESC" +
             "</script>")
     List<Map<String, Object>> selectOutputByUsers(@Param("userIds") List<Long> userIds,
@@ -251,7 +285,7 @@ public interface MemberOutputMapper extends BaseMapper<MemberOutput> {
      * 分页查询导出明细数据（流式导出用）
      */
     @Select("<script>" +
-            "SELECT mo.*, u.username, u.real_name, d.dept_name as department FROM member_output mo " +
+            "SELECT mo.*, u.username AS user_name, u.username, u.real_name, d.dept_name as department FROM member_output mo " +
             "LEFT JOIN sys_user u ON mo.user_id = u.id " +
             "LEFT JOIN sys_department d ON u.dept_id = d.id " +
             "WHERE mo.stat_date BETWEEN #{startDate} AND #{endDate} " +

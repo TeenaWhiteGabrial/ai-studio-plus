@@ -34,7 +34,7 @@
 
 <b>请求参数：</b>
 {
-  "username": "zhangsan",
+  "git_name": "zhangsan",
   "stat_date": "2026-03-26",
   "prd_doc_count": 2,
   "data_model_doc_count": 1,

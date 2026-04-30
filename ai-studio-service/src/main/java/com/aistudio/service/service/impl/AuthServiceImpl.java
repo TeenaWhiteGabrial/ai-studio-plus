@@ -66,6 +66,7 @@ public class AuthServiceImpl implements AuthService {
                 .token(token)
                 .userId(user.getId())
                 .username(user.getUsername())
+                .gitName(user.getGitName())
                 .realName(user.getRealName())
                 .roles(roles.stream().map(SysRole::getRoleCode).collect(Collectors.toList()))
                 .build();
@@ -123,6 +124,7 @@ public class AuthServiceImpl implements AuthService {
         return UserInfoResponse.builder()
                 .userId(user.getId())
                 .username(user.getUsername())
+                .gitName(user.getGitName())
                 .realName(user.getRealName())
                 .roles(roles.stream().map(SysRole::getRoleCode).collect(Collectors.toList()))
                 .avatar(user.getAvatar())

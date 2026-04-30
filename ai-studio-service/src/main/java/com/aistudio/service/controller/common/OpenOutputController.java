@@ -28,8 +28,10 @@ public class OpenOutputController {
     public Result<Map<String, Object>> submit(@Valid @RequestBody OpenOutputSubmitRequest request) {
         memberOutputService.submitOutputByUsername(request);
         Map<String, Object> response = new HashMap<>();
-        response.put("username", request.getUsername());
-        response.put("statDate", request.getStatDate());
+        response.put("git_name", request.getGitName());
+        response.put("stat_date", request.getStatDate());
+        response.put("project_root_name", request.getProjectRootName());
+        response.put("output_type", request.getOutputType());
         return Result.success(response);
     }
 }

@@ -1,13 +1,25 @@
 package com.aistudio.service.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class UserUpdateRequest {
+    @JsonAlias("realName")
     private String realName;
+
+    @JsonAlias("gitName")
+    @Size(max = 50, message = "git_name length can not exceed 50")
+    private String gitName;
+
+    @JsonAlias("deptId")
     private Long deptId;
-    private Long teamId;  // 团队ID
+
+    @JsonAlias("teamId")
+    private Long teamId;
+
     private String email;
-    private String avatar;  // 头像URL
+    private String avatar;
     private Integer status;
 }

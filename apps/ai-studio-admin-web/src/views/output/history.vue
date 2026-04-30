@@ -20,6 +20,7 @@
       <el-table :data="list" v-loading="loading" border height="500">
         <el-table-column prop="stat_date" label="日期" width="100" fixed />
         <el-table-column prop="user_name" label="用户名" width="120" />
+        <el-table-column prop="git_name" label="Git用户名" width="140" />
         <el-table-column prop="real_name" label="姓名" width="100" />
         <el-table-column prop="department" label="部门" width="150" />
         <el-table-column prop="project_root_name" label="项目" width="150" />

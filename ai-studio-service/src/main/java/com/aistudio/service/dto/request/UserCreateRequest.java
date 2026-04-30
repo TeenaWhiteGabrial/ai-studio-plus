@@ -1,6 +1,8 @@
 package com.aistudio.service.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -8,18 +10,28 @@ import java.util.List;
 @Data
 public class UserCreateRequest {
 
-    @NotBlank(message = "用户名不能为空")
+    @NotBlank(message = "username can not be blank")
     private String username;
 
-    @NotBlank(message = "密码不能为空")
+    @JsonAlias("gitName")
+    @Size(max = 50, message = "git_name length can not exceed 50")
+    private String gitName;
+
+    @NotBlank(message = "password can not be blank")
     private String password;
 
+    @JsonAlias("realName")
     private String realName;
-    private Long deptId;
-    private Long teamId;  // 团队ID
-    private String email;
-    private String avatar;  // 头像URL
 
-    /** 角色ID列表，若为空或null则默认分配"普通用户"角色 */
+    @JsonAlias("deptId")
+    private Long deptId;
+
+    @JsonAlias("teamId")
+    private Long teamId;
+
+    private String email;
+    private String avatar;
+
+    @JsonAlias("roleIds")
     private List<Long> roleIds;
 }

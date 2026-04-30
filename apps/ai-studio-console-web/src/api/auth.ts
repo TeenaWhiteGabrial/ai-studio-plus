@@ -11,8 +11,8 @@ export const authApi = {
     })
   },
 
-  // 更新个人资料（邮箱、头像）
-  updateProfile: (data: { email?: string; avatar?: string }) => {
+  // 更新个人资料（邮箱、Git用户名、头像）
+  updateProfile: (data: { email?: string; git_name?: string; avatar?: string }) => {
     console.log('updateProfile 调用，数据：', data)
     return request.post('/auth/update-profile', data, {
       headers: {

@@ -30,7 +30,7 @@ public class AdminUserController {
 
     @Operation(summary = "用户列表")
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN','DEPT_ADMIN')")
     public Result<PageResult<SysUser>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,

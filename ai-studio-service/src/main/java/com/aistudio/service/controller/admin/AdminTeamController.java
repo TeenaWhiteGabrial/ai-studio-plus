@@ -23,7 +23,7 @@ public class AdminTeamController {
 
     @Operation(summary = "团队列表")
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','DEPT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','OP_ADMIN','DEPT_ADMIN')")
     public Result<List<Object>> list(@RequestParam(required = false) Long deptId) {
         return Result.success(teamService.listTeams(deptId));
     }

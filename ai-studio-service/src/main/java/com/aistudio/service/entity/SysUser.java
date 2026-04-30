@@ -18,6 +18,7 @@ public class SysUser {
     private String username;
     private String password;
     private String realName;
+    private String gitName;
     private Long deptId;
     private String email;
     private Integer status;

@@ -23,6 +23,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="username" label="账号" width="120" />
+        <el-table-column prop="git_name" label="Git用户名" width="140" />
         <el-table-column prop="real_name" label="姓名" min-width="100" />
         <el-table-column prop="dept_name" label="部门" width="150" />
         <el-table-column label="团队" min-width="150">
@@ -71,6 +72,7 @@
     <el-dialog v-model="dialogVisible" :title="editId ? '编辑用户' : '新建用户'" width="500px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="账号" prop="username"><el-input v-model="form.username"  placeholder="请输入账号" :disabled="!!editId" /></el-form-item>
+        <el-form-item label="Git用户名" prop="git_name"><el-input v-model="form.git_name" placeholder="请输入 Git 用户名" /></el-form-item>
         <el-form-item v-if="!editId" label="密码" prop="password">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
           <div class="password-hint">密码至少8位，需包含大小写字母、数字和特殊字符</div>
@@ -270,7 +272,7 @@ const roleDialogVisible = ref(false), currentUserId = ref<number | null>(null)
 const allRoles = ref<any[]>([]), selectedRole = ref<number | undefined>(undefined)
 const formRef = ref<FormInstance>()
 const query = reactive({ page: 1, size: 10, keyword: '', dept_id: null as number | null })
-const form = reactive({ username: '', password: '', real_name: '', dept_id: null as number | null, email: '', avatar: '', status: 1, team_id: null as number | null })
+const form = reactive({ username: '', git_name: '', password: '', real_name: '', dept_id: null as number | null, email: '', avatar: '', status: 1, team_id: null as number | null })
 const rules = {
   username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   password: [
@@ -443,7 +445,7 @@ async function handleAvatarUpload(file: any) {
 
 function openCreate() {
   editId.value = null
-  Object.assign(form, { username: '', password: '', real_name: '', dept_id: null, email: '', avatar: '', status: 1, team_id: null })
+  Object.assign(form, { username: '', git_name: '', password: '', real_name: '', dept_id: null, email: '', avatar: '', status: 1, team_id: null })
   teams.value = []
   loadActiveDepartments()
   // DEPT_ADMIN 部门固定，直接加载可用团队

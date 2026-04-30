@@ -19,7 +19,10 @@ export const useMenuStore = defineStore('menu', () => {
 
   async function fetchMenus() {
     const res = await request.get('/menu/tree') as any
-    menus.value = res.data
+    menus.value = (res.data || []).map((menu: MenuItem) => ({
+      ...menu,
+      name: menu.path === '/dashboard' ? '数据看板' : menu.name,
+    }))
   }
 
   function reset() {

@@ -73,9 +73,12 @@ export const outputApi = {
     })
   },
   // Admin 端产出管理
+  today: () => request.get('/output/today'),
+  history: (params: any) => request.get('/output/history', { params }),
   adminList: (params: any) => request.get('/output/list', { params }),
   adminByUsers: (params: any) => request.get('/output/by-users', { params }),
   stats: (params: any) => request.get('/output/stats', { params }),
+  dashboardDetails: (params: any) => request.get('/output/dashboard-details', { params }),
   byDepartment: (params: any) => request.get('/output/by-department', { params }),
   byProject: (params: any) => request.get('/output/by-project', { params }),
   projectMembers: (params: any) => request.get('/output/project-members', { params }),

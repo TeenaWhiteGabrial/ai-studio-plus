@@ -10,6 +10,7 @@ import java.util.List;
 public class UserInfoResponse {
     private Long userId;
     private String username;
+    private String gitName;
     private String realName;
     private List<String> roles;
     private String avatar;       // 头像URL

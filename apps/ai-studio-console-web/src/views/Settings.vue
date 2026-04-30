@@ -22,6 +22,7 @@
         <div class="avatar-info">
           <h3 class="user-name">{{ userInfo?.real_name || userInfo?.username }}</h3>
           <p class="user-username">@{{ userInfo?.username }}</p>
+          <p class="user-username">Git: {{ userInfo?.git_name || '-' }}</p>
           <p class="upload-tip" v-if="!uploading">支持 JPG、PNG 格式，不超过 2MB</p>
           <p class="upload-tip uploading" v-else>上传中...</p>
         </div>
@@ -35,6 +36,12 @@
           <div class="email-display">
             {{ userInfo?.email || '-' }}
             <el-icon class="edit-icon" @click="showEmailDialog = true"><Edit /></el-icon>
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="Git用户名">
+          <div class="email-display">
+            {{ userInfo?.git_name || '-' }}
+            <el-icon class="edit-icon" @click="openGitNameDialog"><Edit /></el-icon>
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="部门">
@@ -88,6 +95,25 @@
       <template #footer>
         <el-button @click="showEmailDialog = false">取消</el-button>
         <el-button type="primary" @click="updateEmail" :loading="emailLoading">确认修改</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 修改 Git 用户名弹窗 -->
+    <el-dialog
+      v-model="showGitNameDialog"
+      title="修改 Git 用户名"
+      width="400px"
+      :close-on-click-modal="false"
+      class="email-dialog"
+    >
+      <el-form :model="gitNameForm" label-width="90px" :rules="gitNameRules" ref="gitNameFormRef">
+        <el-form-item label="Git用户名" prop="git_name">
+          <el-input v-model="gitNameForm.git_name" placeholder="请输入 Git 用户名" clearable />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showGitNameDialog = false">取消</el-button>
+        <el-button type="primary" @click="updateGitName" :loading="gitNameLoading">确认修改</el-button>
       </template>
     </el-dialog>
 
@@ -148,6 +174,7 @@ const userInfo = computed(() => userStore.userInfo)
 
 // 弹窗显示状态
 const showEmailDialog = ref(false)
+const showGitNameDialog = ref(false)
 const showPasswordDialog = ref(false)
 
 // 上传相关
@@ -164,6 +191,18 @@ const emailRules: FormRules = {
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+  ],
+}
+
+// Git 用户名表单
+const gitNameFormRef = ref<FormInstance>()
+const gitNameForm = ref({
+  git_name: '',
+})
+const gitNameLoading = ref(false)
+const gitNameRules: FormRules = {
+  git_name: [
+    { max: 50, message: 'Git 用户名不能超过 50 个字符', trigger: 'blur' },
   ],
 }
 
@@ -278,6 +317,37 @@ const updateEmail = async () => {
     ElMessage.error(error.message || '邮箱更新失败')
   } finally {
     emailLoading.value = false
+  }
+}
+
+// 更新 Git 用户名
+const openGitNameDialog = () => {
+  gitNameForm.value.git_name = userInfo.value?.git_name || ''
+  showGitNameDialog.value = true
+}
+
+const updateGitName = async () => {
+  if (!gitNameFormRef.value) return
+  try {
+    const valid = await gitNameFormRef.value.validate()
+    if (valid) {
+      gitNameLoading.value = true
+      const res = await authApi.updateProfile({ git_name: gitNameForm.value.git_name }) as any
+      if (res.code === 200) {
+        if (userInfo.value) {
+          userInfo.value.git_name = gitNameForm.value.git_name
+          localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
+        }
+        ElMessage.success('Git 用户名更新成功')
+        showGitNameDialog.value = false
+      } else {
+        ElMessage.error(res.message || 'Git 用户名更新失败')
+      }
+    }
+  } catch (error: any) {
+    ElMessage.error(error.message || 'Git 用户名更新失败')
+  } finally {
+    gitNameLoading.value = false
   }
 }
 

@@ -1,5 +1,6 @@
 package com.aistudio.service.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -7,16 +8,14 @@ import lombok.Data;
 @Data
 public class UpdateProfileRequest {
 
-    /**
-     * 邮箱
-     */
-    @Email(message = "邮箱格式不正确")
-    @Size(max = 100, message = "邮箱长度不能超过100个字符")
+    @Email(message = "invalid email format")
+    @Size(max = 100, message = "email length can not exceed 100")
     private String email;
 
-    /**
-     * 头像URL
-     */
-    @Size(max = 500, message = "头像URL长度不能超过500个字符")
+    @JsonAlias("gitName")
+    @Size(max = 50, message = "git_name length can not exceed 50")
+    private String gitName;
+
+    @Size(max = 500, message = "avatar length can not exceed 500")
     private String avatar;
 }

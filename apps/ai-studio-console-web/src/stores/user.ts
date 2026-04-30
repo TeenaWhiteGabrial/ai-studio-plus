@@ -6,6 +6,7 @@ import JSEncrypt from 'jsencrypt'
 interface UserInfo {
   user_id: number
   username: string
+  git_name?: string
   real_name: string
   roles: string[]
   token: string

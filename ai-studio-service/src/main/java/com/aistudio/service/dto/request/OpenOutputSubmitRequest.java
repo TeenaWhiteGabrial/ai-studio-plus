@@ -1,50 +1,80 @@
 package com.aistudio.service.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
 
-/**
- * 开放 API 产出提交请求
- */
 @Data
 public class OpenOutputSubmitRequest {
 
-    @NotBlank(message = "username 不能为空")
-    private String username;
+    @NotBlank(message = "git_name can not be blank")
+    @JsonAlias({"username", "user_name", "gitName"})
+    private String gitName;
 
+    @JsonAlias("statDate")
     private LocalDate statDate;
 
-    // 文档类指标
+    @JsonAlias("projectId")
+    private Long projectId;
+
+    @JsonAlias("projectRootName")
+    private String projectRootName;
+
+    @JsonAlias("outputType")
+    private String outputType;
+
+    @JsonAlias("resourceId")
+    private Long resourceId;
+
+    @JsonAlias("prdDocCount")
     private Integer prdDocCount = 0;
+
+    @JsonAlias("dataModelDocCount")
     private Integer dataModelDocCount = 0;
+
+    @JsonAlias("apiDocCount")
     private Integer apiDocCount = 0;
 
-    // Java 后端指标
+    @JsonAlias("javaFileCount")
     private Integer javaFileCount = 0;
+
+    @JsonAlias("javaCodeLines")
     private Integer javaCodeLines = 0;
+
+    @JsonAlias("apiCount")
     private Integer apiCount = 0;
+
+    @JsonAlias("coreBizServiceCount")
     private Integer coreBizServiceCount = 0;
+
+    @JsonAlias("entityCount")
     private Integer entityCount = 0;
 
-    // 前端指标
+    @JsonAlias("frontendComponentCount")
     private Integer frontendComponentCount = 0;
+
+    @JsonAlias("frontendPageCount")
     private Integer frontendPageCount = 0;
+
+    @JsonAlias("frontendCommonComponentCount")
     private Integer frontendCommonComponentCount = 0;
+
+    @JsonAlias("tsCodeLines")
     private Integer tsCodeLines = 0;
+
+    @JsonAlias("frontendCodeLines")
     private Integer frontendCodeLines = 0;
 
-    // 其他指标
+    @JsonAlias("sqlScriptCount")
     private Integer sqlScriptCount = 0;
+
+    @JsonAlias("testFileCount")
     private Integer testFileCount = 0;
+
+    @JsonAlias("totalCodeLines")
     private Integer totalCodeLines = 0;
 
     private String remark;
-
-    /**
-     * 项目根目录名（可选参数，用于标识产出所属项目）
-     */
-    private String projectRootName;
 }
