@@ -19,10 +19,17 @@
         </button>
       </form>
 
-      <a class="publish-link" :href="publishArticleUrl" target="_blank" rel="noopener">
+      <div class="header-actions">
+        <NuxtLink class="knowledge-link" to="/knowledge">
+          <Icon name="material-symbols:database-search-outline" size="18" />
+          <span>知识库</span>
+        </NuxtLink>
+
+        <a class="publish-link" :href="publishArticleUrl" target="_blank" rel="noopener">
         <Icon name="material-symbols:edit-square-outline" size="18" />
         <span>发布文章</span>
-      </a>
+        </a>
+      </div>
     </div>
   </header>
 </template>
@@ -163,13 +170,18 @@ function handleSearch() {
   cursor: pointer;
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.knowledge-link,
 .publish-link {
   height: 36px;
   border-radius: 4px;
   padding: 0 14px;
-  color: #fff;
-  background: var(--portal-gradient);
-  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -180,6 +192,19 @@ function handleSearch() {
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
+.knowledge-link {
+  border: 1px solid #d8ddf8;
+  color: var(--portal-secondary);
+  background: #fff;
+}
+
+.publish-link {
+  color: #fff;
+  background: var(--portal-gradient);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
+}
+
+.knowledge-link:hover,
 .publish-link:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 24px rgba(79, 70, 229, 0.26);
@@ -199,10 +224,12 @@ function handleSearch() {
 }
 
 @media (max-width: 640px) {
+  .knowledge-link span,
   .publish-link span {
     display: none;
   }
 
+  .knowledge-link,
   .publish-link {
     width: 36px;
     padding: 0;

@@ -49,6 +49,7 @@ export default defineNuxtConfig({
       tokenType: import.meta.env.NUXT_TOKEN_TYPE,
       baseRouter: import.meta.env.NUXT_APP_BASE_URL,
       consoleBase: import.meta.env.NUXT_CONSOLE_BASE_URL || 'http://localhost:5174/ai-studio-plus-console-web',
+      knowledgeApiBase: import.meta.env.NUXT_KNOWLEDGE_API_BASE || 'http://localhost:3000/ai-studio/v1/knowledge',
 
     }
   },

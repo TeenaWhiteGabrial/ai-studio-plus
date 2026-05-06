@@ -91,6 +91,13 @@ const channelItems = computed(() => [
     icon: 'material-symbols:extension-outline',
     to: '/resources?type=plugin',
     active: route.path.startsWith('/resources') && route.query.type === 'plugin'
+  },
+  {
+    key: 'knowledge',
+    label: '知识库',
+    icon: 'material-symbols:database-search-outline',
+    to: '/knowledge',
+    active: route.path.startsWith('/knowledge')
   }
 ])
 </script>

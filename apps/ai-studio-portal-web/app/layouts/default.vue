@@ -44,7 +44,14 @@ const isDetailPage = computed(() => {
   return /^(community\/article|community\/question|resources\/[^/]+\/[^/]+)/.test(normalizedPath.value)
 })
 
-const layoutMode = computed<'three' | 'content-right' | 'single'>(() => {
+const isEmbedPage = computed(() => {
+  return /^(knowledge(?:\/|$))/.test(normalizedPath.value)
+})
+
+const layoutMode = computed<'three' | 'content-right' | 'single' | 'embed'>(() => {
+  if (isEmbedPage.value) {
+    return 'embed'
+  }
   if (isFocusPage.value) {
     return 'single'
   }
@@ -59,7 +66,7 @@ const showLeftSidebar = computed(() => {
 })
 
 const showRightSidebar = computed(() => {
-  return layoutMode.value !== 'single'
+  return layoutMode.value !== 'single' && layoutMode.value !== 'embed'
 })
 
 async function loginByCode() {
@@ -139,6 +146,11 @@ onMounted(async () => {
   max-width: 1120px;
 }
 
+.portal-main.mode-embed {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0;
+}
+
 .portal-left,
 .portal-right {
   position: sticky;
@@ -168,6 +180,11 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
+.portal-main.mode-embed .portal-content {
+  margin-top: 0;
+  width: 100%;
+}
+
 @media (max-width: 1400px) {
   .portal-main {
     grid-template-columns: 200px minmax(0, 1fr) 280px;
@@ -191,6 +208,7 @@ onMounted(async () => {
 @media (max-width: 1024px) {
   .portal-main,
   .portal-main.mode-content-right,
+  .portal-main.mode-embed,
   .portal-main.mode-single,
   .portal-main.mode-three {
     grid-template-columns: minmax(0, 1fr);
