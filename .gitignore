@@ -56,7 +56,7 @@ coverage/
 ai-studio-service/target/
 ai-studio-service/*.log
 ai-studio-service/.mvn/wrapper/maven-wrapper.jar
-
+ai-studio-service/src/main/resources/application.yml
 # ====================
 # Admin Web
 # ====================
