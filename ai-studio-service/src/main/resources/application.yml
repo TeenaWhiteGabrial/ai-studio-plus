@@ -49,11 +49,11 @@ jwt:
 # 浪潮云 OSS 配置（S3 兼容）
 oss:
   endpoint: https://oss.sd-jn-scyd-gyhlwzq-icp.inspurcloudoss.com  # 浪潮云 OSS Endpoint
-  access-key: NjkxYmEwZDgtYWJkOS00MDZjLTlhMDItZTQ2Y2MxZWRiNzc1    # Access Key ID
-  secret-key: Y2MxODFlMDMtYTczZi00NjNiLTkyNjYtMmI1MjY3OTMwMjU4    # Access Key Secret
-  bucket-name: uoc                                                # Bucket 名称
+  access-key: ${OSS_ACCESS_KEY:NjkxYmEwZDgtYWJkOS00MDZjLTlhMDItZTQ2Y2MxZWRiNzc1}    # Access Key ID
+  secret-key: ${OSS_SECRET_KEY:Y2MxODFlMDMtYTczZi00NjNiLTkyNjYtMmI1MjY3OTMwMjU4}    # Access Key Secret
+  bucket-name: ${OSS_BUCKET_NAME:uoc}                                                # Bucket 名称
   download-url: https://uoc.oss.sd-jn-scyd-gyhlwzq-icp.inspurcloudoss.com  # 下载域名
-  region: sd-jn-scyd-gyhlwzq-icp                                  # 区域
+  region: ${OSS_REGION:sd-jn-scyd-gyhlwzq-icp}                                  # 区域
 
 # RSA 密钥配置（2048位，Base64 DER格式）
 rsa:
