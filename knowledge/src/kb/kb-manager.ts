@@ -97,7 +97,7 @@ export class KnowledgeBaseManager {
         const fileRecord = (this.kbFileRepository as any).findByPath?.(normalizedPath);
         fileId = fileRecord?.id || this.generateFileId(normalizedPath);
       }
-      const currentFileId = fileId;
+      const currentFileId = fileId || this.generateFileId(normalizedPath);
 
       logger.info(`[${normalizedPath}] Step 2/4: Chunking document`);
       const chunks = await this.documentProcessor.processDocument(currentFileId, parseResult);

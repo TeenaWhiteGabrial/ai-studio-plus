@@ -181,10 +181,11 @@ export class PdfParser implements IDocumentParser {
             // 获取元数据（只在第一页获取）
             if (pageNum === 1) {
               const metadata = await pdfDocument.getMetadata();
-              if (metadata.info) {
-                title = metadata.info.Title || '';
-                author = metadata.info.Author || '';
-                creator = metadata.info.Creator || '';
+              const info = metadata.info as { Title?: string; Author?: string; Creator?: string } | undefined;
+              if (info) {
+                title = info.Title || '';
+                author = info.Author || '';
+                creator = info.Creator || '';
               }
             }
           } catch (pageError) {
@@ -500,7 +501,7 @@ export class OfficeParserAdapter implements IDocumentParser {
             Tesseract.recognize(imagePath, ocrLanguage, {
               logger: () => {},
               tessdata: process.env.TESSDATA_PREFIX || './lib/tessdata',
-            }),
+            } as any),
             new Promise((_, reject) =>
               setTimeout(() => reject(new Error('OCR timeout')), 30000)
             )

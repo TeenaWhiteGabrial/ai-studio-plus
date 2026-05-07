@@ -91,7 +91,7 @@ export class SQLiteClient {
     this.db.run(sql, params);
 
     // 获取最后插入的行ID和影响的行数
-    const lastId = this.db.exec('SELECT last_insert_rowid() as id')[0]?.values[0]?.[0] || 0;
+    const lastId = (this.db.exec('SELECT last_insert_rowid() as id')[0]?.values[0]?.[0] || 0) as number | bigint;
     const changes = this.db.getRowsModified();
 
     return {
