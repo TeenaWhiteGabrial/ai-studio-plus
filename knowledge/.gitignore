@@ -11,8 +11,7 @@ data/
 logs/
 
 # Local environment and process files
-.env
-.env.*
+
 !.env.example
 *.log
 *.pid
