@@ -11,34 +11,26 @@
         :collapse="isCollapsed"
         router
       >
-        <el-menu-item index="/console/dashboard">
-          <el-icon><HomeFilled /></el-icon>
-          <span>工作台</span>
-        </el-menu-item>
-        <el-menu-item index="/console/apikey">
-          <el-icon><Key /></el-icon>
-          <span>API Key</span>
-        </el-menu-item>
-        <el-menu-item index="/console/task">
-          <el-icon><Calendar /></el-icon>
-          <span>每日任务</span>
-        </el-menu-item>
-        <el-menu-item index="/console/article">
-          <el-icon><Document /></el-icon>
-          <span>文章管理</span>
-        </el-menu-item>
-        <el-menu-item index="/console/resource">
-          <el-icon><Box /></el-icon>
-          <span>资源中心</span>
-        </el-menu-item>
-        <el-menu-item index="/console/stats">
-          <el-icon><DataLine /></el-icon>
-          <span>产出统计</span>
-        </el-menu-item>
-        <el-menu-item index="/console/settings">
-          <el-icon><Setting /></el-icon>
-          <span>个人设置</span>
-        </el-menu-item>
+        <template v-for="menu in visibleMenus" :key="menu.id">
+          <el-sub-menu v-if="menu.children?.length" :index="String(menu.id)">
+            <template #title>
+              <el-icon><component :is="menu.icon || 'Menu'" /></el-icon>
+              <span>{{ menu.name }}</span>
+            </template>
+            <el-menu-item
+              v-for="child in menu.children"
+              :key="child.id"
+              :index="withConsolePrefix(child.path)"
+            >
+              <el-icon><component :is="child.icon || 'Menu'" /></el-icon>
+              <span>{{ child.name }}</span>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item v-else :index="withConsolePrefix(menu.path)">
+            <el-icon><component :is="menu.icon || 'Menu'" /></el-icon>
+            <span>{{ menu.name }}</span>
+          </el-menu-item>
+        </template>
       </el-menu>
 
       <!-- 收起/展开按钮 -->
@@ -93,24 +85,15 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useMenuStore, type ConsoleMenu } from '@/stores/menu'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { getSiteConfig } from '@/api/site'
-import {
-  HomeFilled,
-  Key,
-  Calendar,
-  Document,
-  Box,
-  DataLine,
-  Setting,
-  Fold,
-  Expand,
-  UserFilled,
-} from '@element-plus/icons-vue'
+import { Fold, Expand } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const menuStore = useMenuStore()
 // @ts-ignore - userInfo is a ref that auto-unwraps in templates
 const userInfo = userStore.userInfo
 
@@ -126,10 +109,14 @@ if (savedCollapsed === 'true') {
 const sidebarWidth = computed(() => isCollapsed.value ? '64px' : '200px')
 
 const activeMenu = computed(() => route.path)
+const visibleMenus = computed(() => filterVisibleMenus(menuStore.menus))
 const siteName = ref('AI Studio')
 const siteLogo = ref(`${import.meta.env.BASE_URL}ai-studio-logo.svg`)
 
 onMounted(async () => {
+  if (menuStore.menus.length === 0) {
+    await menuStore.fetchMenus()
+  }
   try {
     const config = await getSiteConfig()
     siteName.value = config.siteName || siteName.value
@@ -145,6 +132,20 @@ function resolveAssetUrl(url?: string) {
   return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
 }
 
+function filterVisibleMenus(menus: ConsoleMenu[]): ConsoleMenu[] {
+  return menus
+    .filter(menu => menu.hidden !== 1)
+    .map(menu => ({
+      ...menu,
+      children: filterVisibleMenus(menu.children || []),
+    }))
+}
+
+function withConsolePrefix(path?: string) {
+  if (!path) return '/console/dashboard'
+  return path.startsWith('/console') ? path : `/console${path}`
+}
+
 // 切换侧边栏收起/展开
 function toggleSidebar() {
   isCollapsed.value = !isCollapsed.value
@@ -154,6 +155,7 @@ function toggleSidebar() {
 const handleCommand = (command: string) => {
   if (command === 'logout') {
     userStore.logout()
+    menuStore.reset()
     router.push('/console/login')
   } else if (command === 'settings') {
     router.push('/console/settings')

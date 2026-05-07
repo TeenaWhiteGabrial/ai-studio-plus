@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
 
+    private static final String APP_CODE_CONSOLE = "CONSOLE";
+
     private final SysMenuMapper menuMapper;
     private final SysRoleMenuMapper roleMenuMapper;
 
@@ -41,7 +43,9 @@ public class MenuServiceImpl implements MenuService {
     @Override
     public List<RoleMenuTreeVO> getRoleMenuTree(Long roleId) {
         // 获取所有菜单
-        List<SysMenu> allMenus = menuMapper.selectList(null);
+        List<SysMenu> allMenus = menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+                .eq(SysMenu::getAppCode, APP_CODE_CONSOLE)
+                .orderByAsc(SysMenu::getSort));
         // 获取角色已分配的菜单ID
         List<SysRoleMenu> roleMenus = roleMenuMapper.selectList(
                 new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
@@ -78,6 +82,7 @@ public class MenuServiceImpl implements MenuService {
     @Override
     public List<SysMenu> listAllMenus() {
         return menuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+                .eq(SysMenu::getAppCode, APP_CODE_CONSOLE)
                 .orderByAsc(SysMenu::getSort));
     }
 
@@ -94,6 +99,7 @@ public class MenuServiceImpl implements MenuService {
     public Long createMenu(MenuRequest request) {
         SysMenu menu = new SysMenu();
         BeanUtils.copyProperties(request, menu);
+        menu.setAppCode(APP_CODE_CONSOLE);
         menuMapper.insert(menu);
         return menu.getId();
     }
@@ -106,6 +112,7 @@ public class MenuServiceImpl implements MenuService {
         }
         BeanUtils.copyProperties(request, menu);
         menu.setId(id);
+        menu.setAppCode(APP_CODE_CONSOLE);
         menuMapper.updateById(menu);
     }
 

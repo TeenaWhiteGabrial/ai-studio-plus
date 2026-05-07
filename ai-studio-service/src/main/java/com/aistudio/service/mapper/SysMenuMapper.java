@@ -14,6 +14,7 @@ public interface SysMenuMapper extends BaseMapper<SysMenu> {
             "INNER JOIN sys_role_menu rm ON m.id = rm.menu_id " +
             "INNER JOIN sys_user_role ur ON rm.role_id = ur.role_id " +
             "WHERE ur.user_id = #{userId} " +
+            "AND COALESCE(m.app_code, 'ADMIN') = 'CONSOLE' " +
             "ORDER BY m.sort ASC")
     List<SysMenu> selectByUserId(Long userId);
 }

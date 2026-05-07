@@ -337,6 +337,80 @@ export const roleApi = {
   updateMenus: (id: number, menuIds: number[]) => request.post(`/role/${id}/menus`, menuIds),
 }
 
+export interface AdminMenu {
+  id: number
+  parentId: number
+  name: string
+  path: string
+  component: string
+  icon: string
+  permission: string
+  sort: number
+  hidden: number
+  createdAt?: string
+  children?: AdminMenu[]
+}
+
+export interface AdminMenuPayload {
+  parentId: number
+  name: string
+  path?: string
+  component?: string
+  icon?: string
+  permission?: string
+  sort?: number
+  hidden?: number
+}
+
+function mapMenuResponse(item: any): AdminMenu {
+  return {
+    id: item.id,
+    parentId: item.parent_id ?? item.parentId ?? 0,
+    name: item.name ?? '',
+    path: item.path ?? '',
+    component: item.component ?? '',
+    icon: item.icon ?? '',
+    permission: item.permission ?? '',
+    sort: item.sort ?? 0,
+    hidden: item.hidden ?? 0,
+    createdAt: item.created_at ?? item.createdAt,
+    children: Array.isArray(item.children) ? item.children.map(mapMenuResponse) : undefined,
+  }
+}
+
+function mapMenuPayload(data: AdminMenuPayload) {
+  return {
+    parent_id: data.parentId,
+    name: data.name,
+    path: data.path || '',
+    component: data.component || '',
+    icon: data.icon || '',
+    permission: data.permission || '',
+    sort: data.sort ?? 0,
+    hidden: data.hidden ?? 0,
+  }
+}
+
+export const menuApi = {
+  list: async () => {
+    const res = await request.get('/menu/list') as any
+    return {
+      ...res,
+      data: (res.data || []).map(mapMenuResponse),
+    }
+  },
+  detail: async (id: number) => {
+    const res = await request.get(`/menu/${id}`) as any
+    return {
+      ...res,
+      data: mapMenuResponse(res.data),
+    }
+  },
+  create: (data: AdminMenuPayload) => request.post('/menu', mapMenuPayload(data)),
+  update: (id: number, data: AdminMenuPayload) => request.post(`/menu/update/${id}`, mapMenuPayload(data)),
+  delete: (id: number) => request.post(`/menu/${id}/delete`),
+}
+
 export const userApi = {
   list: (params: any) => request.get('/user/list', { params }),
   create: (data: any) => request.post('/user', data),

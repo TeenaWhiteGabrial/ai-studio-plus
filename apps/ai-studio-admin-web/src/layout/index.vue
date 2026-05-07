@@ -15,7 +15,7 @@
         active-text-color="#ffffff"
         class="sidebar-menu"
       >
-        <template v-for="menu in menuStore.menus" :key="menu.id">
+        <template v-for="menu in adminMenus" :key="menu.id">
           <el-sub-menu v-if="menu.children?.length" :index="String(menu.id)">
             <template #title>
               <el-icon><component :is="menu.icon" /></el-icon>
@@ -92,23 +92,99 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { useMenuStore } from '@/stores/menu'
 import { ElMessageBox } from 'element-plus'
 import { siteConfigApi } from '@/api'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const menuStore = useMenuStore()
 const isCollapsed = ref(false)
 const activeMenu = computed(() => route.path)
 const siteName = ref('AI Studio')
 const siteLogo = ref(`${import.meta.env.BASE_URL}ai-studio-logo.svg`)
+const adminMenus = [
+  {
+    id: 1,
+    name: '数据看板',
+    path: '/dashboard',
+    icon: 'DataAnalysis',
+    children: [
+      { id: 11, name: '产出数据看板', path: '/dashboard/output', icon: 'TrendCharts' },
+      { id: 12, name: '网站数据看板', path: '/dashboard/portal', icon: 'Monitor' },
+    ],
+  },
+  {
+    id: 2,
+    name: '资源管理',
+    path: '/resource',
+    icon: 'Folder',
+    children: [
+      { id: 21, name: 'Skill管理', path: '/resource/skill', icon: 'Grid' },
+      { id: 22, name: 'MCP管理', path: '/resource/mcp', icon: 'Connection' },
+      { id: 23, name: 'Plugin管理', path: '/resource/plugin', icon: 'Operation' },
+      { id: 24, name: '教程管理', path: '/resource/tutorial', icon: 'Reading' },
+    ],
+  },
+  {
+    id: 3,
+    name: '产出管理',
+    path: '/output',
+    icon: 'Document',
+    children: [
+      { id: 31, name: '我的产出', path: '/output/my', icon: 'EditPen' },
+      { id: 32, name: '产出历史', path: '/output/history', icon: 'Clock' },
+      { id: 33, name: '全员产出', path: '/output/admin', icon: 'List' },
+    ],
+  },
+  {
+    id: 4,
+    name: '统计分析',
+    path: '/stats',
+    icon: 'PieChart',
+    children: [
+      { id: 41, name: '部门统计', path: '/stats/department', icon: 'OfficeBuilding' },
+      { id: 42, name: '项目统计', path: '/stats/project', icon: 'Histogram' },
+    ],
+  },
+  {
+    id: 5,
+    name: '系统管理',
+    path: '/system',
+    icon: 'Setting',
+    children: [
+      { id: 51, name: '用户管理', path: '/system/user', icon: 'User' },
+      { id: 52, name: '部门管理', path: '/system/department', icon: 'OfficeBuilding' },
+      { id: 53, name: '角色管理', path: '/system/role', icon: 'Key' },
+      { id: 54, name: '菜单管理', path: '/system/menu', icon: 'Menu' },
+      { id: 55, name: '团队管理', path: '/system/team', icon: 'Avatar' },
+    ],
+  },
+  {
+    id: 6,
+    name: '运营管理',
+    path: '/ops',
+    icon: 'Operation',
+    children: [
+      { id: 61, name: '资源审核', path: '/audit/resource', icon: 'Stamp' },
+      { id: 62, name: '知识库管理', path: '/knowledge', icon: 'Files' },
+      { id: 63, name: '网站设置', path: '/site-settings', icon: 'SetUp' },
+    ],
+  },
+  {
+    id: 7,
+    name: '社区管理',
+    path: '/community',
+    icon: 'ChatDotRound',
+    children: [
+      { id: 71, name: '文章管理', path: '/community/article', icon: 'Document' },
+      { id: 72, name: '问题管理', path: '/community/question', icon: 'QuestionFilled' },
+      { id: 73, name: '回答管理', path: '/community/answer', icon: 'ChatLineRound' },
+      { id: 74, name: '评论管理', path: '/community/comment', icon: 'ChatSquare' },
+    ],
+  },
+]
 
 onMounted(async () => {
-  if (menuStore.menus.length === 0) {
-    await menuStore.fetchMenus()
-  }
   try {
     const config = await siteConfigApi.get()
     siteName.value = config.siteName || siteName.value
@@ -128,7 +204,6 @@ async function handleCommand(cmd: string) {
   if (cmd === 'logout') {
     await ElMessageBox.confirm('确认退出登录？', '提示', { type: 'warning' })
     userStore.logout()
-    menuStore.reset()
     router.push('/admin/login')
   }
 }

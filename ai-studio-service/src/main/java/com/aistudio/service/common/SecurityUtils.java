@@ -81,14 +81,18 @@ public class SecurityUtils {
         return getCurrentUserRoles().contains("OP_ADMIN");
     }
 
+    public boolean isProjectManager() {
+        return getCurrentUserRoles().contains("PROJECT_MANAGER");
+    }
+
     /**
      * 判断当前用户是否有权操作指定部门的数据
      * SUPER_ADMIN 和 OP_ADMIN 可以操作任何部门
-     * DEPT_ADMIN 只能操作自己所属部门的数据
+     * DEPT_ADMIN 和 PROJECT_MANAGER 只能操作自己所属部门的数据
      */
     public boolean canManageDept(Long targetDeptId) {
         if (isSuperAdmin() || isOpAdmin()) return true;
-        if (isDeptAdmin()) {
+        if (isDeptAdmin() || isProjectManager()) {
             Long myDeptId = getCurrentUserDeptId();
             return myDeptId != null && myDeptId.equals(targetDeptId);
         }

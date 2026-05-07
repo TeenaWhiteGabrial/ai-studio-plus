@@ -186,7 +186,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private void applyDeptScope(LambdaQueryWrapper<Project> wrapper) {
-        if (!securityUtils.isDeptAdmin() || securityUtils.isSuperAdmin() || securityUtils.isOpAdmin()) {
+        if ((!securityUtils.isDeptAdmin() && !securityUtils.isProjectManager()) || securityUtils.isSuperAdmin() || securityUtils.isOpAdmin()) {
             return;
         }
         Long deptId = securityUtils.getCurrentUserDeptId();

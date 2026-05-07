@@ -30,6 +30,15 @@ router.beforeEach((to) => {
     }
     return homeMap[appType] || '/'
   }
+
+  const requiredRoles = to.meta?.roles as string[] | undefined
+  if (token && requiredRoles?.length) {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null')
+    const roles = userInfo?.roles || []
+    if (!requiredRoles.some(role => roles.includes(role))) {
+      return appType === 'console' ? '/console/dashboard' : '/'
+    }
+  }
 })
 
 export default router

@@ -85,7 +85,7 @@ public class SecurityConfig {
                 // Admin role endpoints
                 .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "OP_ADMIN", "DEPT_ADMIN")
                 // Console role endpoints
-                .requestMatchers("/console/**").hasRole("USER")
+                .requestMatchers("/console/**").hasAnyRole("USER", "PROJECT_MANAGER", "OP_ADMIN", "DEPT_ADMIN", "SUPER_ADMIN")
                 // Portal endpoints requiring login
                 .requestMatchers(
                     "/portal/article/*/like",

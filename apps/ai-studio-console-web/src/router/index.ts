@@ -38,6 +38,12 @@ const consoleRoutes = [
     meta: { title: '文章管理' },
   },
   {
+    path: '/console/project',
+    name: 'ProjectManage',
+    component: () => import('@/views/Project.vue'),
+    meta: { title: '项目管理', roles: ['PROJECT_MANAGER', 'SUPER_ADMIN', 'OP_ADMIN', 'DEPT_ADMIN'] },
+  },
+  {
     path: '/console/article/:id/edit',
     name: 'ArticleEdit',
     component: () => import('@/views/ArticleEdit.vue'),

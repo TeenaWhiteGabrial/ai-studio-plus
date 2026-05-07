@@ -80,12 +80,6 @@ const adminRoutes = [
     meta: { title: '全员产出' },
   },
   {
-    path: '/admin/project',
-    name: 'ProjectManage',
-    component: () => import('@/views/project/index.vue'),
-    meta: { title: '项目管理' },
-  },
-  {
     path: '/admin/stats/department',
     name: 'DepartmentStats',
     component: () => import('@/views/stats/DepartmentStats.vue'),
@@ -114,6 +108,12 @@ const adminRoutes = [
     name: 'RoleManage',
     component: () => import('@/views/role/index.vue'),
     meta: { title: '角色管理' },
+  },
+  {
+    path: '/admin/system/menu',
+    name: 'MenuManage',
+    component: () => import('@/views/menu/index.vue'),
+    meta: { title: '菜单管理' },
   },
   {
     path: '/admin/system/team',

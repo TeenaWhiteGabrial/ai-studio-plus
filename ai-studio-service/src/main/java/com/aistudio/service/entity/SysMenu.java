@@ -19,6 +19,7 @@ public class SysMenu {
     private String component;
     private String icon;
     private String permission;
+    private String appCode;
     private Integer sort;
     private Integer hidden;
     private LocalDateTime createdAt;

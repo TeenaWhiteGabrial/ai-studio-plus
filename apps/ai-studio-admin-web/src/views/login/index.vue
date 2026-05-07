@@ -169,12 +169,10 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { useMenuStore } from '@/stores/menu'
 import type { FormInstance } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()
-const menuStore = useMenuStore()
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
@@ -263,11 +261,9 @@ async function handleLogin() {
   loading.value = true
   try {
     await userStore.login(form.value.username, form.value.password)
-    await menuStore.fetchMenus()
     if (rememberMe.value) {
       userStore.saveRememberedCredentials(form.value.username, form.value.password)
     }
-    await menuStore.fetchMenus()
     router.push('/dashboard')
   } catch (error: any) {
     // 显示错误提示
