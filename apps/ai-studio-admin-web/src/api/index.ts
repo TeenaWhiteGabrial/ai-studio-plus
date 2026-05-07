@@ -1,4 +1,145 @@
+import axios from 'axios'
 import request from '@/utils/request'
+
+export interface SiteFooterLink {
+  name: string
+  url: string
+}
+
+export interface SiteConfig {
+  siteName: string
+  siteDescription: string
+  logoUrl: string
+  iconUrl: string
+  footerText: string
+  footerCopyright: string
+  footerRecord: string
+  footerLinks: SiteFooterLink[]
+  contacts: string
+}
+
+function parseFooterLinks(value?: string): SiteFooterLink[] {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function mapSiteConfigResponse(item: any): SiteConfig {
+  return {
+    siteName: item.site_name ?? item.siteName ?? 'AI Studio',
+    siteDescription: item.site_description ?? item.siteDescription ?? '',
+    logoUrl: item.logo_url ?? item.logoUrl ?? '/ai-studio-logo.svg',
+    iconUrl: item.icon_url ?? item.iconUrl ?? '/favicon.png',
+    footerText: item.footer_text ?? item.footerText ?? '',
+    footerCopyright: item.footer_copyright ?? item.footerCopyright ?? '',
+    footerRecord: item.footer_record ?? item.footerRecord ?? '',
+    footerLinks: parseFooterLinks(item.footer_links ?? item.footerLinks),
+    contacts: item.contacts ?? '',
+  }
+}
+
+function mapSiteConfigPayload(data: SiteConfig) {
+  return {
+    site_name: data.siteName,
+    site_description: data.siteDescription,
+    logo_url: data.logoUrl,
+    icon_url: data.iconUrl,
+    footer_text: data.footerText,
+    footer_copyright: data.footerCopyright,
+    footer_record: data.footerRecord,
+    footer_links: JSON.stringify(data.footerLinks || []),
+    contacts: data.contacts,
+  }
+}
+
+export const siteConfigApi = {
+  get: async () => {
+    const res = await request.get('/site/config') as any
+    return mapSiteConfigResponse(res.data)
+  },
+  update: async (data: SiteConfig) => {
+    const res = await request.post('/site/config', mapSiteConfigPayload(data)) as any
+    return mapSiteConfigResponse(res.data)
+  },
+}
+
+interface KnowledgeApiResponse<T> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+export interface KnowledgeDocument {
+  id: string
+  fileName: string
+  filePath: string
+  fileType: string
+  fileSize: number
+  status: string
+  chunkCount: number
+  indexedAt?: string
+  errorMessage?: string
+}
+
+export interface KnowledgeStats {
+  kbId: string
+  kbName: string
+  status: string
+  fileCount: number
+  chunkCount: number
+  vectorCount: number
+  vectorDimension: number
+  queueStatus?: {
+    queueSize: number
+    running: number
+    concurrency: number
+  }
+}
+
+const knowledgeRequest = axios.create({
+  baseURL: import.meta.env.VITE_KNOWLEDGE_API_BASE || '/knowledge-api',
+  timeout: 60000,
+})
+
+async function knowledgeApiRequest<T>(url: string, options: Record<string, any> = {}) {
+  const response = await knowledgeRequest.request<KnowledgeApiResponse<T>>({
+    url,
+    ...options,
+  })
+  const payload = response.data
+  if (!payload.success) {
+    throw new Error(payload.error || payload.message || '知识库服务请求失败')
+  }
+  return payload.data as T
+}
+
+export const knowledgeAdminApi = {
+  health: async () => {
+    const response = await knowledgeRequest.get<{ status: string; timestamp: string; uptime: number }>('/health')
+    return response.data
+  },
+  stats: () => knowledgeApiRequest<KnowledgeStats>('/stats'),
+  documents: () => knowledgeApiRequest<KnowledgeDocument[]>('/documents'),
+  upload: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return knowledgeApiRequest<{ id: string; filename: string; size: number; status: string }>('/upload', {
+      method: 'POST',
+      data: formData,
+    })
+  },
+  remove: (id: string) => knowledgeApiRequest<{ message?: string }>(`/documents/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  }),
+  reindex: (id: string) => knowledgeApiRequest<{ message?: string }>(`/documents/${encodeURIComponent(id)}/reindex`, {
+    method: 'POST',
+  }),
+}
 
 export const skillApi = {
   // 查询

@@ -63,6 +63,7 @@ public class SecurityConfig {
                     "/console/auth/login", "/console/auth/public-key", "/console/auth/token",
                     "/open/**",
                     "/portal/open/**",
+                    "/portal/site/config",
                     "/doc.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**"
                 ).permitAll()
                 // Authenticated profile/account endpoints

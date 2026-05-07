@@ -6,6 +6,10 @@ export interface SiteConfig {
     logo: string          // 网站 URL
     icon: string       // 网站图标    
     contacts?: string      // 联系方式
+    footerText?: string
+    footerCopyright?: string
+    footerRecord?: string
+    footerLinks?: Array<{ name: string; url: string }>
 }
 
 /** 网站顶部组件类型 */
@@ -70,7 +74,16 @@ export const defaultSiteConfig: SiteConfig = {
     tenantId: '',
     name: 'AI Studio',
     description: 'AI 应用开发平台',
-    logo: '',
+    logo: '/ai-studio-logo.svg',
     icon: '/favicon.png',
     contacts: '',
+    footerText: '面向研发团队的 AI 技术社区与资源平台。',
+    footerCopyright: 'Copyright © 2026 AI Studio',
+    footerRecord: '',
+    footerLinks: [
+        { name: '首页', url: '/' },
+        { name: '社区', url: '/community' },
+        { name: '资源中心', url: '/resources' },
+        { name: '个人中心', url: '/profile' },
+    ],
 }

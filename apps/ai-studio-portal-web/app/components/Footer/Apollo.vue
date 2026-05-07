@@ -1,35 +1,66 @@
 <template>
-  <footer class="portal-footer">
+  <footer class="portal-footer" :class="{ transparent }">
     <div class="csdn-container footer-inner">
       <div class="footer-brand">
-        <strong>AI Studio</strong>
-        <p>面向研发团队的 AI 技术社区与资源平台。</p>
+        <strong>{{ siteConfig.name }}</strong>
+        <p>{{ siteConfig.footerText || siteConfig.description }}</p>
       </div>
 
       <div class="footer-links">
-        <NuxtLink to="/">首页</NuxtLink>
-        <NuxtLink to="/community">社区</NuxtLink>
-        <NuxtLink to="/resources">资源中心</NuxtLink>
-        <NuxtLink to="/profile">个人中心</NuxtLink>
+        <NuxtLink v-for="link in footerLinks" :key="link.url" :to="link.url">{{ link.name }}</NuxtLink>
       </div>
 
       <div class="footer-copy">
-        <span>Copyright © {{ year }} AI Studio</span>
-        <span>All rights reserved.</span>
+        <span>{{ siteConfig.footerCopyright || `Copyright © ${year} ${siteConfig.name}` }}</span>
+        <span v-if="siteConfig.footerRecord">{{ siteConfig.footerRecord }}</span>
+        <span v-else>All rights reserved.</span>
       </div>
     </div>
   </footer>
 </template>
 
 <script setup lang="ts">
+defineProps<{
+  transparent?: boolean
+}>()
+
 const year = new Date().getFullYear()
+const { siteConfig } = useSite()
+const footerLinks = computed(() => siteConfig.footerLinks?.length ? siteConfig.footerLinks : [
+  { name: '首页', url: '/' },
+  { name: '社区', url: '/community' },
+  { name: '资源中心', url: '/resources' },
+  { name: '个人中心', url: '/profile' },
+])
 </script>
 
 <style scoped>
 .portal-footer {
   margin-top: 28px;
-  border-top: 1px solid var(--csdn-line);
-  background: #fff;
+  border-top: 1px solid var(--portal-line);
+  background: var(--portal-footer-bg);
+}
+
+.portal-footer.transparent {
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
+  border-top-color: rgba(125, 211, 252, 0.18);
+  background: transparent;
+}
+
+.portal-footer.transparent .footer-brand strong {
+  color: #f8fafc;
+}
+
+.portal-footer.transparent .footer-brand p,
+.portal-footer.transparent .footer-links,
+.portal-footer.transparent .footer-copy {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.portal-footer.transparent .footer-links a:hover {
+  color: #7dd3fc;
 }
 
 .footer-inner {
@@ -43,12 +74,12 @@ const year = new Date().getFullYear()
 
 .footer-brand strong {
   font-size: 18px;
-  color: var(--csdn-text);
+  color: var(--portal-text);
 }
 
 .footer-brand p {
   margin: 6px 0 0;
-  color: var(--csdn-muted);
+  color: var(--portal-muted);
   font-size: 13px;
 }
 
@@ -57,11 +88,11 @@ const year = new Date().getFullYear()
   gap: 14px;
   justify-content: center;
   font-size: 14px;
-  color: var(--csdn-subtext);
+  color: var(--portal-subtext);
 }
 
 .footer-links a:hover {
-  color: var(--csdn-primary);
+  color: var(--color-primary);
 }
 
 .footer-copy {
@@ -70,7 +101,7 @@ const year = new Date().getFullYear()
   align-items: flex-end;
   gap: 4px;
   font-size: 12px;
-  color: var(--csdn-muted);
+  color: var(--portal-muted);
 }
 
 @media (max-width: 900px) {

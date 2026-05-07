@@ -6,8 +6,47 @@
 import type { ThemeConfig } from '~~/shared/types/theme'
 import { defaultTheme } from '~~/shared/types/theme'
 
+export type PortalThemeId = 'glass-dark' | 'dark' | 'light' | string
+
+export interface PortalThemePreset {
+    id: PortalThemeId
+    name: string
+    description: string
+    primaryColor: string
+    immersive: boolean
+    mode: 'light' | 'dark'
+}
+
+export const portalThemePresets: PortalThemePreset[] = [
+    {
+        id: 'glass-dark',
+        name: '深色玻璃',
+        description: '霓虹网格、透明玻璃卡片与沉浸式背景',
+        primaryColor: '#38bdf8',
+        immersive: true,
+        mode: 'dark',
+    },
+    {
+        id: 'dark',
+        name: '深色',
+        description: '克制深色界面，适合长时间阅读',
+        primaryColor: '#60a5fa',
+        immersive: false,
+        mode: 'dark',
+    },
+    {
+        id: 'light',
+        name: '浅色',
+        description: '清爽浅色界面，适合日常内容浏览',
+        primaryColor: '#2563eb',
+        immersive: false,
+        mode: 'light',
+    },
+]
+
 // 全局主题状态
 const themeConfig = ref<ThemeConfig>(defaultTheme)
+const currentPortalTheme = ref<PortalThemeId>('glass-dark')
 
 /**
  * HEX 转 HSLA
@@ -135,6 +174,24 @@ function applyColorsToCSS(colors: ThemeConfig): void {
     }
 }
 
+function getPortalTheme(id: PortalThemeId) {
+    return portalThemePresets.find(theme => theme.id === id) || portalThemePresets[0]
+}
+
+function applyPortalThemeToDOM(id: PortalThemeId): void {
+    if (!import.meta.client) return
+    const theme = getPortalTheme(id)
+    document.documentElement.dataset.portalTheme = theme.id
+    document.documentElement.dataset.portalThemeMode = theme.mode
+    document.body.dataset.portalTheme = theme.id
+    document.body.dataset.portalThemeMode = theme.mode
+}
+
+function persistPortalTheme(id: PortalThemeId): void {
+    if (!import.meta.client) return
+    localStorage.setItem('portal-theme', id)
+}
+
 /**
  * 主题色 Composable
  */
@@ -143,8 +200,13 @@ export const useTheme = () => {
      * 从 API 获取主题配置
      */
     const fetchThemeConfig = async (): Promise<void> => {
-        themeConfig.value = defaultTheme
-        applyColorsToCSS(defaultTheme)
+        const savedPortalTheme = import.meta.client ? localStorage.getItem('portal-theme') : ''
+        const portalTheme = getPortalTheme(savedPortalTheme || currentPortalTheme.value)
+        currentPortalTheme.value = portalTheme.id
+        const colors = deriveColors(portalTheme.primaryColor)
+        themeConfig.value = colors
+        applyColorsToCSS(colors)
+        applyPortalThemeToDOM(portalTheme.id)
         // try {
         //     // 调用 API 获取主题色
         //     const response = await $fetch<ApiResponse<string>>('/api/theme/config')
@@ -176,12 +238,24 @@ export const useTheme = () => {
         applyColorsToCSS(themeConfig.value)
     }
 
+    const setPortalTheme = (themeId: PortalThemeId): void => {
+        const portalTheme = getPortalTheme(themeId)
+        currentPortalTheme.value = portalTheme.id
+        const colors = deriveColors(portalTheme.primaryColor)
+        themeConfig.value = colors
+        applyColorsToCSS(colors)
+        applyPortalThemeToDOM(portalTheme.id)
+        persistPortalTheme(portalTheme.id)
+    }
+
     /**
      * 重置为默认主题
      */
     const resetTheme = (): void => {
         themeConfig.value = defaultTheme
+        currentPortalTheme.value = 'glass-dark'
         applyColorsToCSS(defaultTheme)
+        applyPortalThemeToDOM(currentPortalTheme.value)
     }
 
     /**
@@ -189,8 +263,11 @@ export const useTheme = () => {
      */
     const initTheme = async (): Promise<void> => {
         // 首先应用默认主题
-        themeConfig.value = defaultTheme
-        applyColorsToCSS(defaultTheme)
+        const initialTheme = getPortalTheme(import.meta.client ? localStorage.getItem('portal-theme') || 'glass-dark' : 'glass-dark')
+        currentPortalTheme.value = initialTheme.id
+        themeConfig.value = deriveColors(initialTheme.primaryColor)
+        applyColorsToCSS(themeConfig.value)
+        applyPortalThemeToDOM(initialTheme.id)
 
         // 从 API 获取主题配置
         await fetchThemeConfig()
@@ -199,11 +276,15 @@ export const useTheme = () => {
     return {
         // 状态
         themeConfig,
+        currentPortalTheme,
+        portalThemePresets,
 
         // 方法
         fetchThemeConfig,
         updateTheme,
+        setPortalTheme,
         resetTheme,
-        initTheme
+        initTheme,
+        getPortalTheme
     }
 }

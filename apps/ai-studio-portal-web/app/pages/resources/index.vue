@@ -186,7 +186,7 @@ onMounted(loadResources)
   height: 36px;
   border: 1px solid var(--csdn-line);
   border-radius: 4px;
-  background: #fff;
+  background: var(--portal-surface-soft);
   color: var(--csdn-subtext);
   padding: 0 12px;
   display: inline-flex;
@@ -200,7 +200,7 @@ onMounted(loadResources)
 .tab-btn.active {
   color: var(--portal-secondary);
   background: var(--portal-gradient-soft);
-  border-color: #c7d2fe;
+  border-color: color-mix(in srgb, var(--color-primary) 48%, var(--portal-line));
   font-weight: 700;
 }
 

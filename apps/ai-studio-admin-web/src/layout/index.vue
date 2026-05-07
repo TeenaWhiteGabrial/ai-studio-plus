@@ -3,8 +3,8 @@
     <!-- 侧边栏 -->
     <el-aside :width="isCollapsed ? '64px' : '220px'" class="sidebar">
       <div class="logo" :class="{ collapsed: isCollapsed }">
-        <div class="logo-icon">AI</div>
-        <span v-if="!isCollapsed" class="logo-text">AI Studio</span>
+        <img class="logo-icon" :src="siteLogo" alt="logo">
+        <span v-if="!isCollapsed" class="logo-text">{{ siteName }}</span>
       </div>
       <el-menu
         :default-active="activeMenu"
@@ -94,6 +94,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useMenuStore } from '@/stores/menu'
 import { ElMessageBox } from 'element-plus'
+import { siteConfigApi } from '@/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -101,12 +102,27 @@ const userStore = useUserStore()
 const menuStore = useMenuStore()
 const isCollapsed = ref(false)
 const activeMenu = computed(() => route.path)
+const siteName = ref('AI Studio')
+const siteLogo = ref(`${import.meta.env.BASE_URL}ai-studio-logo.svg`)
 
 onMounted(async () => {
   if (menuStore.menus.length === 0) {
     await menuStore.fetchMenus()
   }
+  try {
+    const config = await siteConfigApi.get()
+    siteName.value = config.siteName || siteName.value
+    siteLogo.value = resolveAssetUrl(config.logoUrl)
+  } catch {
+    siteLogo.value = `${import.meta.env.BASE_URL}ai-studio-logo.svg`
+  }
 })
+
+function resolveAssetUrl(url?: string) {
+  if (!url) return `${import.meta.env.BASE_URL}ai-studio-logo.svg`
+  if (/^(https?:)?\/\//.test(url)) return url
+  return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
+}
 
 async function handleCommand(cmd: string) {
   if (cmd === 'logout') {
@@ -156,13 +172,8 @@ async function handleCommand(cmd: string) {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #4096ff, #1677ff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
+  display: block;
+  object-fit: cover;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(22, 119, 255, 0.4);
 }
@@ -293,4 +304,3 @@ async function handleCommand(cmd: string) {
   flex: 1;
 }
 </style>
-

@@ -21,10 +21,6 @@
           <span v-else class="user-avatar avatar-fallback">{{ avatarFallback }}</span>
           <span class="user-name">{{ displayName }}</span>
         </button>
-        <button class="rail-mini-btn" title="个人设置" @click="navigateTo('/profile/settings')">
-          <Icon name="material-symbols:settings-outline" size="21" />
-          <span>设置</span>
-        </button>
         <button class="rail-mini-btn" title="退出登录" @click="goLogout">
           <Icon name="material-symbols:logout" size="21" />
           <span>退出</span>
@@ -110,7 +106,10 @@ const channelItems = computed(() => [
   flex-direction: column;
   justify-content: space-between;
   border-right: 1px solid var(--csdn-line);
-  background: #fff;
+  background: var(--portal-surface-glass);
+  color: var(--portal-text);
+  box-shadow: var(--portal-shadow);
+  backdrop-filter: var(--portal-backdrop-filter);
 }
 
 .rail-nav,
@@ -123,7 +122,7 @@ const channelItems = computed(() => [
 }
 
 .rail-user {
-  border-top: 1px solid #f0f1f3;
+  border-top: 1px solid var(--portal-line);
 }
 
 .rail-item,
@@ -198,8 +197,8 @@ const channelItems = computed(() => [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--portal-secondary);
-  background: #eef4ff;
+  color: var(--color-primary-text);
+  background: var(--portal-gradient);
   font-size: 14px;
   font-weight: 800;
 }

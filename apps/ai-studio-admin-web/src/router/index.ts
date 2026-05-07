@@ -128,6 +128,18 @@ const adminRoutes = [
     meta: { title: '资源审核' },
   },
   {
+    path: '/admin/knowledge',
+    name: 'KnowledgeManage',
+    component: () => import('@/views/knowledge/index.vue'),
+    meta: { title: '知识库管理' },
+  },
+  {
+    path: '/admin/site-settings',
+    name: 'SiteSettings',
+    component: () => import('@/views/site-settings/index.vue'),
+    meta: { title: '网站设置' },
+  },
+  {
     path: '/admin/community/article',
     name: 'CommunityArticle',
     component: () => import('@/views/community/article.vue'),

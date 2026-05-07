@@ -30,7 +30,7 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-09-11',
   devtools: { enabled: true },
-  css: ['~/assets/css/csdn-theme.css', '~/assets/css/element-plus-theme.css', '~/assets/css/richText.css'],
+  css: ['~/assets/css/csdn-theme.css', '~/assets/css/portal-themes.css', '~/assets/css/element-plus-theme.css', '~/assets/css/richText.css'],
   icon: {
     collections: ['material-symbols'] // 明确指定集合
   },

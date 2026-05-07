@@ -2,8 +2,8 @@
   <el-container class="layout-container">
     <el-aside :width="sidebarWidth" class="sidebar" :class="{ collapsed: isCollapsed }">
       <div class="logo">
-        <span class="logo-text" v-if="!isCollapsed">AI Studio</span>
-        <span class="logo-icon" v-else>A</span>
+        <img class="logo-icon" :src="siteLogo" alt="logo">
+        <span class="logo-text" v-if="!isCollapsed">{{ siteName }}</span>
       </div>
       <el-menu
         :default-active="activeMenu"
@@ -90,10 +90,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import { getSiteConfig } from '@/api/site'
 import {
   HomeFilled,
   Key,
@@ -125,6 +126,24 @@ if (savedCollapsed === 'true') {
 const sidebarWidth = computed(() => isCollapsed.value ? '64px' : '200px')
 
 const activeMenu = computed(() => route.path)
+const siteName = ref('AI Studio')
+const siteLogo = ref(`${import.meta.env.BASE_URL}ai-studio-logo.svg`)
+
+onMounted(async () => {
+  try {
+    const config = await getSiteConfig()
+    siteName.value = config.siteName || siteName.value
+    siteLogo.value = resolveAssetUrl(config.logoUrl)
+  } catch {
+    siteLogo.value = `${import.meta.env.BASE_URL}ai-studio-logo.svg`
+  }
+})
+
+function resolveAssetUrl(url?: string) {
+  if (!url) return `${import.meta.env.BASE_URL}ai-studio-logo.svg`
+  if (/^(https?:)?\/\//.test(url)) return url
+  return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
+}
 
 // 切换侧边栏收起/展开
 function toggleSidebar() {
@@ -158,6 +177,7 @@ const handleCommand = (command: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   background: hsl(var(--secondary));
   border-bottom: 1px solid hsl(var(--border));
   transition: all 0.3s ease;
@@ -172,9 +192,11 @@ const handleCommand = (command: string) => {
 }
 
 .logo-icon {
-  color: hsl(var(--primary));
-  font-size: 24px;
-  font-weight: 600;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: 0 0 auto;
 }
 
 .sidebar.collapsed .logo {

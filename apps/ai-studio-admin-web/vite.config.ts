@@ -31,6 +31,11 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/knowledge-api': {
+        target: 'http://localhost:3002/ai-studio/v1/knowledge',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/knowledge-api/, ''),
+      },
     },
   },
 })

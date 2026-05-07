@@ -2,7 +2,59 @@ import type { SiteConfig } from '~~/shared/types/site'
 import { defaultSiteConfig } from '~~/shared/types/site'
 
 // 全局网站配置状态
-let siteConfig = reactive<SiteConfig>(defaultSiteConfig)
+const siteConfig = reactive<SiteConfig>({ ...defaultSiteConfig })
+
+interface SiteConfigPayload {
+    site_name?: string
+    siteName?: string
+    site_description?: string
+    siteDescription?: string
+    logo_url?: string
+    logoUrl?: string
+    icon_url?: string
+    iconUrl?: string
+    footer_text?: string
+    footerText?: string
+    footer_copyright?: string
+    footerCopyright?: string
+    footer_record?: string
+    footerRecord?: string
+    footer_links?: string
+    footerLinks?: string
+    contacts?: string
+}
+
+interface ApiResponse<T> {
+    code: number
+    message: string
+    data: T
+}
+
+function parseFooterLinks(value?: string) {
+    if (!value) return defaultSiteConfig.footerLinks || []
+    try {
+        const parsed = JSON.parse(value)
+        return Array.isArray(parsed) ? parsed : defaultSiteConfig.footerLinks || []
+    } catch {
+        return defaultSiteConfig.footerLinks || []
+    }
+}
+
+function toSiteConfig(payload?: SiteConfigPayload): SiteConfig {
+    if (!payload) return { ...defaultSiteConfig }
+    return {
+        ...defaultSiteConfig,
+        name: payload.site_name ?? payload.siteName ?? defaultSiteConfig.name,
+        description: payload.site_description ?? payload.siteDescription ?? defaultSiteConfig.description,
+        logo: payload.logo_url ?? payload.logoUrl ?? defaultSiteConfig.logo,
+        icon: payload.icon_url ?? payload.iconUrl ?? defaultSiteConfig.icon,
+        footerText: payload.footer_text ?? payload.footerText ?? defaultSiteConfig.footerText,
+        footerCopyright: payload.footer_copyright ?? payload.footerCopyright ?? defaultSiteConfig.footerCopyright,
+        footerRecord: payload.footer_record ?? payload.footerRecord ?? defaultSiteConfig.footerRecord,
+        footerLinks: parseFooterLinks(payload.footer_links ?? payload.footerLinks),
+        contacts: payload.contacts ?? defaultSiteConfig.contacts,
+    }
+}
 
 /**
  * 网站配置管理 Composable
@@ -12,38 +64,18 @@ export const useSite = () => {
      * 从 API 获取网站配置
      */
     const fetchSiteConfig = async (): Promise<void> => {
-        siteConfig = defaultSiteConfig
-        // try {
-        //     // 调用 API 获取网站配置
-        //     const response = await $fetch<ApiResponse<SiteConfig>>('/api/site/config')
-        //     console.log('获取网站配置:', response)
-        //     if (response.code === 200 && response.data) {
-        //         siteConfig = { ...defaultSiteConfig, ...response.data }
-
-        //         // 更新页面标题和描述
-        //         if (import.meta.client) {
-        //             document.title = siteConfig.name
-
-        //             // 更新 meta 描述
-        //             const metaDescription = document.querySelector('meta[name="description"]')
-        //             if (metaDescription && siteConfig.description) {
-        //                 metaDescription.setAttribute('content', siteConfig.description)
-        //             }
-
-        //             // 更新 favicon
-        //             if (siteConfig.icon) {
-        //                 const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-        //                 if (favicon) {
-        //                     favicon.href = siteConfig.icon
-        //                 }
-        //             }
-        //         }
-        //     }
-        // } catch (err) {
-        //     console.error('获取网站配置失败:', err)
-        //     // API 失败时使用默认配置
-        //     siteConfig = defaultSiteConfig
-        // }
+        const runtimeConfig = useRuntimeConfig()
+        try {
+            const response = await $fetch<ApiResponse<SiteConfigPayload>>('/portal/site/config', {
+                baseURL: runtimeConfig.public.apiBase,
+            })
+            if (response.code === 200) {
+                Object.assign(siteConfig, toSiteConfig(response.data))
+            }
+        } catch (err) {
+            console.error('获取网站配置失败:', err)
+            Object.assign(siteConfig, defaultSiteConfig)
+        }
     }
 
     /**
@@ -51,7 +83,7 @@ export const useSite = () => {
      */
     const initSiteConfig = async (): Promise<void> => {
         // 首先应用默认配置
-        siteConfig = defaultSiteConfig
+        Object.assign(siteConfig, defaultSiteConfig)
 
         // 从 API 获取配置
         await fetchSiteConfig()
@@ -60,7 +92,7 @@ export const useSite = () => {
     return {
         // 标题 
 
-        siteConfig: readonly(siteConfig),
+        siteConfig,
         // 方法
         fetchSiteConfig,
         initSiteConfig

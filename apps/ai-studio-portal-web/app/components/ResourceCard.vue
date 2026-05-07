@@ -67,7 +67,7 @@ function formatTime(value: string) {
 .resource-cover {
   width: 100%;
   height: 140px;
-  background: #f2f5fb;
+  background: var(--portal-surface-soft);
 }
 
 .resource-cover img {
@@ -83,7 +83,7 @@ function formatTime(value: string) {
   align-items: center;
   justify-content: center;
   color: var(--csdn-primary);
-  background: linear-gradient(145deg, #eaf2ff, #f9fbff);
+  background: var(--portal-gradient-soft);
 }
 
 .resource-body {

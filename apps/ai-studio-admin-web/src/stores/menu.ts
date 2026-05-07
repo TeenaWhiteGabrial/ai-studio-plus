@@ -46,12 +46,38 @@ function normalizeMenu(menu: MenuItem): MenuItem {
   }
 }
 
+const knowledgeMenu: MenuItem = {
+  id: 900001,
+  parentId: 0,
+  name: '知识库管理',
+  path: '/knowledge',
+  component: 'knowledge/index',
+  icon: 'Files',
+  sort: 90,
+  hidden: 0,
+}
+
+const siteSettingsMenu: MenuItem = {
+  id: 900002,
+  parentId: 0,
+  name: '网站设置',
+  path: '/site-settings',
+  component: 'site-settings/index',
+  icon: 'Setting',
+  sort: 91,
+  hidden: 0,
+}
+
 export const useMenuStore = defineStore('menu', () => {
   const menus = ref<MenuItem[]>([])
 
   async function fetchMenus() {
     const res = await request.get('/menu/tree') as any
-    menus.value = (res.data || []).map(normalizeMenu)
+    const remoteMenus = (res.data || []).map(normalizeMenu)
+    const additions = [knowledgeMenu, siteSettingsMenu].filter(
+      item => !remoteMenus.some((menu: MenuItem) => menu.path === item.path)
+    )
+    menus.value = [...remoteMenus, ...additions]
   }
 
   function reset() {

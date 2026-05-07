@@ -45,7 +45,7 @@ export interface KnowledgeSearchResult {
   }
 }
 
-const DEFAULT_KNOWLEDGE_API_BASE = 'http://localhost:3000/ai-studio/v1/knowledge'
+const DEFAULT_KNOWLEDGE_API_BASE = 'http://localhost:3002/ai-studio/v1/knowledge'
 
 function trimBaseUrl(url: string) {
   return String(url || '').replace(/\/$/, '')

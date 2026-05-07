@@ -83,6 +83,11 @@ export class LocalEmbeddingModel implements IEmbeddingModel {
 
     try {
       this.transformersModule = await import('@xenova/transformers');
+      const remoteHost = process.env.TRANSFORMERS_REMOTE_HOST || process.env.HF_ENDPOINT;
+      if (remoteHost && this.transformersModule.env) {
+        this.transformersModule.env.remoteHost = remoteHost.endsWith('/') ? remoteHost : `${remoteHost}/`;
+        logger.info(`Transformers remote host: ${this.transformersModule.env.remoteHost}`);
+      }
       this.progressCallback?.({ status: 'loading', message: 'Initializing model...', progress: 50 });
     } catch (error) {
       throw new Error(

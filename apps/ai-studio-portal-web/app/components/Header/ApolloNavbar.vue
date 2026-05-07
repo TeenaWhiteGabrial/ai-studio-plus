@@ -12,7 +12,7 @@
           v-model="keyword"
           class="search-input"
           type="text"
-          placeholder="搜索文章、Skill、Plugin"
+          placeholder="搜索知识库"
         >
         <button class="search-button" type="submit">
           <Icon name="material-symbols:search" size="18" />
@@ -25,10 +25,10 @@
           <span>知识库</span>
         </NuxtLink>
 
-        <a class="publish-link" :href="publishArticleUrl" target="_blank" rel="noopener">
-        <Icon name="material-symbols:edit-square-outline" size="18" />
-        <span>发布文章</span>
-        </a>
+        <button v-if="!authStore.token" class="publish-link" type="button" @click="navigateTo('/login')">
+          <Icon name="material-symbols:login" size="18" />
+          <span>登录</span>
+        </button>
       </div>
     </div>
   </header>
@@ -36,18 +36,13 @@
 
 <script setup lang="ts">
 const route = useRoute()
-const config = useRuntimeConfig()
 const { siteConfig } = useSite()
+const authStore = useAuthStore()
 
 const keyword = ref('')
 
-const publishArticleUrl = computed(() => {
-  const base = String(config.public.consoleBase || '').replace(/\/$/, '')
-  return `${base}/console/article/new/edit`
-})
-
 watch(
-  () => route.query.keyword,
+  () => route.query.query,
   value => {
     keyword.value = typeof value === 'string' ? value : ''
   },
@@ -58,13 +53,16 @@ function handleSearch() {
   const value = keyword.value.trim()
   if (!value) return
 
-  const path = route.path.startsWith('/resources') ? '/resources' : '/community'
+  if (!authStore.token) {
+    ElMessage.warning('请先登录后再搜索知识库')
+    navigateTo(`/login?redirect=${encodeURIComponent(route.fullPath)}`)
+    return
+  }
+
   navigateTo({
-    path,
+    path: '/knowledge',
     query: {
-      ...route.query,
-      keyword: value,
-      page: undefined
+      query: value
     }
   })
 }

@@ -32,12 +32,7 @@
       <div class="left-content">
         <div class="brand-section">
           <div class="logo-wrapper">
-            <div class="logo-circle">
-              <div class="logo-ring"></div>
-              <div class="logo-ring logo-ring-2"></div>
-              <div class="logo-ring logo-ring-3"></div>
-              <span class="logo-letter">A</span>
-            </div>
+            <img class="brand-logo-image" :src="brandLogo" alt="logo">
             <div class="logo-dots">
               <span></span><span></span><span></span>
             </div>
@@ -184,6 +179,7 @@ const loading = ref(false)
 const rememberMe = ref(false)
 const loginError = ref('')
 const form = ref({ username: '', password: '' })
+const brandLogo = `${import.meta.env.BASE_URL}ai-studio-logo.svg`
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
@@ -564,6 +560,15 @@ async function handleLogin() {
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.brand-logo-image {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  object-fit: cover;
+  filter: drop-shadow(0 18px 38px rgba(37, 99, 235, 0.38));
+  animation: logo-breathe 4s ease-in-out infinite;
 }
 
 .logo-circle {

@@ -1,6 +1,8 @@
 <template>
   <div class="portal-shell">
-    <HeaderApolloNavbar />
+    <div class="portal-theme-bg portal-theme-immersive-only"></div>
+    <div class="portal-theme-scanline portal-theme-immersive-only"></div>
+    <PortalLandingTopbar />
 
     <main class="csdn-container portal-main" :class="`mode-${layoutMode}`">
       <aside v-if="showLeftSidebar" class="portal-left">
@@ -20,19 +22,19 @@
       </aside>
     </main>
 
-    <FooterApollo />
+    <FooterApollo :transparent="isTransparentChrome" />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { TokenResponse, UserInfo } from '~~/shared/types/auth'
 
-import HeaderApolloNavbar from '~/components/Header/ApolloNavbar.vue'
 import LeftSidebar from '~/components/Sidebar/LeftSidebar.vue'
 import RightSidebar from '~/components/Sidebar/RightSidebar.vue'
 
 const route = useRoute()
 const config = useRuntimeConfig()
+const { currentPortalTheme, getPortalTheme } = useTheme()
 
 const normalizedPath = computed(() => route.path.replace(/^\//, ''))
 
@@ -47,6 +49,8 @@ const isDetailPage = computed(() => {
 const isEmbedPage = computed(() => {
   return /^(knowledge(?:\/|$))/.test(normalizedPath.value)
 })
+
+const isTransparentChrome = computed(() => getPortalTheme(currentPortalTheme.value).immersive)
 
 const layoutMode = computed<'three' | 'content-right' | 'single' | 'embed'>(() => {
   if (isEmbedPage.value) {
@@ -123,17 +127,48 @@ onMounted(async () => {
 
 <style scoped>
 .portal-shell {
+  position: relative;
   min-height: 100vh;
-  background: var(--csdn-bg);
+  overflow: hidden;
+  background: var(--portal-page-bg);
+  color: var(--portal-text);
+}
+
+.portal-theme-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(circle at center, black, transparent 72%);
+  pointer-events: none;
+}
+
+.portal-theme-scanline {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03) 0,
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+  pointer-events: none;
 }
 
 .portal-main {
+  position: relative;
+  z-index: 1;
   display: grid;
   width: 100%;
   max-width: none;
   grid-template-columns: 200px minmax(0, 1fr) 300px;
   gap: 12px;
-  padding: 0 12px 18px 0;
+  padding: 84px 12px 18px 12px;
   margin: 0;
 }
 
@@ -154,7 +189,7 @@ onMounted(async () => {
 .portal-left,
 .portal-right {
   position: sticky;
-  top: 56px;
+  top: 84px;
   align-self: start;
   max-height: calc(100vh - 56px);
   overflow-y: auto;
@@ -163,6 +198,16 @@ onMounted(async () => {
 
 .portal-left {
   overflow: visible;
+}
+
+.portal-main.mode-three .portal-left {
+  position: fixed;
+  top: 84px;
+  left: 12px;
+  bottom: 18px;
+  z-index: 2;
+  width: 200px;
+  max-height: none;
 }
 
 .portal-content,

@@ -1,5 +1,36 @@
 import type { Article, ArticleListQuery, ArticleListResponse } from '~~/shared/types/article'
 
+function normalizeArticle(item: Record<string, any>): Article {
+  return {
+    ...item,
+    id: String(item.id),
+    title: item.title || '',
+    content: item.content || '',
+    summary: item.summary || '',
+    coverImage: item.coverImage ?? item.cover_image ?? '',
+    authorId: String(item.authorId ?? item.author_id ?? ''),
+    authorName: item.authorName ?? item.author_name ?? item.realName ?? item.real_name ?? item.username ?? '',
+    authorAvatar: item.authorAvatar ?? item.author_avatar ?? '',
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    categoryId: item.categoryId ?? item.category_id,
+    categoryName: item.categoryName ?? item.category_name ?? '',
+    viewCount: item.viewCount ?? item.viewsCount ?? item.views_count ?? 0,
+    viewsCount: item.viewsCount ?? item.views_count ?? item.viewCount ?? 0,
+    likeCount: item.likeCount ?? item.likesCount ?? item.likes_count ?? 0,
+    likesCount: item.likesCount ?? item.likes_count ?? item.likeCount ?? 0,
+    commentCount: item.commentCount ?? item.commentsCount ?? item.comments_count ?? 0,
+    commentsCount: item.commentsCount ?? item.comments_count ?? item.commentCount ?? 0,
+    favoriteCount: item.favoriteCount ?? item.favorite_count ?? 0,
+    status: item.status,
+    createTime: item.createTime ?? item.create_time ?? item.createdAt ?? item.created_at ?? '',
+    createdAt: item.createdAt ?? item.created_at ?? item.createTime ?? item.create_time ?? '',
+    updateTime: item.updateTime ?? item.update_time ?? item.updatedAt ?? item.updated_at ?? '',
+    updatedAt: item.updatedAt ?? item.updated_at ?? item.updateTime ?? item.update_time ?? '',
+    publishTime: item.publishTime ?? item.publish_time ?? item.publishedAt ?? item.published_at ?? '',
+    publishedAt: item.publishedAt ?? item.published_at ?? item.publishTime ?? item.publish_time ?? '',
+  } as Article
+}
+
 export function useArticle() {
   const config = useRuntimeConfig()
   const authStore = useAuthStore()
@@ -33,7 +64,7 @@ export function useArticle() {
       })
       return {
         total: res?.total || 0,
-        records: res?.records || []
+        records: (res?.records || []).map(item => normalizeArticle(item as Record<string, any>))
       }
     } catch (error) {
       if (isUnauthorized(error)) {
@@ -44,11 +75,12 @@ export function useArticle() {
   }
 
   async function getArticleDetail(id: string): Promise<Article> {
-    return await $fetch<Article>(`/portal/article/${id}`, {
+    const res = await $fetch<Record<string, any>>(`/portal/article/${id}`, {
       method: 'GET',
       baseURL: config.public.apiBase,
       headers: getAuthHeaders()
     })
+    return normalizeArticle(res)
   }
 
   async function likeArticle(id: string): Promise<void> {

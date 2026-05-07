@@ -497,7 +497,6 @@ export class OfficeParserAdapter implements IDocumentParser {
 
           // 运行 OCR - 添加超时和错误处理
           const result = await Promise.race([
-          const result = await Promise.race([
             Tesseract.recognize(imagePath, ocrLanguage, {
               logger: () => {},
               tessdata: process.env.TESSDATA_PREFIX || './lib/tessdata',
@@ -510,7 +509,6 @@ export class OfficeParserAdapter implements IDocumentParser {
           const text = result?.data?.text?.trim() || '';
           if (text && text.length > 5) {
             // 检测图片类型
-            const imageType = this.detectImageType(text);
             const imageType = this.detectImageType(text);
             ocrTextBlocks.push({
               text,

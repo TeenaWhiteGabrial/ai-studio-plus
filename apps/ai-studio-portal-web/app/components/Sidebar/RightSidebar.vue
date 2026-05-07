@@ -111,6 +111,7 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   font-weight: 800;
+  color: var(--portal-text);
 }
 
 .rank-list,
@@ -139,8 +140,8 @@ onMounted(() => {
   border-radius: 4px;
   text-align: center;
   font-size: 12px;
-  color: #7a7c88;
-  background: #f0f1f5;
+  color: var(--portal-muted);
+  background: var(--portal-surface-soft);
 }
 
 .rank-index.top {
@@ -168,7 +169,7 @@ onMounted(() => {
   height: 40px;
   border: 1px solid var(--csdn-line);
   border-radius: 4px;
-  background: #fff;
+  background: var(--portal-surface-soft);
   color: var(--csdn-subtext);
   display: inline-flex;
   align-items: center;
@@ -179,7 +180,7 @@ onMounted(() => {
 }
 
 .shortcut-item:hover {
-  border-color: #c7d2fe;
+  border-color: color-mix(in srgb, var(--color-primary) 48%, var(--portal-line));
   color: var(--portal-secondary);
   background: var(--portal-gradient-soft);
 }

@@ -8,6 +8,7 @@
     "dev:admin": "pnpm --filter ai-studio-web dev",
     "dev:console": "pnpm --filter ai-studio-console-web dev",
     "dev:portal": "pnpm --filter ai-studio-portal-web dev",
+    "dev:knowledge": "pnpm --filter @knowledgebase/doc-manager dev",
     "dev:all": "pnpm -r --parallel -filter ai-studio-web -filter ai-studio-console-web -filter ai-studio-portal-web dev",
     "build:admin": "pnpm --filter ai-studio-web build",
     "build:console": "pnpm --filter ai-studio-console-web build",
