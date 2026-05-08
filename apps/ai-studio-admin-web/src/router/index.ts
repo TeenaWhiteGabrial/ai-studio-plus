@@ -62,34 +62,10 @@ const adminRoutes = [
     meta: { title: '阅读教程' },
   },
   {
-    path: '/admin/output/my',
-    name: 'MyOutput',
-    component: () => import('@/views/output/my.vue'),
-    meta: { title: '我的产出' },
-  },
-  {
-    path: '/admin/output/history',
-    name: 'OutputHistory',
-    component: () => import('@/views/output/history.vue'),
-    meta: { title: '产出历史' },
-  },
-  {
     path: '/admin/output/admin',
     name: 'AdminOutput',
     component: () => import('@/views/output/admin.vue'),
     meta: { title: '全员产出' },
-  },
-  {
-    path: '/admin/stats/department',
-    name: 'DepartmentStats',
-    component: () => import('@/views/stats/DepartmentStats.vue'),
-    meta: { title: '部门统计' },
-  },
-  {
-    path: '/admin/stats/project',
-    name: 'ProjectStats',
-    component: () => import('@/views/stats/ProjectStats.vue'),
-    meta: { title: '项目统计' },
   },
   {
     path: '/admin/system/user',
@@ -140,22 +116,28 @@ const adminRoutes = [
     meta: { title: '网站设置' },
   },
   {
+    path: '/admin/message/announcement',
+    name: 'AnnouncementManage',
+    component: () => import('@/views/message/announcement.vue'),
+    meta: { title: '公告管理' },
+  },
+  {
+    path: '/admin/message/notification',
+    name: 'NotificationRecord',
+    component: () => import('@/views/message/notification.vue'),
+    meta: { title: '通知记录' },
+  },
+  {
+    path: '/admin/message/rule',
+    name: 'NotificationRule',
+    component: () => import('@/views/message/rule.vue'),
+    meta: { title: '通知规则' },
+  },
+  {
     path: '/admin/community/article',
     name: 'CommunityArticle',
     component: () => import('@/views/community/article.vue'),
     meta: { title: '文章管理' },
-  },
-  {
-    path: '/admin/community/question',
-    name: 'CommunityQuestion',
-    component: () => import('@/views/community/question.vue'),
-    meta: { title: '问题管理' },
-  },
-  {
-    path: '/admin/community/answer',
-    name: 'CommunityAnswer',
-    component: () => import('@/views/community/answer.vue'),
-    meta: { title: '回答管理' },
   },
   {
     path: '/admin/community/comment',

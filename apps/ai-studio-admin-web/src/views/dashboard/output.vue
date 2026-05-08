@@ -26,7 +26,7 @@
         <el-select v-model="selectedProjectNames" multiple clearable filterable collapse-tags placeholder="项目">
           <el-option v-for="project in projectOptions" :key="project" :label="project" :value="project" />
         </el-select>
-        <el-select v-model="selectedUserIds" multiple clearable filterable collapse-tags placeholder="随机或指定成员">
+        <el-select v-model="selectedUserIds" multiple clearable filterable collapse-tags placeholder="指定成员">
           <el-option
             v-for="user in filteredUsers"
             :key="user.id"
@@ -38,10 +38,6 @@
       </div>
 
       <div class="filter-actions">
-        <el-button @click="pickRandomUsers">
-          <el-icon><User /></el-icon>
-          随机选择 5 人
-        </el-button>
         <el-button @click="resetFilters">
           <el-icon><Refresh /></el-icon>
           重置
@@ -66,7 +62,7 @@
         <section class="chart-grid overview-grid">
           <div class="panel wide">
             <div class="panel-header">
-              <h3>{{ metricScope === 'frontend' ? '前端产出趋势' : '产出趋势' }}</h3>
+              <h3>{{ metricScope === 'frontend' ? '前端产出趋势' : metricScope === 'backend' ? '后端产出趋势' : '产出趋势' }}</h3>
               <span>按时间聚合</span>
             </div>
             <v-chart v-if="records.length" class="chart large" :option="trendOption" autoresize />
@@ -103,7 +99,7 @@
         <section class="chart-grid">
           <div class="panel wide">
             <div class="panel-header">
-              <h3>部门排行</h3>
+              <h3>部门数据</h3>
               <span>按 {{ primaryMetricLabel }}</span>
             </div>
             <v-chart v-if="departmentSummaries.length" class="chart large" :option="departmentBarOption" autoresize />
@@ -111,7 +107,7 @@
           </div>
           <div class="panel">
             <div class="panel-header">
-              <h3>团队排行</h3>
+              <h3>团队数据</h3>
               <span>按 {{ primaryMetricLabel }}</span>
             </div>
             <v-chart v-if="teamSummaries.length" class="chart" :option="teamBarOption" autoresize />
@@ -136,7 +132,7 @@
         <section class="chart-grid">
           <div class="panel wide">
             <div class="panel-header">
-              <h3>项目排行</h3>
+              <h3>项目数据</h3>
               <span>按 {{ primaryMetricLabel }}</span>
             </div>
             <v-chart v-if="projectSummaries.length" class="chart large" :option="projectBarOption" autoresize />
@@ -144,8 +140,8 @@
           </div>
           <div class="panel">
             <div class="panel-header">
-              <h3>人员排行</h3>
-              <span>可随机选择人员查看</span>
+              <h3>人员数据</h3>
+              <span>可指定人员查看</span>
             </div>
             <v-chart v-if="userSummaries.length" class="chart" :option="userBarOption" autoresize />
             <el-empty v-else description="暂无人员数据" />
@@ -183,20 +179,20 @@
               <el-table-column prop="dataModelDocCount" label="数据模型" width="100" align="center" />
               <el-table-column prop="apiDocCount" label="API 文档" width="100" align="center" />
             </el-table-column>
-            <el-table-column v-if="metricScope === 'all'" label="后端" align="center">
+            <el-table-column v-if="metricScope === 'all' || metricScope === 'backend'" label="后端" align="center">
               <el-table-column prop="javaCodeLines" label="Java 行数" width="110" align="center" />
               <el-table-column prop="apiCount" label="接口" width="80" align="center" />
               <el-table-column prop="coreBizServiceCount" label="服务" width="80" align="center" />
               <el-table-column prop="entityCount" label="实体" width="80" align="center" />
             </el-table-column>
-            <el-table-column label="前端" align="center">
+            <el-table-column v-if="metricScope === 'all' || metricScope === 'frontend'" label="前端" align="center">
               <el-table-column prop="frontendComponentCount" label="组件" width="80" align="center" />
               <el-table-column prop="frontendPageCount" label="页面" width="80" align="center" />
               <el-table-column prop="frontendCommonComponentCount" label="公共组件" width="100" align="center" />
               <el-table-column prop="tsCodeLines" label="TS/JS 行数" width="110" align="center" />
               <el-table-column prop="frontendCodeLines" label="前端行数" width="110" align="center" />
             </el-table-column>
-            <el-table-column v-if="metricScope === 'all'" label="其他" align="center">
+            <el-table-column v-if="metricScope === 'all' || metricScope === 'backend'" label="其他" align="center">
               <el-table-column prop="sqlScriptCount" label="SQL" width="80" align="center" />
               <el-table-column prop="testFileCount" label="测试" width="80" align="center" />
               <el-table-column prop="totalCodeLines" label="总代码" width="110" align="center" />
@@ -216,12 +212,12 @@ import { use } from 'echarts/core'
 import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { Refresh, Search, User } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import { departmentApi, outputApi, teamApi, userApi } from '@/api'
 
 use([BarChart, CanvasRenderer, GridComponent, LegendComponent, LineChart, PieChart, TooltipComponent])
 
-type MetricScope = 'all' | 'frontend'
+type MetricScope = 'all' | 'frontend' | 'backend'
 type NumberKey = typeof numberFields[number]
 
 interface OutputRecord {
@@ -317,6 +313,16 @@ const frontendMetricDefs = [
   { key: 'frontendCodeLines', label: '前端行数' },
 ] as const
 
+const backendMetricDefs = [
+  { key: 'javaFileCount', label: 'Java 文件' },
+  { key: 'javaCodeLines', label: 'Java 行数' },
+  { key: 'apiCount', label: '接口数' },
+  { key: 'coreBizServiceCount', label: '核心服务' },
+  { key: 'entityCount', label: '实体数量' },
+  { key: 'sqlScriptCount', label: 'SQL 脚本' },
+  { key: 'testFileCount', label: '测试文件' },
+] as const
+
 const palette = ['#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#db2777', '#0891b2', '#ea580c']
 
 const loading = ref(false)
@@ -336,12 +342,29 @@ const projectOptions = ref<string[]>([])
 const metricScopeOptions = [
   { label: '全部指标', value: 'all' },
   { label: '仅前端指标', value: 'frontend' },
+  { label: '仅后端指标', value: 'backend' },
 ]
 
-const metricScopeLabel = computed(() => metricScope.value === 'frontend' ? '仅前端指标' : '全部指标')
-const metricDefs = computed(() => metricScope.value === 'frontend' ? frontendMetricDefs : allMetricDefs)
-const primaryMetricKey = computed(() => metricScope.value === 'frontend' ? 'frontendCodeLines' : 'totalCodeLines')
-const primaryMetricLabel = computed(() => metricScope.value === 'frontend' ? '前端代码行数' : '总代码行数')
+const metricScopeLabel = computed(() => {
+  if (metricScope.value === 'frontend') return '仅前端指标'
+  if (metricScope.value === 'backend') return '仅后端指标'
+  return '全部指标'
+})
+const metricDefs = computed(() => {
+  if (metricScope.value === 'frontend') return frontendMetricDefs
+  if (metricScope.value === 'backend') return backendMetricDefs
+  return allMetricDefs
+})
+const primaryMetricKey = computed(() => {
+  if (metricScope.value === 'frontend') return 'frontendCodeLines'
+  if (metricScope.value === 'backend') return 'javaCodeLines'
+  return 'totalCodeLines'
+})
+const primaryMetricLabel = computed(() => {
+  if (metricScope.value === 'frontend') return '前端代码行数'
+  if (metricScope.value === 'backend') return 'Java 代码行数'
+  return '总代码行数'
+})
 
 const filteredTeams = computed(() => {
   if (!selectedDeptIds.value.length) return teams.value
@@ -351,8 +374,8 @@ const filteredTeams = computed(() => {
 const filteredUsers = computed(() => users.value.filter((user) => {
   const deptId = user.dept_id ?? user.deptId
   const teamId = user.team_id ?? user.teamId
-  const deptMatched = !selectedDeptIds.value.length || selectedDeptIds.value.includes(deptId)
-  const teamMatched = !selectedTeamIds.value.length || selectedTeamIds.value.includes(teamId)
+  const deptMatched = !selectedDeptIds.value.length || (deptId != null && selectedDeptIds.value.includes(deptId))
+  const teamMatched = !selectedTeamIds.value.length || (teamId != null && selectedTeamIds.value.includes(teamId))
   return deptMatched && teamMatched
 }))
 
@@ -365,6 +388,14 @@ const metricCards = computed(() => {
       { label: 'TS/JS 行数', value: totals.value.tsCodeLines, help: 'ts_code_lines' },
       { label: '前端组件', value: totals.value.frontendComponentCount, help: 'component_count' },
       { label: '前端页面', value: totals.value.frontendPageCount, help: 'page_count' },
+    ]
+  }
+  if (metricScope.value === 'backend') {
+    return [
+      { label: 'Java 代码行数', value: totals.value.javaCodeLines, help: 'java_code_lines' },
+      { label: '接口数量', value: totals.value.apiCount, help: 'api_count' },
+      { label: '核心服务', value: totals.value.coreBizServiceCount, help: 'core_biz_service_count' },
+      { label: '实体数量', value: totals.value.entityCount, help: 'entity_count' },
     ]
   }
   return [
@@ -387,7 +418,7 @@ const departmentSummaries = computed(() => {
     const key = record.department || '未归属部门'
     addToSummary(map, key, record, { id: record.deptId, name: key })
   })
-  return sortSummaries(Array.from(map.values()))
+  return sortSummaries(Array.from(map.values()), 'name', false)
 })
 
 const teamSummaries = computed(() => {
@@ -396,7 +427,7 @@ const teamSummaries = computed(() => {
     const key = record.teamName || '未归属团队'
     addToSummary(map, key, record, { id: record.teamId, name: key })
   })
-  return sortSummaries(Array.from(map.values()))
+  return sortSummaries(Array.from(map.values()), 'name', false)
 })
 
 const projectSummaries = computed(() => {
@@ -405,7 +436,7 @@ const projectSummaries = computed(() => {
     const key = record.projectRootName || '未归属项目'
     addToSummary(map, key, record, { name: key })
   })
-  return sortSummaries(Array.from(map.values()))
+  return sortSummaries(Array.from(map.values()), 'name', false)
 })
 
 const userSummaries = computed(() => {
@@ -419,7 +450,7 @@ const userSummaries = computed(() => {
       teamName: record.teamName,
     })
   })
-  return sortSummaries(Array.from(map.values()))
+  return sortSummaries(Array.from(map.values()), 'name', false)
 })
 
 const orgTableData = computed(() => [
@@ -440,7 +471,13 @@ const trendOption = computed(() => ({
         lineSeries('TS/JS 行数', dailySummaries.value.map((item) => item.tsCodeLines)),
         lineSeries('前端组件', dailySummaries.value.map((item) => item.frontendComponentCount)),
       ]
-    : [
+    : metricScope.value === 'backend'
+      ? [
+          lineSeries('Java 行数', dailySummaries.value.map((item) => item.javaCodeLines)),
+          lineSeries('接口数', dailySummaries.value.map((item) => item.apiCount)),
+          lineSeries('核心服务', dailySummaries.value.map((item) => item.coreBizServiceCount)),
+        ]
+      : [
         lineSeries('总代码', dailySummaries.value.map((item) => item.totalCodeLines)),
         lineSeries('文档数', dailySummaries.value.map((item) => item.prdDocCount + item.dataModelDocCount + item.apiDocCount)),
         lineSeries('接口数', dailySummaries.value.map((item) => item.apiCount)),
@@ -473,10 +510,10 @@ const metricBarOption = computed(() => ({
 }))
 
 const projectPieOption = computed(() => pieOption('项目占比', projectSummaries.value))
-const departmentBarOption = computed(() => rankingBarOption(departmentSummaries.value, '部门'))
-const teamBarOption = computed(() => rankingBarOption(teamSummaries.value, '团队'))
-const projectBarOption = computed(() => rankingBarOption(projectSummaries.value, '项目'))
-const userBarOption = computed(() => rankingBarOption(userSummaries.value, '人员'))
+const departmentBarOption = computed(() => summaryBarOption(departmentSummaries.value, '部门'))
+const teamBarOption = computed(() => summaryBarOption(teamSummaries.value, '团队'))
+const projectBarOption = computed(() => summaryBarOption(projectSummaries.value, '项目'))
+const userBarOption = computed(() => summaryBarOption(userSummaries.value, '人员'))
 
 function lineSeries(name: string, data: number[]) {
   return { name, type: 'line', smooth: true, symbolSize: 6, areaStyle: { opacity: 0.08 }, data }
@@ -499,7 +536,7 @@ function pieOption(name: string, data: SummaryItem[]) {
   }
 }
 
-function rankingBarOption(data: SummaryItem[], label: string) {
+function summaryBarOption(data: SummaryItem[], label: string) {
   const rows = data.slice(0, 12)
   return {
     color: [palette[0]],
@@ -508,7 +545,6 @@ function rankingBarOption(data: SummaryItem[], label: string) {
     xAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f7' } } },
     yAxis: {
       type: 'category',
-      inverse: true,
       data: rows.map((item) => item.name),
       axisLabel: { formatter: shortName },
     },
@@ -622,17 +658,6 @@ function handleDeptChange() {
   selectedUserIds.value = selectedUserIds.value.filter((id) => filteredUsers.value.some((user) => user.id === id))
 }
 
-function pickRandomUsers() {
-  const pool = [...filteredUsers.value]
-  const selected: number[] = []
-  while (pool.length && selected.length < 5) {
-    const index = Math.floor(Math.random() * pool.length)
-    const [user] = pool.splice(index, 1)
-    selected.push(user.id)
-  }
-  selectedUserIds.value = selected
-}
-
 function resetFilters() {
   selectedDeptIds.value = []
   selectedTeamIds.value = []
@@ -726,9 +751,32 @@ onMounted(async () => {
 }
 
 .filter-grid {
-  display: grid;
-  grid-template-columns: minmax(280px, 1.5fr) repeat(5, minmax(160px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
+}
+
+.filter-grid > * {
+  flex: 1 1 180px;
+  min-width: 0;
+  max-width: 260px;
+}
+
+.filter-grid > :deep(.el-date-editor) {
+  flex-basis: 280px;
+  max-width: 320px;
+}
+
+.filter-grid > :deep(.el-segmented) {
+  flex: 0 1 260px;
+  min-width: 230px;
+  max-width: 100%;
+}
+
+.filter-grid :deep(.el-select),
+.filter-grid :deep(.el-date-editor) {
+  width: 100%;
 }
 
 .filter-actions {
@@ -832,7 +880,6 @@ onMounted(async () => {
 }
 
 @media (max-width: 1280px) {
-  .filter-grid,
   .chart-grid,
   .overview-grid {
     grid-template-columns: 1fr 1fr;
@@ -840,11 +887,17 @@ onMounted(async () => {
 }
 
 @media (max-width: 900px) {
-  .filter-grid,
   .chart-grid,
   .overview-grid,
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .filter-grid > *,
+  .filter-grid > :deep(.el-date-editor),
+  .filter-grid > :deep(.el-segmented) {
+    flex-basis: 100%;
+    max-width: 100%;
   }
 
   .filter-actions {

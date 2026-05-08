@@ -164,8 +164,11 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void assignRoles(Long userId, List<Long> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            throw new BusinessException(400, "at least one role is required");
+        }
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
-        for (Long roleId : roleIds) {
+        for (Long roleId : roleIds.stream().distinct().toList()) {
             SysUserRole ur = new SysUserRole();
             ur.setUserId(userId);
             ur.setRoleId(roleId);

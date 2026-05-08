@@ -10,6 +10,7 @@ import com.aistudio.service.entity.PluginVersion;
 import com.aistudio.service.mapper.PluginMapper;
 import com.aistudio.service.mapper.PluginVersionMapper;
 import com.aistudio.service.service.OssService;
+import com.aistudio.service.service.NotificationService;
 import com.aistudio.service.service.PluginService;
 import com.aistudio.service.util.EmojiFilter;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -33,6 +34,7 @@ public class PluginServiceImpl implements PluginService {
     private final PluginMapper pluginMapper;
     private final PluginVersionMapper versionMapper;
     private final OssService ossService;
+    private final NotificationService notificationService;
 
     @Override
     public PageResult<Plugin> listPlugins(int page, int size, String keyword, String category, Integer status) {
@@ -108,6 +110,22 @@ public class PluginServiceImpl implements PluginService {
         plugin.setReviewTime(LocalDateTime.now());
         plugin.setReviewComment(request.getReviewComment());
         pluginMapper.updateById(plugin);
+        notifyResourceAuditResult(plugin.getCreatorId(), "Plugin", plugin.getName(), id, request.getStatus());
+    }
+
+    private void notifyResourceAuditResult(Long creatorId, String resourceType, String resourceName, Long resourceId, Integer status) {
+        if (creatorId == null || status == null) return;
+        if (status == 1) {
+            notificationService.createRuleNotification(
+                    creatorId, "RESOURCE_APPROVED", "资源审核通过",
+                    "你的" + resourceType + "《" + resourceName + "》已审核通过。",
+                    resourceId, resourceType.toLowerCase(), "RESOURCE_APPROVED:" + resourceType + ":" + resourceId + ":" + status);
+        } else if (status == 2) {
+            notificationService.createRuleNotification(
+                    creatorId, "RESOURCE_TAKEN_DOWN", "资源未通过或已下架",
+                    "你的" + resourceType + "《" + resourceName + "》未通过审核或已被下架。",
+                    resourceId, resourceType.toLowerCase(), "RESOURCE_TAKEN_DOWN:" + resourceType + ":" + resourceId + ":" + status);
+        }
     }
 
     @Override

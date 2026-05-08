@@ -127,24 +127,9 @@ const adminMenus = [
   },
   {
     id: 3,
-    name: '产出管理',
-    path: '/output',
+    name: '全员产出',
+    path: '/output/admin',
     icon: 'Document',
-    children: [
-      { id: 31, name: '我的产出', path: '/output/my', icon: 'EditPen' },
-      { id: 32, name: '产出历史', path: '/output/history', icon: 'Clock' },
-      { id: 33, name: '全员产出', path: '/output/admin', icon: 'List' },
-    ],
-  },
-  {
-    id: 4,
-    name: '统计分析',
-    path: '/stats',
-    icon: 'PieChart',
-    children: [
-      { id: 41, name: '部门统计', path: '/stats/department', icon: 'OfficeBuilding' },
-      { id: 42, name: '项目统计', path: '/stats/project', icon: 'Histogram' },
-    ],
   },
   {
     id: 5,
@@ -172,14 +157,23 @@ const adminMenus = [
   },
   {
     id: 7,
+    name: '消息管理',
+    path: '/message',
+    icon: 'Bell',
+    children: [
+      { id: 71, name: '公告管理', path: '/message/announcement', icon: 'Notification' },
+      { id: 72, name: '通知记录', path: '/message/notification', icon: 'Bell' },
+      { id: 73, name: '通知规则', path: '/message/rule', icon: 'SetUp' },
+    ],
+  },
+  {
+    id: 8,
     name: '社区管理',
     path: '/community',
     icon: 'ChatDotRound',
     children: [
-      { id: 71, name: '文章管理', path: '/community/article', icon: 'Document' },
-      { id: 72, name: '问题管理', path: '/community/question', icon: 'QuestionFilled' },
-      { id: 73, name: '回答管理', path: '/community/answer', icon: 'ChatLineRound' },
-      { id: 74, name: '评论管理', path: '/community/comment', icon: 'ChatSquare' },
+      { id: 81, name: '文章管理', path: '/community/article', icon: 'Document' },
+      { id: 82, name: '评论管理', path: '/community/comment', icon: 'ChatSquare' },
     ],
   },
 ]

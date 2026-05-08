@@ -136,9 +136,11 @@
 
     <!-- 分配角色弹窗 -->
     <el-dialog v-model="roleDialogVisible" title="分配角色" width="400px">
-      <el-radio-group v-model="selectedRole">
-        <el-radio v-for="role in filteredRoles" :key="role.id" :value="role.id">{{ role.role_name }}</el-radio>
-      </el-radio-group>
+      <el-checkbox-group v-model="selectedRoleIds" class="role-checkbox-group">
+        <el-checkbox v-for="role in filteredRoles" :key="role.id" :value="role.id">
+          {{ role.role_name }}
+        </el-checkbox>
+      </el-checkbox-group>
       <template #footer>
         <el-button @click="roleDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleAssignRole">确定</el-button>
@@ -269,7 +271,7 @@ const uploadingAvatar = ref(false)
 const list = ref<any[]>([]), total = ref(0)
 const dialogVisible = ref(false), editId = ref<number | null>(null)
 const roleDialogVisible = ref(false), currentUserId = ref<number | null>(null)
-const allRoles = ref<any[]>([]), selectedRole = ref<number | undefined>(undefined)
+const allRoles = ref<any[]>([]), selectedRoleIds = ref<number[]>([])
 const formRef = ref<FormInstance>()
 const query = reactive({ page: 1, size: 10, keyword: '', dept_id: null as number | null })
 const form = reactive({ username: '', git_name: '', password: '', real_name: '', dept_id: null as number | null, email: '', avatar: '', status: 1, team_id: null as number | null })
@@ -486,16 +488,15 @@ async function openAssignRole(row: any) {
   currentUserId.value = row.id
   const res = await userApi.roles() as any
   allRoles.value = res.data
-  // 单选：取第一个角色ID，如果没有则设为 null
-  selectedRole.value = row.role_ids && row.role_ids.length > 0 ? row.role_ids[0] : null
+  selectedRoleIds.value = row.role_ids ? row.role_ids.filter((roleId: number) => roleId !== 1) : []
   roleDialogVisible.value = true
 }
 async function handleAssignRole() {
-  if (!selectedRole.value) {
-    ElMessage.warning('请选择一个角色')
+  if (!selectedRoleIds.value.length) {
+    ElMessage.warning('请至少选择一个角色')
     return
   }
-  await userApi.assignRoles(currentUserId.value!, [selectedRole.value])
+  await userApi.assignRoles(currentUserId.value!, selectedRoleIds.value)
   ElMessage.success('分配成功'); roleDialogVisible.value = false
   loadList()
 }
@@ -717,6 +718,12 @@ async function handleImport() {
 .role-tag {
   margin-right: 4px;
   margin-bottom: 2px;
+}
+
+.role-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .text-gray {

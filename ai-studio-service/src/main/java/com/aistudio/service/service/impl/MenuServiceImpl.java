@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,7 +34,7 @@ public class MenuServiceImpl implements MenuService {
     @Override
     public List<MenuTreeVO> getMenuTree(Long userId) {
         List<SysMenu> menus = menuMapper.selectByUserId(userId);
-        List<MenuTreeVO> vos = menus.stream().map(m -> {
+        List<MenuTreeVO> vos = dedupeMenus(menus).stream().map(m -> {
             MenuTreeVO vo = new MenuTreeVO();
             BeanUtils.copyProperties(m, vo);
             return vo;
@@ -143,6 +145,16 @@ public class MenuServiceImpl implements MenuService {
             }
         }
         return result;
+    }
+
+    private List<SysMenu> dedupeMenus(List<SysMenu> menus) {
+        Map<String, SysMenu> map = new LinkedHashMap<>();
+        for (SysMenu menu : menus) {
+            String key = (menu.getAppCode() == null ? "" : menu.getAppCode()) + "|"
+                    + (menu.getPath() == null || menu.getPath().isBlank() ? String.valueOf(menu.getId()) : menu.getPath());
+            map.putIfAbsent(key, menu);
+        }
+        return new ArrayList<>(map.values());
     }
 
     private List<RoleMenuTreeVO> buildRoleMenuTree(List<RoleMenuTreeVO> all, Long parentId) {

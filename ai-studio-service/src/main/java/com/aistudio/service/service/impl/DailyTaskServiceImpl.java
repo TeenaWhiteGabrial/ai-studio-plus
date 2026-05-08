@@ -12,6 +12,7 @@ import com.aistudio.service.mapper.MemberOutputMapper;
 import com.aistudio.service.mapper.ProjectMapper;
 import com.aistudio.service.mapper.SysUserMapper;
 import com.aistudio.service.service.DailyTaskService;
+import com.aistudio.service.service.NotificationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class DailyTaskServiceImpl implements DailyTaskService {
     private final MemberOutputMapper memberOutputMapper;
     private final ProjectMapper projectMapper;
     private final SysUserMapper userMapper;
+    private final NotificationService notificationService;
 
     @Override
     public List<DailyTask> list(Long userId, LocalDate startDate, LocalDate endDate, String status) {
@@ -68,6 +70,15 @@ public class DailyTaskServiceImpl implements DailyTaskService {
         applyRequest(task, request);
         dailyTaskMapper.insert(task);
         fillOutput(task);
+        notificationService.createRuleNotification(
+                userId,
+                "TASK_ASSIGNED",
+                "任务已登记到你名下",
+                "你有一条新的每日任务：" + task.getContent(),
+                task.getId(),
+                "daily_task",
+                "TASK_ASSIGNED:" + task.getId() + ":" + userId
+        );
         return task;
     }
 

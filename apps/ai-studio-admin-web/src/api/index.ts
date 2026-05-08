@@ -335,6 +335,8 @@ export const roleApi = {
   list: () => request.get('/role/list'),
   menus: (id: number) => request.get(`/role/${id}/menus`),
   updateMenus: (id: number, menuIds: number[]) => request.post(`/role/${id}/menus`, menuIds),
+  users: (id: number) => request.get(`/role/${id}/users`),
+  updateUsers: (id: number, userIds: number[]) => request.post(`/role/${id}/users`, userIds),
 }
 
 export interface AdminMenu {
@@ -424,6 +426,30 @@ export const userApi = {
   updateStatus: (id: number, status: number) => request.post(`/user/${id}/status`, null, { params: { status } }),
 }
 
+export const announcementApi = {
+  list: (params: any) => request.get('/announcement/list', { params }),
+  create: (data: any) => request.post('/announcement', data),
+  update: (id: number, data: any) => request.post(`/announcement/${id}`, data),
+  publish: (id: number) => request.post(`/announcement/${id}/publish`),
+  offline: (id: number) => request.post(`/announcement/${id}/offline`),
+  delete: (id: number) => request.post(`/announcement/${id}/delete`),
+}
+
+export const notificationApi = {
+  list: (params: any) => request.get('/notification/list', { params }),
+}
+
+export const notificationRuleApi = {
+  groups: () => request.get('/notification-rule/groups'),
+  createGroup: (data: any) => request.post('/notification-rule/groups', data),
+  updateGroup: (id: number, data: any) => request.post(`/notification-rule/groups/${id}`, data),
+  deleteGroup: (id: number) => request.post(`/notification-rule/groups/${id}/delete`),
+  rules: (id: number) => request.get(`/notification-rule/groups/${id}/rules`),
+  updateRules: (id: number, data: any[]) => request.post(`/notification-rule/groups/${id}/rules`, data),
+  users: (id: number) => request.get(`/notification-rule/groups/${id}/users`),
+  bindUsers: (id: number, userIds: number[]) => request.post(`/notification-rule/groups/${id}/users`, { userIds }),
+}
+
 export const authApi = {
   // 修改密码
   changePassword: (data: { oldPassword: string; newPassword: string }) =>
@@ -449,7 +475,7 @@ export const teamApi = {
 
 // 社区管理 - 文章
 export const adminArticleApi = {
-  list: () => request.get('/article/list'),
+  list: (params?: { keyword?: string; status?: number; page?: number; size?: number }) => request.get('/article/list', { params }),
   detail: (id: number) => request.get(`/article/${id}`),
   takedown: (id: number, reason: string) => request.post(`/article/${id}/takedown`, { reason }),
 }

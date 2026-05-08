@@ -7,6 +7,7 @@ import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.McpServer;
 import com.aistudio.service.mapper.McpServerMapper;
 import com.aistudio.service.service.McpServerService;
+import com.aistudio.service.service.NotificationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class McpServerServiceImpl implements McpServerService {
 
     private final McpServerMapper mcpServerMapper;
+    private final NotificationService notificationService;
 
     @Override
     public PageResult<McpServer> listMcpServers(int page, int size, String keyword, Integer status) {
@@ -77,6 +79,22 @@ public class McpServerServiceImpl implements McpServerService {
             server.setReviewComment(null);
         }
         mcpServerMapper.updateById(server);
+        notifyResourceAuditResult(server.getCreatedBy() != null ? server.getCreatedBy() : server.getCreatorId(), "MCP", server.getName(), id, request.getStatus());
+    }
+
+    private void notifyResourceAuditResult(Long creatorId, String resourceType, String resourceName, Long resourceId, Integer status) {
+        if (creatorId == null || status == null) return;
+        if (status == 1) {
+            notificationService.createRuleNotification(
+                    creatorId, "RESOURCE_APPROVED", "资源审核通过",
+                    "你的" + resourceType + "《" + resourceName + "》已审核通过。",
+                    resourceId, resourceType.toLowerCase(), "RESOURCE_APPROVED:" + resourceType + ":" + resourceId + ":" + status);
+        } else if (status == 2) {
+            notificationService.createRuleNotification(
+                    creatorId, "RESOURCE_TAKEN_DOWN", "资源未通过或已下架",
+                    "你的" + resourceType + "《" + resourceName + "》未通过审核或已被下架。",
+                    resourceId, resourceType.toLowerCase(), "RESOURCE_TAKEN_DOWN:" + resourceType + ":" + resourceId + ":" + status);
+        }
     }
 
     @Override

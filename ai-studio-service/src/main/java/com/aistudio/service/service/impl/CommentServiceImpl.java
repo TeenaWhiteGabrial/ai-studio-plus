@@ -3,10 +3,13 @@ package com.aistudio.service.service.impl;
 import com.aistudio.service.common.exception.BusinessException;
 import com.aistudio.service.dto.response.PageResult;
 import com.aistudio.service.entity.CommunityComment;
+import com.aistudio.service.entity.Article;
 import com.aistudio.service.entity.SysUser;
+import com.aistudio.service.mapper.ArticleMapper;
 import com.aistudio.service.mapper.CommunityCommentMapper;
 import com.aistudio.service.mapper.SysUserMapper;
 import com.aistudio.service.service.CommentService;
+import com.aistudio.service.service.NotificationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -25,6 +28,8 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommunityCommentMapper commentMapper;
     private final SysUserMapper userMapper;
+    private final ArticleMapper articleMapper;
+    private final NotificationService notificationService;
 
     @Override
     public List<CommunityComment> listComments(String targetType, Long targetId) {
@@ -55,6 +60,21 @@ public class CommentServiceImpl implements CommentService {
         comment.setLikesCount(0);
         comment.setIsDeleted(0);
         commentMapper.insert(comment);
+
+        if ("article".equals(targetType)) {
+            Article article = articleMapper.selectById(targetId);
+            if (article != null && article.getAuthorId() != null && !article.getAuthorId().equals(userId)) {
+                notificationService.createRuleNotification(
+                        article.getAuthorId(),
+                        "ARTICLE_COMMENTED",
+                        "你的文章收到了评论",
+                        "你的文章《" + article.getTitle() + "》收到了一条评论。",
+                        comment.getId(),
+                        "comment",
+                        "ARTICLE_COMMENTED:" + comment.getId()
+                );
+            }
+        }
 
         log.info("创建评论: id={}, targetType={}, targetId={}, userId={}", comment.getId(), targetType, targetId, userId);
         return comment.getId();

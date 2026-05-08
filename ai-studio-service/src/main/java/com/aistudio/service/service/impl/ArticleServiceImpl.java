@@ -16,6 +16,7 @@ import com.aistudio.service.mapper.ArticleMapper;
 import com.aistudio.service.mapper.ArticleTagMapper;
 import com.aistudio.service.mapper.SysUserMapper;
 import com.aistudio.service.service.ArticleService;
+import com.aistudio.service.service.NotificationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -38,6 +39,7 @@ public class ArticleServiceImpl implements ArticleService {
     private final ArticleLikeMapper articleLikeMapper;
     private final ArticleTagMapper articleTagMapper;
     private final SysUserMapper userMapper;
+    private final NotificationService notificationService;
 
     @Override
     public PageResult listArticles(String keyword, Long tagId, String sort, int page, int size) {
@@ -288,6 +290,18 @@ public class ArticleServiceImpl implements ArticleService {
             articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                     .eq(Article::getId, id)
                     .setSql("likes_count = likes_count + 1"));
+            Article article = articleMapper.selectById(id);
+            if (article != null && article.getAuthorId() != null && !article.getAuthorId().equals(userId)) {
+                notificationService.createRuleNotification(
+                        article.getAuthorId(),
+                        "ARTICLE_LIKED",
+                        "你的文章收到了点赞",
+                        "你的文章《" + article.getTitle() + "》收到了一次点赞。",
+                        id,
+                        "article",
+                        "ARTICLE_LIKED:" + id + ":" + userId
+                );
+            }
         }
     }
 
@@ -301,9 +315,21 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public void takedown(Long id) {
+        Article article = articleMapper.selectById(id);
         articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                 .eq(Article::getId, id)
                 .set(Article::getStatus, 2));
+        if (article != null && article.getAuthorId() != null) {
+            notificationService.createRuleNotification(
+                    article.getAuthorId(),
+                    "ARTICLE_TAKEN_DOWN",
+                    "你的文章已被下架",
+                    "你的文章《" + article.getTitle() + "》已被管理员下架。",
+                    id,
+                    "article",
+                    "ARTICLE_TAKEN_DOWN:" + id
+            );
+        }
         log.info("文章下架: id={}", id);
     }
 

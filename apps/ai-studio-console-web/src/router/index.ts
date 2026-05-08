@@ -73,6 +73,12 @@ const consoleRoutes = [
     component: () => import('@/views/Settings.vue'),
     meta: { title: '个人设置' },
   },
+  {
+    path: '/console/messages',
+    name: 'MessageCenter',
+    component: () => import('@/views/MessageCenter.vue'),
+    meta: { title: '消息中心' },
+  },
 ]
 
 // 使用 Layout 的路由

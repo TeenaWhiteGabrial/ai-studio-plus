@@ -9,6 +9,7 @@ import com.aistudio.service.entity.TutorialVersion;
 import com.aistudio.service.mapper.TutorialMapper;
 import com.aistudio.service.mapper.TutorialVersionMapper;
 import com.aistudio.service.service.OssService;
+import com.aistudio.service.service.NotificationService;
 import com.aistudio.service.service.TutorialService;
 import com.aistudio.service.util.EmojiFilter;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -30,6 +31,7 @@ public class TutorialServiceImpl implements TutorialService {
     private final TutorialMapper tutorialMapper;
     private final TutorialVersionMapper versionMapper;
     private final OssService ossService;
+    private final NotificationService notificationService;
 
     @Override
     public PageResult<Tutorial> listTutorials(int page, int size, String keyword, String category, String tag, Integer status) {
@@ -88,6 +90,22 @@ public class TutorialServiceImpl implements TutorialService {
         tutorial.setReviewTime(LocalDateTime.now());
         tutorial.setReviewComment(request.getReviewComment());
         tutorialMapper.updateById(tutorial);
+        notifyResourceAuditResult(tutorial.getCreatorId(), "教程", tutorial.getTitle(), id, request.getStatus());
+    }
+
+    private void notifyResourceAuditResult(Long creatorId, String resourceType, String resourceName, Long resourceId, Integer status) {
+        if (creatorId == null || status == null) return;
+        if (status == 1) {
+            notificationService.createRuleNotification(
+                    creatorId, "RESOURCE_APPROVED", "资源审核通过",
+                    "你的" + resourceType + "《" + resourceName + "》已审核通过。",
+                    resourceId, "tutorial", "RESOURCE_APPROVED:" + resourceType + ":" + resourceId + ":" + status);
+        } else if (status == 2) {
+            notificationService.createRuleNotification(
+                    creatorId, "RESOURCE_TAKEN_DOWN", "资源未通过或已下架",
+                    "你的" + resourceType + "《" + resourceName + "》未通过审核或已被下架。",
+                    resourceId, "tutorial", "RESOURCE_TAKEN_DOWN:" + resourceType + ":" + resourceId + ":" + status);
+        }
     }
 
     @Override

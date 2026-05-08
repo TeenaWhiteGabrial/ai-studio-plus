@@ -4,20 +4,29 @@
       <template #header>
         <div class="card-header">
           <span>文章管理</span>
+          <div class="filters">
+            <el-input v-model="query.keyword" placeholder="搜索标题/摘要" clearable style="width: 220px" @keyup.enter="loadArticles" />
+            <el-select v-model="query.status" placeholder="全部状态" clearable style="width: 140px" @change="loadArticles">
+              <el-option label="草稿" :value="0" />
+              <el-option label="已发布" :value="1" />
+              <el-option label="已下架" :value="2" />
+            </el-select>
+            <el-button type="primary" @click="loadArticles">查询</el-button>
+          </div>
         </div>
       </template>
       <el-table :data="articleList" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="标题" min-width="200" />
         <el-table-column prop="authorName" label="作者" width="120" />
-        <el-table-column prop="status" label="状态" width="100100">
+        <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="publishTime" label="发布时间" width="180">
+        <el-table-column prop="publishedAt" label="发布时间" width="180">
           <template #default="{ row }">
-            {{ formatTime(row.publishTime) }}
+            {{ formatTime(row.publishedAt) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
@@ -34,6 +43,15 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        v-model:current-page="query.page"
+        v-model:page-size="query.size"
+        :total="total"
+        layout="total, sizes, prev, pager, next"
+        class="pagination"
+        @size-change="loadArticles"
+        @current-change="loadArticles"
+      />
     </el-card>
 
     <!-- 下架对话框 -->
@@ -52,12 +70,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { adminArticleApi } from '@/api'
 
 const loading = ref(false)
 const articleList = ref<any[]>([])
+const total = ref(0)
+const query = reactive<{ keyword: string; status?: number; page: number; size: number }>({
+  keyword: '',
+  status: undefined,
+  page: 1,
+  size: 10,
+})
 const takedownDialogVisible = ref(false)
 const takedownForm = ref<{ reason: string }>({ reason: '' })
 const currentArticle = ref<any>(null)
@@ -80,8 +105,15 @@ const formatTime = (time: string) => {
 const loadArticles = async () => {
   loading.value = true
   try {
-    const res = await adminArticleApi.list()
-    articleList.value = res || []
+    const res: any = await adminArticleApi.list({
+      keyword: query.keyword || undefined,
+      status: query.status,
+      page: query.page,
+      size: query.size,
+    })
+    const records = res.data?.records || []
+    articleList.value = records.map(normalizeArticle)
+    total.value = res.data?.total || 0
   } catch (error) {
     console.error('加载文章列表失败:', error)
   } finally {
@@ -95,7 +127,7 @@ const handleView = (article: any) => {
 
 const handleTakedown = (article: any) => {
   currentArticle.value = article
-  t.takedownForm.value.reason = ''
+  takedownForm.value.reason = ''
   takedownDialogVisible.value = true
 }
 
@@ -117,6 +149,14 @@ const confirmTakedown = async () => {
 onMounted(() => {
   loadArticles()
 })
+
+function normalizeArticle(item: any) {
+  return {
+    ...item,
+    authorName: item.authorName ?? item.author_name,
+    publishedAt: item.publishedAt ?? item.published_at,
+  }
+}
 </script>
 
 <style scoped>
@@ -127,5 +167,15 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination {
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>

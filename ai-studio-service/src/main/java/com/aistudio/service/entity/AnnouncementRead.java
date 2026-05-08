@@ -8,22 +8,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("notification")
-public class Notification {
+@TableName("announcement_read")
+public class AnnouncementRead {
 
     @TableId(type = IdType.AUTO)
     private Long id;
-
+    private Long announcementId;
     private Long userId;
-    /** 通知类型 */
-    private String type;
-    private String title;
-    private String content;
-    private Long sourceId;
-    private String sourceType;
-    private String dedupeKey;
-    /** 是否已读: 0-未读 1-已读 */
-    private Integer isRead;
     private LocalDateTime readAt;
-    private LocalDateTime createdAt;
 }
