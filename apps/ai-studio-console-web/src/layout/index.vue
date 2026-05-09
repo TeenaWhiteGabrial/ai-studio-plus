@@ -63,35 +63,44 @@
             </template>
             <div class="message-popover">
               <div class="message-tabs-wrap">
-                <el-button class="message-view-all" link type="primary" @click="router.push('/console/messages')">查看全部</el-button>
-                <el-tabs v-model="messageTab">
-                  <el-tab-pane name="notifications">
-                    <template #label>
-                      <span class="message-tab-label">
-                        通知
-                        <span v-if="unreadSummary.notificationUnread" class="message-tab-count">{{ unreadSummary.notificationUnread }}</span>
-                      </span>
-                    </template>
+                <div class="message-tabs-bar">
+                  <div class="message-tabs">
+                    <button
+                      type="button"
+                      class="message-tab"
+                      :class="{ active: messageTab === 'notifications' }"
+                      @click="messageTab = 'notifications'"
+                    >
+                      <span>通知</span>
+                      <span v-if="unreadSummary.notificationUnread" class="message-tab-count">{{ unreadSummary.notificationUnread }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="message-tab"
+                      :class="{ active: messageTab === 'announcements' }"
+                      @click="messageTab = 'announcements'"
+                    >
+                      <span>公告</span>
+                      <span v-if="unreadSummary.announcementUnread" class="message-tab-count">{{ unreadSummary.announcementUnread }}</span>
+                    </button>
+                  </div>
+                  <button type="button" class="message-view-all" @click="router.push('/console/messages')">查看全部</button>
+                </div>
+                <div v-if="messageTab === 'notifications'" class="message-panel">
                   <div v-if="previewNotifications.length" class="message-list">
                     <div v-for="item in previewNotifications" :key="item.id" class="message-item notification-preview" @click="markNotificationRead(item)">
                       <div class="message-preview-body">
                         <div class="message-title-line">
                           <div class="message-title">{{ item.title || item.type }}</div>
-                          <div class="message-preview-time">{{ item.createdAt || item.created_at || '' }}</div>
+                          <div class="message-preview-time">{{ formatMessageTime(item.createdAt || item.created_at) }}</div>
                         </div>
                         <div class="message-content">{{ item.content }}</div>
                       </div>
                     </div>
                   </div>
                   <el-empty v-else description="暂无通知" :image-size="72" />
-                </el-tab-pane>
-                <el-tab-pane name="announcements">
-                  <template #label>
-                    <span class="message-tab-label">
-                      公告
-                      <span v-if="unreadSummary.announcementUnread" class="message-tab-count">{{ unreadSummary.announcementUnread }}</span>
-                    </span>
-                  </template>
+                </div>
+                <div v-else class="message-panel">
                   <div v-if="previewAnnouncements.length" class="message-list">
                     <div
                       v-for="item in previewAnnouncements"
@@ -103,15 +112,14 @@
                       <div class="message-preview-body">
                         <div class="message-title-line">
                           <span class="message-title">{{ item.title }}</span>
-                          <span class="message-preview-time">{{ item.publishedAt || item.published_at || '未发布' }}</span>
+                          <span class="message-preview-time">{{ formatMessageTime(item.publishedAt || item.published_at) }}</span>
                         </div>
                         <div class="message-content">{{ item.content }}</div>
                       </div>
                     </div>
                   </div>
                   <el-empty v-else description="暂无公告" :image-size="72" />
-                </el-tab-pane>
-                </el-tabs>
+                </div>
               </div>
             </div>
           </el-popover>
@@ -151,7 +159,7 @@
           <div class="announcement-dialog-title">
             {{ announcementDetail?.title || '公告详情' }}
           </div>
-          <div class="announcement-dialog-meta">{{ announcementDetail?.publishedAt || announcementDetail?.published_at || '未发布' }}</div>
+          <div class="announcement-dialog-meta">{{ formatMessageTime(announcementDetail?.publishedAt || announcementDetail?.published_at) }}</div>
         </div>
       </template>
       <div v-loading="announcementDetailLoading" class="announcement-dialog-body">
@@ -305,6 +313,12 @@ async function markAnnouncementRead(item: any) {
     await messageApi.markAnnouncementRead(item.id)
     await loadMessagePreview()
   }
+}
+
+function formatMessageTime(value?: string) {
+  if (!value) return '未发布'
+  const normalized = value.replace('T', ' ')
+  return normalized.length >= 16 ? normalized.slice(0, 16) : normalized
 }
 </script>
 
@@ -598,6 +612,7 @@ async function markAnnouncementRead(item: any) {
 }
 
 .main-content {
+  position: relative;
   background: hsl(var(--background));
   padding: 20px;
 }
@@ -618,35 +633,92 @@ async function markAnnouncementRead(item: any) {
 
 .console-message-popover .message-tabs-wrap {
   position: relative;
+  padding: 12px 14px 10px;
 }
 
-.console-message-popover .el-tabs {
-  padding: 0 14px 10px;
+.console-message-popover .message-tabs-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-.console-message-popover .el-tabs__header {
-  padding-right: 76px;
-  margin-bottom: 0;
+.console-message-popover .message-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .console-message-popover .message-view-all {
-  position: absolute;
-  top: 7px;
-  right: 12px;
-  z-index: 2;
+  flex: 0 0 auto;
+  padding: 0;
+  color: hsl(var(--primary));
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
 }
 
-.console-message-popover .message-tab-label {
+.console-message-popover .message-view-all:hover {
+  color: hsl(var(--foreground));
+}
+
+.console-message-popover .message-tab {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding-right: 12px;
+  justify-content: center;
+  min-width: 0;
+  height: 32px;
+  padding: 0 2px;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  transition: color 0.18s ease;
+}
+
+.console-message-popover .message-tab::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: transparent;
+  border-radius: 999px;
+  content: "";
+}
+
+.console-message-popover .message-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+.console-message-popover .message-tab.active {
+  color: hsl(var(--foreground));
+  background: transparent;
+  box-shadow: none;
+}
+
+.console-message-popover .message-tab.active::after {
+  background: hsl(var(--primary));
 }
 
 .console-message-popover .message-tab-count {
   position: absolute;
-  top: -8px;
-  right: -10px;
+  top: -3px;
+  right: -16px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
@@ -657,6 +729,15 @@ async function markAnnouncementRead(item: any) {
   font-weight: 700;
   line-height: 16px;
   text-align: center;
+  box-shadow: 0 0 0 2px hsl(var(--card));
+}
+
+.console-message-popover .message-tab.active .message-tab-count {
+  box-shadow: 0 0 0 2px hsl(var(--card));
+}
+
+.console-message-popover .message-panel {
+  min-height: 88px;
 }
 
 .console-message-popover .message-list {

@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElLoading, ElMessage } from 'element-plus'
+import type { LoadingInstance } from 'element-plus/es/components/loading/src/loading'
 import router from './auth'
 
 // API 基础路径
@@ -12,9 +13,41 @@ const request: AxiosInstance = axios.create({
   timeout: 30000,
 })
 
+let pendingCount = 0
+let loadingTimer: number | undefined
+let loadingInstance: LoadingInstance | null = null
+
+function startGlobalLoading() {
+  pendingCount += 1
+  if (pendingCount === 1) {
+    loadingTimer = window.setTimeout(() => {
+      loadingInstance = ElLoading.service({
+        target: document.querySelector('.main-content') || document.body,
+        lock: true,
+        text: '加载中...',
+        background: 'rgba(255, 255, 255, 0.6)',
+      })
+    }, 180)
+  }
+}
+
+function stopGlobalLoading() {
+  pendingCount = Math.max(0, pendingCount - 1)
+  if (pendingCount > 0) return
+  if (loadingTimer) {
+    window.clearTimeout(loadingTimer)
+    loadingTimer = undefined
+  }
+  if (loadingInstance) {
+    loadingInstance.close()
+    loadingInstance = null
+  }
+}
+
 // 请求拦截器：添加 Token
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    startGlobalLoading()
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -34,8 +67,12 @@ request.interceptors.request.use(
 
 // 响应拦截器：统一错误处理 + 401 跳转
 request.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    stopGlobalLoading()
+    return response.data
+  },
   (error) => {
+    stopGlobalLoading()
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('userInfo')

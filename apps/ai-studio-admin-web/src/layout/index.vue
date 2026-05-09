@@ -164,6 +164,7 @@ const adminMenus = [
       { id: 71, name: '公告管理', path: '/message/announcement', icon: 'Notification' },
       { id: 72, name: '通知记录', path: '/message/notification', icon: 'Bell' },
       { id: 73, name: '通知规则', path: '/message/rule', icon: 'SetUp' },
+      { id: 74, name: '邮件日报', path: '/message/email-report', icon: 'Message' },
     ],
   },
   {
@@ -367,6 +368,7 @@ async function handleCommand(cmd: string) {
 
 /* ===== 内容区域 ===== */
 .main-content {
+  position: relative;
   background: #f0f2f5;
   padding: 20px;
   overflow-y: auto;

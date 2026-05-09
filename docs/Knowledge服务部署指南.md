@@ -128,6 +128,7 @@ HF_ENDPOINT=https://hf-mirror.com
 回到仓库根目录执行：
 
 ```bash
+
 cd /opt/ai-studio-plus
 pnpm --filter @knowledgebase/doc-manager build
 ```

@@ -450,6 +450,110 @@ export const notificationRuleApi = {
   bindUsers: (id: number, userIds: number[]) => request.post(`/notification-rule/groups/${id}/users`, { userIds }),
 }
 
+export interface EmailReportRule {
+  id?: number
+  name: string
+  toRecipientUserIds: number[]
+  ccRecipientUserIds: number[]
+  recipients: string[]
+  ccRecipients: string[]
+  userIds: number[]
+  sendTime: string
+  status: number
+  lastSentAt?: string
+  createdAt?: string
+}
+
+export interface EmailReportRulePayload {
+  name: string
+  toRecipientUserIds: number[]
+  ccRecipientUserIds: number[]
+  recipients?: string[]
+  userIds: number[]
+  sendTime: string
+  status: number
+}
+
+export interface EmailReportSendLog {
+  id: number
+  ruleId: number
+  ruleName: string
+  reportDate: string
+  triggerType: 'MANUAL' | 'SCHEDULED'
+  status: 'SUCCESS' | 'FAILED'
+  toRecipients: string[]
+  ccRecipients: string[]
+  subject?: string
+  errorMessage?: string
+  sentAt?: string
+}
+
+function mapEmailReportRuleResponse(item: any): EmailReportRule {
+  return {
+    id: item.id,
+    name: item.name ?? '',
+    toRecipientUserIds: item.to_recipient_user_ids ?? item.toRecipientUserIds ?? item.recipient_user_ids ?? item.recipientUserIds ?? [],
+    ccRecipientUserIds: item.cc_recipient_user_ids ?? item.ccRecipientUserIds ?? [],
+    recipients: item.recipients ?? [],
+    ccRecipients: item.cc_recipients ?? item.ccRecipients ?? [],
+    userIds: item.user_ids ?? item.userIds ?? [],
+    sendTime: item.send_time ?? item.sendTime ?? '18:00',
+    status: item.status ?? 1,
+    lastSentAt: item.last_sent_at ?? item.lastSentAt,
+    createdAt: item.created_at ?? item.createdAt,
+  }
+}
+
+function mapEmailReportRulePayload(data: EmailReportRulePayload) {
+  return {
+    name: data.name,
+    to_recipient_user_ids: data.toRecipientUserIds || [],
+    cc_recipient_user_ids: data.ccRecipientUserIds || [],
+    recipients: data.recipients || [],
+    user_ids: data.userIds || [],
+    send_time: data.sendTime,
+    status: data.status,
+  }
+}
+
+function mapEmailReportSendLogResponse(item: any): EmailReportSendLog {
+  return {
+    id: item.id,
+    ruleId: item.rule_id ?? item.ruleId,
+    ruleName: item.rule_name ?? item.ruleName ?? '',
+    reportDate: item.report_date ?? item.reportDate ?? '',
+    triggerType: item.trigger_type ?? item.triggerType ?? 'MANUAL',
+    status: item.status ?? 'FAILED',
+    toRecipients: item.to_recipients ?? item.toRecipients ?? [],
+    ccRecipients: item.cc_recipients ?? item.ccRecipients ?? [],
+    subject: item.subject,
+    errorMessage: item.error_message ?? item.errorMessage,
+    sentAt: item.sent_at ?? item.sentAt,
+  }
+}
+
+export const emailReportApi = {
+  rules: async () => {
+    const res = await request.get('/email-report/rules') as any
+    return {
+      ...res,
+      data: (res.data || []).map(mapEmailReportRuleResponse),
+    }
+  },
+  createRule: (data: EmailReportRulePayload) => request.post('/email-report/rules', mapEmailReportRulePayload(data)),
+  updateRule: (id: number, data: EmailReportRulePayload) => request.post(`/email-report/rules/${id}`, mapEmailReportRulePayload(data)),
+  deleteRule: (id: number) => request.post(`/email-report/rules/${id}/delete`),
+  logs: async (id: number) => {
+    const res = await request.get(`/email-report/rules/${id}/logs`) as any
+    return {
+      ...res,
+      data: (res.data || []).map(mapEmailReportSendLogResponse),
+    }
+  },
+  preview: (id: number, date?: string) => request.get(`/email-report/rules/${id}/preview`, { params: { date } }),
+  send: (id: number, date?: string) => request.post(`/email-report/rules/${id}/send`, null, { params: { date }, silentError: true } as any),
+}
+
 export const authApi = {
   // 修改密码
   changePassword: (data: { oldPassword: string; newPassword: string }) =>

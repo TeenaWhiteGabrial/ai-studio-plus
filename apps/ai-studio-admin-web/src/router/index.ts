@@ -134,6 +134,12 @@ const adminRoutes = [
     meta: { title: '通知规则' },
   },
   {
+    path: '/admin/message/email-report',
+    name: 'EmailReport',
+    component: () => import('@/views/message/email-report.vue'),
+    meta: { title: '邮件日报' },
+  },
+  {
     path: '/admin/community/article',
     name: 'CommunityArticle',
     component: () => import('@/views/community/article.vue'),
