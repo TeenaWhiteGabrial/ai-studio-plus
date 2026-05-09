@@ -67,6 +67,45 @@ export const siteConfigApi = {
   },
 }
 
+export interface MailConfig {
+  senderEmail: string
+  authCode: string
+  hasAuthCode: boolean
+  updatedAt?: string
+}
+
+export interface MailConfigPayload {
+  senderEmail: string
+  authCode: string
+}
+
+function mapMailConfigResponse(item: any): MailConfig {
+  return {
+    senderEmail: item.sender_email ?? item.senderEmail ?? '',
+    authCode: '',
+    hasAuthCode: item.has_auth_code ?? item.hasAuthCode ?? false,
+    updatedAt: item.updated_at ?? item.updatedAt ?? '',
+  }
+}
+
+function mapMailConfigPayload(data: MailConfigPayload) {
+  return {
+    sender_email: data.senderEmail,
+    auth_code: data.authCode,
+  }
+}
+
+export const mailConfigApi = {
+  get: async () => {
+    const res = await request.get('/system/mail-config') as any
+    return mapMailConfigResponse(res.data)
+  },
+  update: async (data: MailConfigPayload) => {
+    const res = await request.post('/system/mail-config', mapMailConfigPayload(data)) as any
+    return mapMailConfigResponse(res.data)
+  },
+}
+
 interface KnowledgeApiResponse<T> {
   success: boolean
   data?: T

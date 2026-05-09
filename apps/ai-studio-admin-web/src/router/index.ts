@@ -98,6 +98,12 @@ const adminRoutes = [
     meta: { title: '团队管理' },
   },
   {
+    path: '/admin/system/mail-config',
+    name: 'MailConfig',
+    component: () => import('@/views/system/mail-config.vue'),
+    meta: { title: '邮件配置' },
+  },
+  {
     path: '/admin/audit/resource',
     name: 'ResourceAudit',
     component: () => import('@/views/audit/resource.vue'),

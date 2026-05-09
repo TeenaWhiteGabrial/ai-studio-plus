@@ -142,6 +142,7 @@ const adminMenus = [
       { id: 53, name: '角色管理', path: '/system/role', icon: 'Key' },
       { id: 54, name: '菜单管理', path: '/system/menu', icon: 'Menu' },
       { id: 55, name: '团队管理', path: '/system/team', icon: 'Avatar' },
+      { id: 56, name: '邮件配置', path: '/system/mail-config', icon: 'Message' },
     ],
   },
   {

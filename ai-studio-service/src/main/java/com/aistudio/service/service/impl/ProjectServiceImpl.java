@@ -95,8 +95,15 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Long createProject(ProjectCreateRequest request) {
-        SysDepartment department = requireDepartment(request.getDeptId());
-        SysTeam team = requireTeam(request.getTeamId(), department.getId());
+        SysUser currentUser = requireCurrentUser();
+        if (currentUser.getDeptId() == null) {
+            throw new BusinessException(400, "当前登录用户未设置所属部门，无法创建项目");
+        }
+        if (currentUser.getTeamId() == null) {
+            throw new BusinessException(400, "当前登录用户未设置所属团队，无法创建项目");
+        }
+        SysDepartment department = requireDepartment(currentUser.getDeptId());
+        SysTeam team = requireTeam(currentUser.getTeamId(), department.getId());
         SysUser owner = requireOwner(request.getOwnerId());
         assertCanManageDept(department.getId());
         assertOwnerMatchesProjectScope(owner, department.getId(), team.getId());
@@ -211,6 +218,18 @@ public class ProjectServiceImpl implements ProjectService {
             throw new BusinessException(404, "负责人不存在");
         }
         return owner;
+    }
+
+    private SysUser requireCurrentUser() {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new BusinessException(401, "未登录");
+        }
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(401, "当前登录用户不存在");
+        }
+        return user;
     }
 
     private SysDepartment requireDepartment(Long deptId) {

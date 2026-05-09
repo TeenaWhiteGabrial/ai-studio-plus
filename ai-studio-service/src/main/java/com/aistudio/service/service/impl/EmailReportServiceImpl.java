@@ -5,6 +5,7 @@ import com.aistudio.service.dto.request.EmailReportRuleRequest;
 import com.aistudio.service.entity.DailyTask;
 import com.aistudio.service.entity.EmailReportRule;
 import com.aistudio.service.entity.EmailReportSendLog;
+import com.aistudio.service.entity.MailConfig;
 import com.aistudio.service.entity.MemberOutput;
 import com.aistudio.service.entity.Project;
 import com.aistudio.service.entity.SysUser;
@@ -15,14 +16,15 @@ import com.aistudio.service.mapper.MemberOutputMapper;
 import com.aistudio.service.mapper.ProjectMapper;
 import com.aistudio.service.mapper.SysUserMapper;
 import com.aistudio.service.service.EmailReportService;
+import com.aistudio.service.service.MailConfigService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -37,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,14 +56,32 @@ public class EmailReportServiceImpl implements EmailReportService {
     private final ProjectMapper projectMapper;
     private final SysUserMapper userMapper;
     private final MemberOutputMapper outputMapper;
-    private final JavaMailSender mailSender;
+    private final MailConfigService mailConfigService;
     private final ObjectMapper objectMapper;
 
-    @Value("${spring.mail.username:}")
-    private String sender;
+    @Value("${spring.mail.host:smtp.qq.com}")
+    private String mailHost;
 
-    @Value("${spring.mail.password:}")
-    private String mailPassword;
+    @Value("${spring.mail.port:465}")
+    private Integer mailPort;
+
+    @Value("${spring.mail.protocol:smtps}")
+    private String mailProtocol;
+
+    @Value("${spring.mail.default-encoding:UTF-8}")
+    private String mailDefaultEncoding;
+
+    @Value("${spring.mail.properties.mail.smtp.auth:true}")
+    private String mailSmtpAuth;
+
+    @Value("${spring.mail.properties.mail.smtp.ssl.enable:true}")
+    private String mailSmtpSslEnable;
+
+    @Value("${spring.mail.properties.mail.smtp.socketFactory.class:javax.net.ssl.SSLSocketFactory}")
+    private String mailSmtpSocketFactoryClass;
+
+    @Value("${spring.mail.properties.mail.smtp.socketFactory.port:465}")
+    private String mailSmtpSocketFactoryPort;
 
     @Override
     public List<Map<String, Object>> listRules() {
@@ -180,9 +201,11 @@ public class EmailReportServiceImpl implements EmailReportService {
         log.setTriggerType(triggerType);
         log.setSentAt(LocalDateTime.now());
         log.setCreatedAt(LocalDateTime.now());
-        if (!StringUtils.hasText(mailPassword)) {
-            logFailedSend(log, "QQ 邮箱授权码未配置，请设置环境变量 QQ_MAIL_AUTH_CODE");
-            throw new BusinessException(500, "QQ 邮箱授权码未配置，请设置环境变量 QQ_MAIL_AUTH_CODE");
+        MailConfig mailConfig = mailConfigService.getMailConfig();
+        String mailConfigError = validateMailConfig(mailConfig);
+        if (mailConfigError != null) {
+            logFailedSend(log, mailConfigError);
+            throw new BusinessException(500, mailConfigError);
         }
         try {
             List<String> toRecipients = ruleToRecipientEmails(rule);
@@ -192,9 +215,10 @@ public class EmailReportServiceImpl implements EmailReportService {
             }
             String subject = "产品研发日报-" + date.format(DATE_FORMATTER);
             String html = buildDailyReportHtml(rule, date);
+            JavaMailSenderImpl mailSender = createMailSender(mailConfig);
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(sender);
+            helper.setFrom(mailConfig.getSenderEmail().trim());
             helper.setTo(toRecipients.toArray(new String[0]));
             if (!ccRecipients.isEmpty()) {
                 helper.setCc(ccRecipients.toArray(new String[0]));
@@ -211,8 +235,9 @@ public class EmailReportServiceImpl implements EmailReportService {
             logFailedSend(log, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logFailedSend(log, "邮件发送失败: " + e.getMessage());
-            throw new BusinessException(500, "邮件发送失败: " + e.getMessage());
+            String message = StringUtils.hasText(e.getMessage()) ? e.getMessage() : e.getClass().getSimpleName();
+            logFailedSend(log, "邮件发送失败: " + message);
+            throw new BusinessException(500, "邮件发送失败: " + message);
         }
     }
 
@@ -247,7 +272,7 @@ public class EmailReportServiceImpl implements EmailReportService {
                 .append(th("项目名称", "18%"))
                 .append(th("今日任务", "42%"))
                 .append(th("参与人", "14%"))
-                .append(th("关联产出", "26%"))
+                .append(th("AI 代码产出", "26%"))
                 .append("</tr></thead><tbody>");
         if (grouped.isEmpty()) {
             html.append("<tr><td colspan='4' style='border:1px solid #d1d5db;padding:14px;text-align:center;color:#6b7280;'>暂无日报任务</td></tr>");
@@ -258,19 +283,22 @@ public class EmailReportServiceImpl implements EmailReportService {
                     html.append("<tr>");
                     if (i == 0) {
                         html.append("<td rowspan='").append(projectTasks.size()).append("' style='")
-                                .append(tdStyle()).append("font-weight:600;background:#fafafa;'>")
+                                .append(tdStyle()).append("font-weight:600;background:#fafafa;vertical-align:middle;'>")
                                 .append(escape(projectName)).append("</td>");
                     }
                     html.append("<td style='").append(tdStyle()).append("'>").append(formatTask(task)).append("</td>");
                     html.append("<td style='").append(tdStyle()).append("white-space:nowrap;'>")
                             .append(escape(userName(users.get(task.getUserId())))).append("</td>");
+                    MemberOutput output = task.getOutputId() == null ? null : outputs.get(task.getOutputId());
                     html.append("<td style='").append(tdStyle()).append("'>")
-                            .append(formatOutput(outputs.get(task.getOutputId()))).append("</td>");
+                            .append(formatOutput(output)).append("</td>");
                     html.append("</tr>");
                 }
             });
         }
         html.append("</tbody></table></body></html>");
+        html.insert(html.lastIndexOf("</body>"),
+                "<p style='margin:16px 0 0;color:#6b7280;font-size:12px;line-height:1.7;'>本邮件由AI Studio系统自动发出，请勿回复。</p>");
         return html.toString();
     }
 
@@ -308,7 +336,7 @@ public class EmailReportServiceImpl implements EmailReportService {
     }
 
     private String formatOutput(MemberOutput output) {
-        if (output == null) return "-";
+        if (output == null) return "不涉及AI Coding";
         List<String> parts = new ArrayList<>();
         addPart(parts, "PRD", output.getPrdDocCount());
         addPart(parts, "API文档", output.getApiDocCount());
@@ -318,7 +346,7 @@ public class EmailReportServiceImpl implements EmailReportService {
         addPart(parts, "SQL", output.getSqlScriptCount());
         addPart(parts, "测试", output.getTestFileCount());
         addPart(parts, "总行数", output.getTotalCodeLines());
-        return parts.isEmpty() ? "-" : escape(String.join("；", parts));
+        return parts.isEmpty() ? "不涉及AI Coding" : escape(String.join("；", parts));
     }
 
     private void addPart(List<String> parts, String label, Integer value) {
@@ -331,6 +359,37 @@ public class EmailReportServiceImpl implements EmailReportService {
 
     private String tdStyle() {
         return "border:1px solid #d1d5db;padding:10px 8px;vertical-align:top;line-height:1.7;";
+    }
+
+    private String validateMailConfig(MailConfig mailConfig) {
+        boolean hasSenderEmail = StringUtils.hasText(mailConfig.getSenderEmail());
+        boolean hasAuthCode = StringUtils.hasText(mailConfig.getAuthCode());
+        if (!hasSenderEmail && !hasAuthCode) {
+            return "请在系统管理-邮件配置中设置发件邮箱和安全码";
+        }
+        if (!hasSenderEmail) {
+            return "请在系统管理-邮件配置中设置发件邮箱";
+        }
+        if (!hasAuthCode) {
+            return "请在系统管理-邮件配置中设置安全码";
+        }
+        return null;
+    }
+
+    private JavaMailSenderImpl createMailSender(MailConfig mailConfig) {
+        JavaMailSenderImpl sender = new JavaMailSenderImpl();
+        sender.setHost(mailHost);
+        sender.setPort(mailPort);
+        sender.setProtocol(mailProtocol);
+        sender.setDefaultEncoding(mailDefaultEncoding);
+        sender.setUsername(mailConfig.getSenderEmail().trim());
+        sender.setPassword(mailConfig.getAuthCode().trim());
+        Properties properties = sender.getJavaMailProperties();
+        properties.put("mail.smtp.auth", mailSmtpAuth);
+        properties.put("mail.smtp.ssl.enable", mailSmtpSslEnable);
+        properties.put("mail.smtp.socketFactory.class", mailSmtpSocketFactoryClass);
+        properties.put("mail.smtp.socketFactory.port", mailSmtpSocketFactoryPort);
+        return sender;
     }
 
     private EmailReportRule requireRule(Long id) {

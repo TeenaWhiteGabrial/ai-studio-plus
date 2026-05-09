@@ -97,7 +97,14 @@
           <el-input v-model="form.projectName" placeholder="请输入项目名称" />
         </el-form-item>
         <el-form-item label="所属部门" prop="deptId">
+          <el-input
+            v-if="!editId"
+            :model-value="currentDeptName"
+            disabled
+            placeholder="当前登录用户未设置所属部门"
+          />
           <el-select
+            v-else
             v-model="form.deptId"
             placeholder="请选择所属部门"
             filterable
@@ -113,7 +120,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="所属团队" prop="teamId">
+          <el-input
+            v-if="!editId"
+            :model-value="currentTeamName"
+            disabled
+            placeholder="当前登录用户未设置所属团队"
+          />
           <el-select
+            v-else
             v-model="form.teamId"
             placeholder="请选择所属团队"
             filterable
@@ -174,9 +188,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { departmentApi, projectApi, teamApi, userApi, type ConsoleProject } from '@/api'
+import { useUserStore } from '@/stores/user'
 
 interface OwnerOption {
   id: number
@@ -203,6 +219,8 @@ const total = ref(0)
 const ownerOptions = ref<OwnerOption[]>([])
 const departmentOptions = ref<DepartmentOption[]>([])
 const teamOptions = ref<TeamOption[]>([])
+const userStore = useUserStore()
+const { userInfo } = storeToRefs(userStore)
 
 const query = reactive({
   page: 1,
@@ -240,6 +258,19 @@ const formOwnerOptions = computed(() => {
     if (form.teamId && user.teamId !== form.teamId) return false
     return true
   })
+})
+
+const currentDeptId = computed(() => userInfo.value?.dept_id ?? null)
+const currentTeamId = computed(() => userInfo.value?.team_id ?? null)
+const currentDeptName = computed(() => {
+  if (userInfo.value?.dept_name) return userInfo.value.dept_name
+  const dept = departmentOptions.value.find((item) => item.id === currentDeptId.value)
+  return dept?.deptName || ''
+})
+const currentTeamName = computed(() => {
+  if (userInfo.value?.team_name) return userInfo.value.team_name
+  const team = teamOptions.value.find((item) => item.id === currentTeamId.value)
+  return team?.teamName || ''
 })
 
 function normalizeDepartment(dept: any): DepartmentOption {
@@ -328,19 +359,21 @@ function resetForm() {
     projectName: '',
     description: '',
     ownerId: null,
-    deptId: null,
-    teamId: null,
+    deptId: currentDeptId.value,
+    teamId: currentTeamId.value,
     status: 'ACTIVE',
     startedAt: '',
   })
-  teamOptions.value = []
   formRef.value?.clearValidate()
 }
 
-function openCreate() {
+async function openCreate() {
+  if (!currentDeptId.value) return ElMessage.warning('当前登录用户未设置所属部门，无法创建项目')
+  if (!currentTeamId.value) return ElMessage.warning('当前登录用户未设置所属团队，无法创建项目')
   dialogTitle.value = '新建项目'
   editId.value = null
   resetForm()
+  await loadTeams(form.deptId)
   dialogVisible.value = true
 }
 
@@ -377,11 +410,15 @@ async function handleSubmit() {
     const payload = {
       projectName: form.projectName,
       description: form.description,
-      deptId: form.deptId!,
-      teamId: form.teamId!,
       ownerId: form.ownerId!,
       status: form.status,
       startedAt: form.startedAt || undefined,
+    }
+    if (editId.value) {
+      Object.assign(payload, {
+        deptId: form.deptId!,
+        teamId: form.teamId!,
+      })
     }
     if (editId.value) {
       await projectApi.update(editId.value, payload)

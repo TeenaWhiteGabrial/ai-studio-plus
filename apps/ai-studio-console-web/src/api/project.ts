@@ -23,8 +23,8 @@ export interface ConsoleProjectPayload {
   projectName: string
   description?: string
   ownerId: number
-  deptId: number
-  teamId: number
+  deptId?: number
+  teamId?: number
   status?: 'ACTIVE' | 'ENDED'
   startedAt?: string
   endedAt?: string

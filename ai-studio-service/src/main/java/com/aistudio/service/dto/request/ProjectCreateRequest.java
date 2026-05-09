@@ -21,11 +21,9 @@ public class ProjectCreateRequest {
     @JsonAlias({"ownerId", "owner_id"})
     private Long ownerId;
 
-    @NotNull
     @JsonAlias({"deptId", "dept_id"})
     private Long deptId;
 
-    @NotNull
     @JsonAlias({"teamId", "team_id"})
     private Long teamId;
 
