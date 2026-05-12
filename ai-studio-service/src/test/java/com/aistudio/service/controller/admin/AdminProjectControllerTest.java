@@ -1,10 +1,11 @@
 package com.aistudio.service.controller.admin;
 
 import com.aistudio.service.dto.request.ProjectCreateRequest;
+import com.aistudio.service.dto.request.ProjectUpdateRequest;
 import com.aistudio.service.dto.response.PageResult;
+import com.aistudio.service.dto.response.ProjectVO;
 import com.aistudio.service.service.ProjectService;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -12,10 +13,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -23,16 +20,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AdminProjectControllerTest {
 
-    private final ProjectService projectService = mock(ProjectService.class);
+    private final RecordingProjectService projectService = new RecordingProjectService();
     private final MockMvc mockMvc = MockMvcBuilders
             .standaloneSetup(new AdminProjectController(projectService))
             .build();
 
     @Test
     void listUsesAdminProjectPath() throws Exception {
-        when(projectService.listProjects(1, 20, "studio", "ACTIVE", 7L))
-                .thenReturn(PageResult.of(0L, List.of()));
-
         mockMvc.perform(get("/admin/project/list")
                         .param("page", "1")
                         .param("size", "20")
@@ -43,13 +37,15 @@ class AdminProjectControllerTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.total").value(0));
 
-        verify(projectService).listProjects(1, 20, "studio", "ACTIVE", 7L);
+        assertThat(projectService.lastPage).isEqualTo(1);
+        assertThat(projectService.lastSize).isEqualTo(20);
+        assertThat(projectService.lastKeyword).isEqualTo("studio");
+        assertThat(projectService.lastStatus).isEqualTo("ACTIVE");
+        assertThat(projectService.lastOwnerId).isEqualTo(7L);
     }
 
     @Test
     void createAcceptsSnakeCasePayload() throws Exception {
-        when(projectService.createProject(any(ProjectCreateRequest.class))).thenReturn(11L);
-
         mockMvc.perform(post("/admin/project")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -66,9 +62,62 @@ class AdminProjectControllerTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(11));
 
-        ArgumentCaptor<ProjectCreateRequest> captor = ArgumentCaptor.forClass(ProjectCreateRequest.class);
-        verify(projectService).createProject(captor.capture());
-        assertThat(captor.getValue().getProjectName()).isEqualTo("AI Studio");
-        assertThat(captor.getValue().getOwnerId()).isEqualTo(7L);
+        assertThat(projectService.lastCreateRequest.getProjectName()).isEqualTo("AI Studio");
+        assertThat(projectService.lastCreateRequest.getOwnerId()).isEqualTo(7L);
+    }
+
+    private static class RecordingProjectService implements ProjectService {
+        private int lastPage;
+        private int lastSize;
+        private String lastKeyword;
+        private String lastStatus;
+        private Long lastOwnerId;
+        private ProjectCreateRequest lastCreateRequest;
+
+        @Override
+        public PageResult<ProjectVO> listProjects(int page, int size, String keyword, String status, Long ownerId) {
+            this.lastPage = page;
+            this.lastSize = size;
+            this.lastKeyword = keyword;
+            this.lastStatus = status;
+            this.lastOwnerId = ownerId;
+            return PageResult.of(0L, List.of());
+        }
+
+        @Override
+        public List<ProjectVO> listActiveProjects() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<ProjectVO> listActiveProjectsForCurrentUserTeam() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ProjectVO getProject(Long id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Long createProject(ProjectCreateRequest request) {
+            this.lastCreateRequest = request;
+            return 11L;
+        }
+
+        @Override
+        public void updateProject(Long id, ProjectUpdateRequest request) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void deleteProject(Long id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void updateProjectStatus(Long id, String status) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

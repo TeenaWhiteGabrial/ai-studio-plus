@@ -58,27 +58,10 @@ test.describe('Portal Home Core APIs', () => {
     }).toBe(200)
   })
 
-  test('question list should be 200 after login', async ({ page }) => {
+  test('resource list should be 200 after login', async ({ page }) => {
     const getAuthTokenStatus = trackApiStatus(page, '/auth/token')
     const getUserInfoStatus = trackApiStatus(page, '/auth/user-info')
-    const getStatus = trackApiStatus(page, '/portal/question/list')
-    await loginAsAdmin(page)
-
-    await expect.poll(() => getAuthTokenStatus(), {
-      timeout: 15_000
-    }).toBe(200)
-    await expect.poll(() => getUserInfoStatus(), {
-      timeout: 15_000
-    }).toBe(200)
-    await expect.poll(() => getStatus(), {
-      timeout: 15_000
-    }).toBe(200)
-  })
-
-  test('tag list should be 200 after login', async ({ page }) => {
-    const getAuthTokenStatus = trackApiStatus(page, '/auth/token')
-    const getUserInfoStatus = trackApiStatus(page, '/auth/user-info')
-    const getStatus = trackApiStatus(page, '/portal/tag/list')
+    const getStatus = trackApiStatus(page, '/portal/open/resource/skill/list')
     await loginAsAdmin(page)
 
     await expect.poll(() => getAuthTokenStatus(), {

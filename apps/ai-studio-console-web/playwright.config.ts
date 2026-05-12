@@ -21,7 +21,7 @@ export default defineConfig({
     ? [['list'], ['junit', { outputFile: 'test-results/e2e-junit.xml' }], zhReporter]
     : [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }], zhReporter],
   use: {
-    baseURL: process.env.PORTAL_BASE_URL || 'http://localhost:3000/ai-studio-portal-web',
+    baseURL: process.env.CONSOLE_BASE_URL || 'http://localhost:5174/ai-studio-plus-console-web',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure'

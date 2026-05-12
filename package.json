@@ -13,9 +13,29 @@
     "build:admin": "pnpm --filter ai-studio-web build",
     "build:console": "pnpm --filter ai-studio-console-web build",
     "build:portal": "pnpm --filter ai-studio-portal-web build",
-    "build:all": "pnpm -r --filter ai-studio-web -filter ai-studio-console-web -filter ai-studio-portal-web build"
+    "build:all": "pnpm -r --filter ai-studio-web -filter ai-studio-console-web -filter ai-studio-portal-web build",
+    "test:backend": "mvn -f ai-studio-service/pom.xml test",
+    "test:portal:smoke": "pnpm --filter ai-studio-portal-web test:e2e:smoke",
+    "test:admin:smoke": "pnpm --filter ai-studio-web test:e2e:smoke",
+    "test:console:smoke": "pnpm --filter ai-studio-console-web test:e2e:smoke",
+    "test:portal:coverage": "pnpm --filter ai-studio-portal-web test:e2e:coverage",
+    "test:admin:coverage": "pnpm --filter ai-studio-web test:e2e:coverage",
+    "test:console:coverage": "pnpm --filter ai-studio-console-web test:e2e:coverage",
+    "test:portal:report": "pnpm --filter ai-studio-portal-web test:e2e:report",
+    "test:admin:report": "pnpm --filter ai-studio-web test:e2e:report",
+    "test:console:report": "pnpm --filter ai-studio-console-web test:e2e:report",
+    "test:portal:report:zh": "pnpm --filter ai-studio-portal-web test:e2e:report:zh",
+    "test:admin:report:zh": "pnpm --filter ai-studio-web test:e2e:report:zh",
+    "test:console:report:zh": "pnpm --filter ai-studio-console-web test:e2e:report:zh",
+    "test:local:coverage": "pnpm test:portal:coverage && pnpm test:admin:coverage && pnpm test:console:coverage",
+    "test:local:smoke": "pnpm test:backend && pnpm test:portal:smoke && pnpm test:admin:smoke && pnpm test:console:smoke",
+    "openspec:status:testing": "openspec status --change add-local-ai-testing",
+    "openspec:apply:testing": "openspec instructions apply --change add-local-ai-testing"
   },
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "devDependencies": {
+    "@fission-ai/openspec": "^1.3.1"
+  }
 }

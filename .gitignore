@@ -5,6 +5,8 @@ dev.config
 *.local
 .env.local
 .env.*.local
+**/tests/e2e/.env.local
+**/tests/e2e/.env
 
 # ====================
 # Dependencies
@@ -49,6 +51,9 @@ yarn-error.log*
 coverage/
 *.lcov
 .nyc_output/
+test-results/
+playwright-report/
+playwright-report-zh/
 
 # ====================
 # Spring Boot (Backend)

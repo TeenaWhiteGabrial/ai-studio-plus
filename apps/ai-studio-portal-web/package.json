@@ -20,6 +20,9 @@
     "pm2:monit": "pm2 monit",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test tests/e2e/smoke-login.spec.ts",
+    "test:e2e:coverage": "playwright test tests/e2e/coverage.spec.ts",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:report:zh": "node ../../scripts/serve-playwright-zh-report.mjs",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install chromium"
   },
