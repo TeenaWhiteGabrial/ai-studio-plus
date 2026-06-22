@@ -17,14 +17,7 @@
     "pm2:reload": "pm2 reload ecosystem.config.cjs",
     "pm2:delete": "pm2 delete ecosystem.config.cjs",
     "pm2:logs": "pm2 logs NuxtAppName",
-    "pm2:monit": "pm2 monit",
-    "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test tests/e2e/smoke-login.spec.ts",
-    "test:e2e:coverage": "playwright test tests/e2e/coverage.spec.ts",
-    "test:e2e:report": "playwright show-report",
-    "test:e2e:report:zh": "node ../../scripts/serve-playwright-zh-report.mjs",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:install": "playwright install chromium"
+    "pm2:monit": "pm2 monit"
   },
   "dependencies": {
     "@iconify-json/material-symbols": "^1.2.34",
@@ -50,10 +43,8 @@
   "devDependencies": {
     "@element-plus/nuxt": "^1.1.4",
     "@nuxt/kit": "^4.3.1",
-    "@playwright/test": "^1.59.1",
     "@unocss/nuxt": "^66.4.2",
     "@unocss/preset-wind3": "^66.5.10",
-    "element-plus": "^2.11.2",
-    "playwright": "^1.59.1"
+    "element-plus": "^2.11.2"
   }
 }

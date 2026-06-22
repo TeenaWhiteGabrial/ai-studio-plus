@@ -6,14 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test tests/e2e/smoke.spec.ts",
-    "test:e2e:coverage": "playwright test tests/e2e/coverage.spec.ts",
-    "test:e2e:report": "playwright show-report",
-    "test:e2e:report:zh": "node ../../scripts/serve-playwright-zh-report.mjs",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:install": "playwright install chromium"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -31,9 +24,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
     "@vitejs/plugin-vue": "^5.0.0",
-    "playwright": "^1.59.1",
     "typescript": "^5.4.0",
     "unplugin-auto-import": "^0.17.0",
     "unplugin-vue-components": "^0.27.0",

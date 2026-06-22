@@ -4,7 +4,7 @@ import type { LoadingInstance } from 'element-plus/es/components/loading/src/loa
 import router from './auth'
 
 // API 基础路径
-const API_BASE_URL = '/ai-studio/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/ai-studio/v1'
 // 业务路由前缀
 const BASE_ROUTER = import.meta.env.VITE_BASE_ROUTER
 

@@ -1,0 +1,55 @@
+services:
+  ai-studio-service:
+    build:
+      context: /Users/topazzz/unified-project/ai-studio-plus/ai-studio-service
+    image: ai-studio-service:local
+    container_name: ai-studio-service
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+    restart: unless-stopped
+
+  ai-studio-admin-web:
+    build:
+      context: /Users/topazzz/unified-project/ai-studio-plus
+      dockerfile: apps/ai-studio-admin-web/Dockerfile
+    image: ai-studio-admin-web:local
+    container_name: ai-studio-admin-web
+    ports:
+      - "${ADMIN_PORT:-8081}:80"
+    depends_on:
+      - ai-studio-service
+    restart: unless-stopped
+
+  ai-studio-console-web:
+    build:
+      context: /Users/topazzz/unified-project/ai-studio-plus
+      dockerfile: apps/ai-studio-console-web/Dockerfile
+    image: ai-studio-console-web:local
+    container_name: ai-studio-console-web
+    ports:
+      - "${CONSOLE_PORT:-8082}:80"
+    depends_on:
+      - ai-studio-service
+    restart: unless-stopped
+
+  ai-studio-portal-web:
+    build:
+      context: /Users/topazzz/unified-project/ai-studio-plus
+      dockerfile: apps/ai-studio-portal-web/Dockerfile
+    image: ai-studio-portal-web:local
+    container_name: ai-studio-portal-web
+    ports:
+      - "${PORTAL_PORT:-3000}:3000"
+    depends_on:
+      - ai-studio-service
+    environment:
+      NUXT_API_BASE_URL: ${NUXT_API_BASE_URL:-http://ai-studio-service:8080/ai-studio/v1}
+      NUXT_LOGIN_TYPE: ${NUXT_LOGIN_TYPE:-own}
+      NUXT_TOKEN_TYPE: ${NUXT_TOKEN_TYPE:-Bearer}
+      NUXT_APP_BASE_URL: ${NUXT_APP_BASE_URL:-/}
+      NUXT_CONSOLE_BASE_URL: ${NUXT_CONSOLE_BASE_URL:-http://localhost:8082/ai-studio-plus-console-web}
+      NUXT_KNOWLEDGE_API_BASE: ${NUXT_KNOWLEDGE_API_BASE:-http://localhost:3002/ai-studio/v1/knowledge}
+    restart: unless-stopped
