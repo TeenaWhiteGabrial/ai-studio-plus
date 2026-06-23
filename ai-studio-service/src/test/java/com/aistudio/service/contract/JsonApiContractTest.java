@@ -2,11 +2,15 @@ package com.aistudio.service.contract;
 
 import com.aistudio.service.common.Result;
 import com.aistudio.service.dto.request.ArticleCreateRequest;
+import com.aistudio.service.dto.request.GitlabProjectConfigRequest;
+import com.aistudio.service.dto.request.GitlabWebhookRequest;
+import com.aistudio.service.dto.response.GitlabEventLogResponse;
 import com.aistudio.service.dto.request.LoginRequest;
 import com.aistudio.service.dto.request.MemberOutputRequest;
 import com.aistudio.service.dto.request.ProjectCreateRequest;
 import com.aistudio.service.dto.request.SkillCreateRequest;
 import com.aistudio.service.dto.request.UserCreateRequest;
+import com.aistudio.service.dto.response.ActivityWorkItemResponse;
 import com.aistudio.service.dto.response.LoginResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -170,5 +174,111 @@ class JsonApiContractTest {
         Set<?> violations = validator.validate(request);
 
         assertThat(violations).hasSize(4);
+    }
+
+    @Test
+    void gitlabProjectConfigRequestAcceptsSnakeCaseAndCamelCaseTransitionFields() throws Exception {
+        GitlabProjectConfigRequest request = objectMapper.readValue("""
+                {
+                  "projectId": 11,
+                  "gitlab_project_id": 101,
+                  "gitlabProjectName": "AI Studio Service",
+                  "gitlab_project_path": "group/ai-studio-service",
+                  "gitlab_group_name": "group",
+                  "enabled": 1
+                }
+                """, GitlabProjectConfigRequest.class);
+
+        assertThat(request.getProject_id()).isEqualTo(11L);
+        assertThat(request.getGitlab_project_id()).isEqualTo(101L);
+        assertThat(request.getGitlab_project_name()).isEqualTo("AI Studio Service");
+        assertThat(request.getGitlab_project_path()).isEqualTo("group/ai-studio-service");
+        assertThat(request.getGitlab_group_name()).isEqualTo("group");
+    }
+
+    @Test
+    void gitlabWebhookRequestAcceptsGitlabSnakeCasePayload() throws Exception {
+        GitlabWebhookRequest request = objectMapper.readValue("""
+                {
+                  "object_kind": "push",
+                  "event_name": "push",
+                  "user_name": "tester",
+                  "user_email": "tester@example.com",
+                  "ref": "refs/heads/main",
+                  "checkout_sha": "abcdef123456",
+                  "total_commits_count": 1,
+                  "project": {"id": 99},
+                  "user": {"id": 7},
+                  "commits": [
+                    {
+                      "id": "abcdef123456",
+                      "author_name": "tester",
+                      "author_email": "tester@example.com",
+                      "message": "feat: add webhook pipeline",
+                      "timestamp": "2026-06-22T10:15:30Z"
+                    }
+                  ]
+                }
+                """, GitlabWebhookRequest.class);
+
+        assertThat(request.getObject_kind()).isEqualTo("push");
+        assertThat(request.getEvent_name()).isEqualTo("push");
+        assertThat(request.getUser_name()).isEqualTo("tester");
+        assertThat(request.getUser_email()).isEqualTo("tester@example.com");
+        assertThat(request.getCheckout_sha()).isEqualTo("abcdef123456");
+        assertThat(request.getTotal_commits_count()).isEqualTo(1);
+        assertThat(request.getProject()).containsEntry("id", 99);
+        assertThat(request.getUser()).containsEntry("id", 7);
+        assertThat(request.getCommits()).hasSize(1);
+    }
+
+    @Test
+    void activityWorkItemResponseSerializesWithSnakeCaseFields() throws Exception {
+        ActivityWorkItemResponse response = new ActivityWorkItemResponse();
+        response.setId(1L);
+        response.setAnalysis_date(java.time.LocalDate.of(2026, 6, 22));
+        response.setGitlab_project_id(101L);
+        response.setProgress_status("in_progress");
+        response.setRisk_summary("主题集中");
+
+        JsonNode json = objectMapper.valueToTree(Result.success(response));
+
+        assertThat(json.path("data").has("analysis_date")).isTrue();
+        assertThat(json.path("data").has("gitlab_project_id")).isTrue();
+        assertThat(json.path("data").has("progress_status")).isTrue();
+        assertThat(json.path("data").has("risk_summary")).isTrue();
+        assertThat(json.path("data").has("gitlabProjectId")).isFalse();
+    }
+
+    @Test
+    void taskAndEventLogResponsesSerializeWithSnakeCaseFields() {
+        com.aistudio.service.dto.response.ActivityTaskExecutionResponse taskResponse = new com.aistudio.service.dto.response.ActivityTaskExecutionResponse();
+        taskResponse.setId(10L);
+        taskResponse.setEvent_log_id(77L);
+        taskResponse.setTask_type("ANALYZE");
+
+        GitlabEventLogResponse eventLogResponse = new GitlabEventLogResponse();
+        eventLogResponse.setId(77L);
+        eventLogResponse.setEvent_uid("evt-1");
+        eventLogResponse.setGitlab_project_id(101L);
+        eventLogResponse.setProcess_status("RECORDED");
+        eventLogResponse.setRelated_commit_refs(List.of("abc12345"));
+        eventLogResponse.setRelated_mr_refs(List.of(88L));
+        eventLogResponse.setRelated_work_item_summaries(List.of("补齐 webhook | in_progress | low"));
+        eventLogResponse.setRelated_report_titles(List.of("个人研发活动日报"));
+
+        JsonNode taskJson = objectMapper.valueToTree(Result.success(taskResponse));
+        JsonNode eventJson = objectMapper.valueToTree(Result.success(eventLogResponse));
+
+        assertThat(taskJson.path("data").has("event_log_id")).isTrue();
+        assertThat(taskJson.path("data").has("eventLogId")).isFalse();
+        assertThat(eventJson.path("data").has("event_uid")).isTrue();
+        assertThat(eventJson.path("data").has("gitlab_project_id")).isTrue();
+        assertThat(eventJson.path("data").has("process_status")).isTrue();
+        assertThat(eventJson.path("data").has("related_commit_refs")).isTrue();
+        assertThat(eventJson.path("data").has("related_mr_refs")).isTrue();
+        assertThat(eventJson.path("data").has("related_work_item_summaries")).isTrue();
+        assertThat(eventJson.path("data").has("related_report_titles")).isTrue();
+        assertThat(eventJson.path("data").has("processStatus")).isFalse();
     }
 }

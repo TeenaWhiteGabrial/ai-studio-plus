@@ -104,6 +104,18 @@ const adminRoutes = [
     meta: { title: '邮件配置' },
   },
   {
+    path: '/admin/system/gitlab-runtime-config',
+    name: 'GitlabRuntimeConfig',
+    component: () => import('@/views/system/gitlab-runtime-config.vue'),
+    meta: { title: 'GitLab配置' },
+  },
+  {
+    path: '/admin/system/ai-model-config',
+    name: 'AiModelConfig',
+    component: () => import('@/views/system/ai-model-config.vue'),
+    meta: { title: 'AI模型配置' },
+  },
+  {
     path: '/admin/audit/resource',
     name: 'ResourceAudit',
     component: () => import('@/views/audit/resource.vue'),
@@ -144,6 +156,12 @@ const adminRoutes = [
     name: 'EmailReport',
     component: () => import('@/views/message/email-report.vue'),
     meta: { title: '邮件日报' },
+  },
+  {
+    path: '/admin/message/gitlab-activity',
+    name: 'GitlabActivityTrace',
+    component: () => import('@/views/message/gitlab-activity.vue'),
+    meta: { title: 'GitLab活动追踪' },
   },
   {
     path: '/admin/community/article',

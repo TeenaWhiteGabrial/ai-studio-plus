@@ -1,19 +1,29 @@
 services:
   ai-studio-service:
     build:
-      context: /Users/topazzz/unified-project/ai-studio-plus/ai-studio-service
+      context: ./ai-studio-service
     image: ai-studio-service:local
     container_name: ai-studio-service
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-}
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      GITLAB_ACTIVITY_API_BASE_URL: ${GITLAB_ACTIVITY_API_BASE_URL:-}
+      GITLAB_ACTIVITY_PRIVATE_TOKEN: ${GITLAB_ACTIVITY_PRIVATE_TOKEN:-}
+      GITLAB_ACTIVITY_WEBHOOK_TOKEN: ${GITLAB_ACTIVITY_WEBHOOK_TOKEN:-}
+      GITLAB_ACTIVITY_SCHEDULES_ENABLED: ${GITLAB_ACTIVITY_SCHEDULES_ENABLED:-false}
+      GITLAB_ACTIVITY_DAILY_ANALYZE_CRON: ${GITLAB_ACTIVITY_DAILY_ANALYZE_CRON:-0 15 20 * * ?}
+      GITLAB_ACTIVITY_DAILY_REPORT_CRON: ${GITLAB_ACTIVITY_DAILY_REPORT_CRON:-0 30 20 * * ?}
+      GITLAB_ACTIVITY_BACKFILL_CRON: ${GITLAB_ACTIVITY_BACKFILL_CRON:-0 0/30 * * * ?}
     restart: unless-stopped
 
   ai-studio-admin-web:
     build:
-      context: /Users/topazzz/unified-project/ai-studio-plus
+      context: .
       dockerfile: apps/ai-studio-admin-web/Dockerfile
     image: ai-studio-admin-web:local
     container_name: ai-studio-admin-web
@@ -25,7 +35,7 @@ services:
 
   ai-studio-console-web:
     build:
-      context: /Users/topazzz/unified-project/ai-studio-plus
+      context: .
       dockerfile: apps/ai-studio-console-web/Dockerfile
     image: ai-studio-console-web:local
     container_name: ai-studio-console-web
@@ -37,7 +47,7 @@ services:
 
   ai-studio-portal-web:
     build:
-      context: /Users/topazzz/unified-project/ai-studio-plus
+      context: .
       dockerfile: apps/ai-studio-portal-web/Dockerfile
     image: ai-studio-portal-web:local
     container_name: ai-studio-portal-web

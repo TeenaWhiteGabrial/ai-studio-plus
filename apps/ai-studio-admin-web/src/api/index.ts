@@ -106,6 +106,236 @@ export const mailConfigApi = {
   },
 }
 
+export interface GitlabRuntimeConfig {
+  baseUrl: string
+  privateToken: string
+  webhookToken: string
+  hasPrivateToken: boolean
+  hasWebhookToken: boolean
+  schedulesEnabled: boolean
+  dailyAnalyzeCron: string
+  dailyReportCron: string
+  backfillCron: string
+  enabled: number
+}
+
+export interface GitlabRuntimeConfigPayload {
+  baseUrl: string
+  privateToken: string
+  webhookToken: string
+  schedulesEnabled: boolean
+  dailyAnalyzeCron: string
+  dailyReportCron: string
+  backfillCron: string
+  enabled: number
+}
+
+function mapGitlabRuntimeConfigResponse(item: any): GitlabRuntimeConfig {
+  return {
+    baseUrl: item.base_url ?? item.baseUrl ?? '',
+    privateToken: '',
+    webhookToken: '',
+    hasPrivateToken: item.has_private_token ?? item.hasPrivateToken ?? false,
+    hasWebhookToken: item.has_webhook_token ?? item.hasWebhookToken ?? false,
+    schedulesEnabled: item.schedules_enabled ?? item.schedulesEnabled ?? false,
+    dailyAnalyzeCron: item.daily_analyze_cron ?? item.dailyAnalyzeCron ?? '',
+    dailyReportCron: item.daily_report_cron ?? item.dailyReportCron ?? '',
+    backfillCron: item.backfill_cron ?? item.backfillCron ?? '',
+    enabled: item.enabled ?? 1,
+  }
+}
+
+function mapGitlabRuntimeConfigPayload(data: GitlabRuntimeConfigPayload) {
+  return {
+    base_url: data.baseUrl,
+    private_token: data.privateToken,
+    webhook_token: data.webhookToken,
+    schedules_enabled: data.schedulesEnabled,
+    daily_analyze_cron: data.dailyAnalyzeCron,
+    daily_report_cron: data.dailyReportCron,
+    backfill_cron: data.backfillCron,
+    enabled: data.enabled,
+  }
+}
+
+export const gitlabRuntimeConfigApi = {
+  get: async () => {
+    const res = await request.get('/system/gitlab-runtime-config') as any
+    return mapGitlabRuntimeConfigResponse(res.data)
+  },
+  update: async (data: GitlabRuntimeConfigPayload) => {
+    const res = await request.post('/system/gitlab-runtime-config', mapGitlabRuntimeConfigPayload(data)) as any
+    return mapGitlabRuntimeConfigResponse(res.data)
+  },
+}
+
+export interface AiModelConfig {
+  providerName: string
+  baseUrl: string
+  modelName: string
+  apiKey: string
+  hasApiKey: boolean
+  promptVersion: string
+  requestTimeoutMs: number
+  maxRetries: number
+  enabled: number
+}
+
+export interface AiModelConfigPayload {
+  providerName: string
+  baseUrl: string
+  modelName: string
+  apiKey: string
+  promptVersion: string
+  requestTimeoutMs: number
+  maxRetries: number
+  enabled: number
+}
+
+function mapAiModelConfigResponse(item: any): AiModelConfig {
+  return {
+    providerName: item.provider_name ?? item.providerName ?? '',
+    baseUrl: item.base_url ?? item.baseUrl ?? '',
+    modelName: item.model_name ?? item.modelName ?? '',
+    apiKey: '',
+    hasApiKey: item.has_api_key ?? item.hasApiKey ?? false,
+    promptVersion: item.prompt_version ?? item.promptVersion ?? '',
+    requestTimeoutMs: item.request_timeout_ms ?? item.requestTimeoutMs ?? 30000,
+    maxRetries: item.max_retries ?? item.maxRetries ?? 2,
+    enabled: item.enabled ?? 0,
+  }
+}
+
+function mapAiModelConfigPayload(data: AiModelConfigPayload) {
+  return {
+    provider_name: data.providerName,
+    base_url: data.baseUrl,
+    model_name: data.modelName,
+    api_key: data.apiKey,
+    prompt_version: data.promptVersion,
+    request_timeout_ms: data.requestTimeoutMs,
+    max_retries: data.maxRetries,
+    enabled: data.enabled,
+  }
+}
+
+export const aiModelConfigApi = {
+  get: async () => {
+    const res = await request.get('/system/ai-model-config') as any
+    return mapAiModelConfigResponse(res.data)
+  },
+  update: async (data: AiModelConfigPayload) => {
+    const res = await request.post('/system/ai-model-config', mapAiModelConfigPayload(data)) as any
+    return mapAiModelConfigResponse(res.data)
+  },
+}
+
+export interface GitlabActivityTaskItem {
+  id: number
+  taskType: string
+  targetDate?: string
+  userId?: number
+  projectId?: number
+  eventLogId?: number
+  targetRef?: string
+  status: string
+  attemptCount: number
+  nextRunAt?: string
+  errorMessage?: string
+  payloadJson?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface GitlabEventLogItem {
+  id: number
+  eventUid: string
+  eventType: string
+  projectId?: number
+  gitlabProjectId?: number
+  gitlabUserId?: number
+  refName?: string
+  eventTime?: string
+  payloadJson?: string
+  processStatus?: string
+  processMessage?: string
+  relatedCommitRefs: string[]
+  relatedMrRefs: number[]
+  relatedWorkItemSummaries: string[]
+  relatedReportTitles: string[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+function mapGitlabTaskResponse(item: any): GitlabActivityTaskItem {
+  return {
+    id: item.id,
+    taskType: item.task_type ?? item.taskType ?? '',
+    targetDate: item.target_date ?? item.targetDate ?? '',
+    userId: item.user_id ?? item.userId,
+    projectId: item.project_id ?? item.projectId,
+    eventLogId: item.event_log_id ?? item.eventLogId,
+    targetRef: item.target_ref ?? item.targetRef ?? '',
+    status: item.status ?? '',
+    attemptCount: item.attempt_count ?? item.attemptCount ?? 0,
+    nextRunAt: item.next_run_at ?? item.nextRunAt ?? '',
+    errorMessage: item.error_message ?? item.errorMessage ?? '',
+    payloadJson: item.payload_json ?? item.payloadJson ?? '',
+    createdAt: item.created_at ?? item.createdAt ?? '',
+    updatedAt: item.updated_at ?? item.updatedAt ?? '',
+  }
+}
+
+function mapGitlabEventLogResponse(item: any): GitlabEventLogItem {
+  return {
+    id: item.id,
+    eventUid: item.event_uid ?? item.eventUid ?? '',
+    eventType: item.event_type ?? item.eventType ?? '',
+    projectId: item.project_id ?? item.projectId,
+    gitlabProjectId: item.gitlab_project_id ?? item.gitlabProjectId,
+    gitlabUserId: item.gitlab_user_id ?? item.gitlabUserId,
+    refName: item.ref_name ?? item.refName ?? '',
+    eventTime: item.event_time ?? item.eventTime ?? '',
+    payloadJson: item.payload_json ?? item.payloadJson ?? '',
+    processStatus: item.process_status ?? item.processStatus ?? '',
+    processMessage: item.process_message ?? item.processMessage ?? '',
+    relatedCommitRefs: item.related_commit_refs ?? item.relatedCommitRefs ?? [],
+    relatedMrRefs: item.related_mr_refs ?? item.relatedMrRefs ?? [],
+    relatedWorkItemSummaries: item.related_work_item_summaries ?? item.relatedWorkItemSummaries ?? [],
+    relatedReportTitles: item.related_report_titles ?? item.relatedReportTitles ?? [],
+    createdAt: item.created_at ?? item.createdAt ?? '',
+    updatedAt: item.updated_at ?? item.updatedAt ?? '',
+  }
+}
+
+function mapPageResult<T>(payload: any, mapper: (item: any) => T) {
+  return {
+    total: payload.total ?? 0,
+    records: Array.isArray(payload.records) ? payload.records.map(mapper) : [],
+  }
+}
+
+export const gitlabActivityAdminApi = {
+  listTasks: async (params: { page: number; size: number; status?: string }) => {
+    const res = await request.get('/gitlab-activity/tasks/list', { params }) as any
+    return mapPageResult(res.data, mapGitlabTaskResponse)
+  },
+  getTask: async (taskId: number) => {
+    const res = await request.get(`/gitlab-activity/tasks/${taskId}`) as any
+    return mapGitlabTaskResponse(res.data)
+  },
+  retryTask: (taskId: number) => request.post(`/gitlab-activity/tasks/${taskId}/retry`),
+  runTaskNow: (taskId: number) => request.post(`/gitlab-activity/tasks/${taskId}/run-now`),
+  listEventLogs: async (params: { page: number; size: number; processStatus?: string; gitlabProjectId?: number }) => {
+    const res = await request.get('/gitlab-activity/event-logs/list', { params }) as any
+    return mapPageResult(res.data, mapGitlabEventLogResponse)
+  },
+  getEventLog: async (eventLogId: number) => {
+    const res = await request.get(`/gitlab-activity/event-logs/${eventLogId}`) as any
+    return mapGitlabEventLogResponse(res.data)
+  },
+}
+
 interface KnowledgeApiResponse<T> {
   success: boolean
   data?: T

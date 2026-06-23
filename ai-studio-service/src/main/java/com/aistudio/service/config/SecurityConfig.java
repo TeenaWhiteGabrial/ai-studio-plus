@@ -62,6 +62,7 @@ public class SecurityConfig {
                     "/admin/auth/login", "/admin/auth/public-key", "/admin/auth/gen-hash", "/admin/auth/token",
                     "/console/auth/login", "/console/auth/public-key", "/console/auth/token",
                     "/open/**",
+                    "/open/gitlab/webhook/**",
                     "/portal/open/**",
                     "/portal/site/config",
                     "/doc.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**"

@@ -143,6 +143,8 @@ const adminMenus = [
       { id: 54, name: '菜单管理', path: '/system/menu', icon: 'Menu' },
       { id: 55, name: '团队管理', path: '/system/team', icon: 'Avatar' },
       { id: 56, name: '邮件配置', path: '/system/mail-config', icon: 'Message' },
+      { id: 57, name: 'GitLab配置', path: '/system/gitlab-runtime-config', icon: 'Link' },
+      { id: 58, name: 'AI模型配置', path: '/system/ai-model-config', icon: 'Cpu' },
     ],
   },
   {
@@ -166,6 +168,7 @@ const adminMenus = [
       { id: 72, name: '通知记录', path: '/message/notification', icon: 'Bell' },
       { id: 73, name: '通知规则', path: '/message/rule', icon: 'SetUp' },
       { id: 74, name: '邮件日报', path: '/message/email-report', icon: 'Message' },
+      { id: 75, name: 'GitLab活动追踪', path: '/message/gitlab-activity', icon: 'DataAnalysis' },
     ],
   },
   {
