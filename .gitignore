@@ -93,3 +93,5 @@ packages/@ai-studio/shared-auth/dist/
 *.bak
 *.swp
 .cache/
+
+.env.docker
