@@ -12,6 +12,12 @@ CONTAINERS=(
   ai-studio-console-web
   ai-studio-portal-web
 )
+CONTAINER_PATTERNS=(
+  "_ai-studio-service"
+  "_ai-studio-admin-web"
+  "_ai-studio-console-web"
+  "_ai-studio-portal-web"
+)
 
 has_cmd() {
   command -v "$1" >/dev/null 2>&1
@@ -38,6 +44,8 @@ compose() {
 
 remove_existing_containers() {
   local container_name
+  local existing_name
+  local pattern
 
   for container_name in "${CONTAINERS[@]}"; do
     if docker inspect "$container_name" >/dev/null 2>&1; then
@@ -45,6 +53,17 @@ remove_existing_containers() {
       docker rm -f "$container_name" >/dev/null
     fi
   done
+
+  while IFS= read -r existing_name; do
+    [[ -z "$existing_name" ]] && continue
+    for pattern in "${CONTAINER_PATTERNS[@]}"; do
+      if [[ "$existing_name" == *"$pattern" ]]; then
+        echo "删除兼容性残留容器: $existing_name"
+        docker rm -f "$existing_name" >/dev/null
+        break
+      fi
+    done
+  done < <(docker ps -a --format '{{.Names}}')
 }
 
 if ! command -v docker >/dev/null 2>&1; then
