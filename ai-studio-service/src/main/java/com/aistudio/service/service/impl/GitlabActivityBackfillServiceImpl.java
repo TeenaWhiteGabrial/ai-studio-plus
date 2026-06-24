@@ -20,7 +20,6 @@ import com.aistudio.service.service.GitlabRuntimeConfigService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -40,12 +39,10 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class GitlabActivityBackfillServiceImpl implements GitlabActivityBackfillService {
 
     private final GitlabActivityProperties properties;
     private final GitlabRuntimeConfigService runtimeConfigService;
-    @Qualifier("gitlabActivityRestTemplate")
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final GitlabProjectSnapshotMapper projectSnapshotMapper;
@@ -54,6 +51,30 @@ public class GitlabActivityBackfillServiceImpl implements GitlabActivityBackfill
     private final GitlabMemberFactMapper memberFactMapper;
     private final GitlabMrFactMapper mrFactMapper;
     private final GitlabCommitFactMapper commitFactMapper;
+
+    public GitlabActivityBackfillServiceImpl(
+            GitlabActivityProperties properties,
+            GitlabRuntimeConfigService runtimeConfigService,
+            @Qualifier("gitlabActivityRestTemplate") RestTemplate restTemplate,
+            ObjectMapper objectMapper,
+            GitlabProjectSnapshotMapper projectSnapshotMapper,
+            GitlabUserSnapshotMapper userSnapshotMapper,
+            GitlabBranchFactMapper branchFactMapper,
+            GitlabMemberFactMapper memberFactMapper,
+            GitlabMrFactMapper mrFactMapper,
+            GitlabCommitFactMapper commitFactMapper
+    ) {
+        this.properties = properties;
+        this.runtimeConfigService = runtimeConfigService;
+        this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
+        this.projectSnapshotMapper = projectSnapshotMapper;
+        this.userSnapshotMapper = userSnapshotMapper;
+        this.branchFactMapper = branchFactMapper;
+        this.memberFactMapper = memberFactMapper;
+        this.mrFactMapper = mrFactMapper;
+        this.commitFactMapper = commitFactMapper;
+    }
 
     @Override
     @Transactional

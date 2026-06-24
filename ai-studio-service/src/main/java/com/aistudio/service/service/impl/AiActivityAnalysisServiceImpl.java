@@ -6,7 +6,6 @@ import com.aistudio.service.service.AiActivityAnalysisService;
 import com.aistudio.service.service.AiModelConfigService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
@@ -25,13 +24,21 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AiActivityAnalysisServiceImpl implements AiActivityAnalysisService {
 
     private final AiModelConfigService aiModelConfigService;
-    @Qualifier("aiModelRestTemplate")
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+
+    public AiActivityAnalysisServiceImpl(
+            AiModelConfigService aiModelConfigService,
+            @Qualifier("aiModelRestTemplate") RestTemplate restTemplate,
+            ObjectMapper objectMapper
+    ) {
+        this.aiModelConfigService = aiModelConfigService;
+        this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public Optional<AiActivityAnalysisResult> analyze(Long userId, Long gitlabProjectId, LocalDate analysisDate, List<GitlabCommitFact> commits) {
