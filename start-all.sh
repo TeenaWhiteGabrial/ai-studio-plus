@@ -6,6 +6,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.docker}"
 COMPOSE_FILE="$ROOT_DIR/docker-compose.yml"
 COMPOSE_CMD=()
+CONTAINERS=(
+  ai-studio-service
+  ai-studio-admin-web
+  ai-studio-console-web
+  ai-studio-portal-web
+)
 
 has_cmd() {
   command -v "$1" >/dev/null 2>&1
@@ -28,6 +34,17 @@ detect_compose() {
 
 compose() {
   "${COMPOSE_CMD[@]}" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
+}
+
+remove_existing_containers() {
+  local container_name
+
+  for container_name in "${CONTAINERS[@]}"; do
+    if docker inspect "$container_name" >/dev/null 2>&1; then
+      echo "删除旧容器: $container_name"
+      docker rm -f "$container_name" >/dev/null
+    fi
+  done
 }
 
 if ! command -v docker >/dev/null 2>&1; then
@@ -53,6 +70,7 @@ echo "使用 Compose 命令: ${COMPOSE_CMD[*]}"
 echo "启动整套服务: ai-studio-service + ai-studio-admin-web + ai-studio-console-web + ai-studio-portal-web"
 
 cd "$ROOT_DIR"
+remove_existing_containers
 compose up -d --build
 
 echo "启动完成。查看状态:"
